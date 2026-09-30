@@ -1,0 +1,35 @@
+# dependencies
+node_modules/
+
+# Expo
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+
+# Native 빌드 결과물 (EAS가 클라우드에서 빌드해줌)
+ios/
+android/
+
+# 환경변수 (API 키 등 절대 올리면 안 됨!)
+.env
+.env.local
+.env.production
+
+# OSX
+.DS_Store
+
+# Windows
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# 빌드 관련
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.orig.*
