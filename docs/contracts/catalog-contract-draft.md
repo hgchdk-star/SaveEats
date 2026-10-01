@@ -1,125 +1,63 @@
-# 카탈로그 API 계약 초안 (지우 → 혜지 논의용, 미합의)
+# 카탈로그 API 계약 catalog@0.1 (합의본, 혜지 검수 대기)
 
-범위: 가게 목록 · 가게 상세 · 메뉴 상세 (Guest 조회).
-근거: 개발 명세 DB-001, DB-004, DB-009, API-001~004, REC-003 / PRD 8·9·10.
-이 문서는 제안입니다. 합의 후 한 사람이 `src/contracts/`에 옮깁니다.
+범위: 카테고리 · 가게 목록 · 가게 상세 · 메뉴 상세 · 찜 (조회는 Guest 가능).
+근거: 개발 명세 DB-004, DB-009, API-001~004, SEC-008 / PRD 8·9·10·11.
+TS 계약: `src/contracts/catalog.ts`, `src/contracts/common.ts` — 지우 작성, 혜지 검수.
+서버 구현: `supabase/migrations/20261001000000_catalog_read.sql`, `20261001000100_profiles_favorites.sql` (혜지 브랜치 `feat/store-menu-read-api`).
 
-## 1. 공통 규칙 (API-001, REC-003 그대로)
+## 1. 합의 결과 (지우 질문 11개)
 
-```ts
-type Uuid = string;          // UUID
-type Won = number;           // 원 단위 정수, JS 안전 정수 범위 검사
-type IsoTimestamp = string;  // UTC RFC3339
+| # | 항목 | 합의 |
+|---|---|---|
+| 1 | 조회 방식 | RPC. 서버가 활성 상위 항목 필터와 응답 모양을 고정하고 camelCase JSON을 반환한다. 앱 키 변환 없음 |
+| 2 | 페이지네이션 | cursor 방식, 이름 → id 오름차순. `추천 가게 우선` 정렬은 정책 변경이라 넣지 않음 |
+| 3 | Guest 찜 | `isFavorite: null` |
+| 4 | 비활성 상세 요청 | `RESOURCE_NOT_FOUND`로 통일. 없는 것과 숨겨진 것을 구분하지 않음. Cart에 남은 비활성 메뉴 표시는 Cart 계약(T04)에서 정함 |
+| 5 | 이미지 | 서버는 `imageRef` 키만 반환, URL 변환은 앱. 권리 검토 전이라 현재 이미지 없음 |
+| 6 | 리뷰 요약 | 리뷰 기능(T09) 전에는 `{count: 0, averageCravingRating: null}` 고정, 이후 실제 집계로 교체 (서정 확인) |
+| 7 | 대표 메뉴 | 판매 가능한 활성 메뉴 중 sort_order → 이름 → ID 첫 메뉴. 모두 품절이면 첫 활성 메뉴(품절 표시), 활성 메뉴 없으면 null (서정 확인) |
+| 8 | 오류 코드 | SEC-008 기준: `RESOURCE_NOT_FOUND`, `INVALID_INPUT`, `AUTH_REQUIRED` |
+| 9 | 계약 버전 | `catalog@0.1` |
+| 10 | `src/contracts/` 담당 | 지우가 TS 작성, 혜지가 검수·승인 |
+| 11 | 영업 종료 서버 검증 | Cart 검증·주문 생성에서도 거절, 값 이름 `STORE_CLOSED`. T04·T06에서 구현 |
 
-type ApiSuccess<T> = { data: T; contractVersion: string; correlationId: string };
+## 2. 호출
 
-type ApiFailure = {
-  code: string;                 // 예: NOT_FOUND, NETWORK_UNAVAILABLE
-  category: 'AUTH' | 'VALIDATION' | 'CONFLICT' | 'NETWORK' | 'LOCAL' | 'INTERNAL';
-  retryable: boolean;
-  outcomeUnknown: boolean;
-  correlationId: string | null;
-  safeDetails?: Record<string, unknown>;
-};
+| 계약 | RPC | 인자 | 응답 | 실패 |
+|---|---|---|---|---|
+| listCategories | `list_categories` | 없음 | `CategoryDto[]` | |
+| listStores | `list_stores` | `p_category_id?`, `p_cursor?`, `p_page_size?` (1~50, 기본 20) | `Page<StoreCardDto>` | INVALID_INPUT |
+| getStore | `get_store` | `p_store_id` | `StoreDetailDto` | RESOURCE_NOT_FOUND |
+| getMenu | `get_menu` | `p_menu_id` | `MenuDetailDto` | RESOURCE_NOT_FOUND |
+| setFavorite | `set_favorite` | `p_store_id`, `p_desired` | `SetFavoriteResultDto` | AUTH_REQUIRED, RESOURCE_NOT_FOUND |
+| listMyFavorites | `list_my_favorites` | `p_cursor?`, `p_page_size?` | `Page<FavoriteStoreCardDto>` | AUTH_REQUIRED |
+| ensureMyProfile | `ensure_my_profile` | 없음 | `MyProfileDto` | AUTH_REQUIRED |
 
-type Page<T> = { items: T[]; nextCursor: string | null; hasMore: boolean }; // pageSize 기본 20, 최대 50
-```
+- `p_category_id` 없음 = `전체` (`전체`는 DB 카테고리 행이 아님, DB-004).
+- 업무 오류는 PostgREST `P0001`의 `message`로 온다. UUID 형식 오류(`22P02`)는 INVALID_INPUT, Guest의 실행 권한 오류(`42501`)는 AUTH_REQUIRED로 repository가 정규화한다.
+- 공통 실패 결과(`ApiFailure`)와 `Page`는 `src/contracts/common.ts` (API-001).
+- Mock adapter와 Supabase adapter는 같은 interface를 구현한다 (API-004).
 
-- DTO는 camelCase, DB는 snake_case. 변환은 repository에서.
-- 공개 응답에는 활성 항목만 (DB-009).
+## 3. 혜지 브랜치 대비 추가된 필드 (서버 반영 필요)
 
-## 2. DTO 제안
+| DTO | 필드 | 내용 |
+|---|---|---|
+| StoreCardDto (목록·찜 목록) | `representativeMenu: {id, name, price, isSoldOut} \| null` | 1절 #7 규칙 |
+| StoreCardDto, StoreDetailDto | `reviewSummary: {count, averageCravingRating}` | 1절 #6, 현재 고정값 |
+| MenuDetailDto | `storeIsOpen: boolean` | 검색·배너·최근 본 항목에서 메뉴로 바로 들어와도 영업 종료 담기를 막기 위함 |
 
-```ts
-type CategoryRef = { id: Uuid; code: string; name: string };
+`CATALOG_CONTRACT_VERSION`은 `catalog-0.2-draft` → `catalog@0.1`로 바꿨다.
 
-type ReviewSummary = { count: number; averageCravingRating: number | null }; // 0개면 null, 가짜 값 없음
+## 4. 확정된 제품 정책 (2026-10-01, 기획서·PRD·개발 명세 반영)
 
-type MenuPriceRef = { id: Uuid; name: string; price: Won };
-
-// API-003 StoreCard: id/name/category/imageRef/대표 또는 matchingMenu/activeReviewSummary/favorite
-type StoreCard = {
-  id: Uuid;
-  name: string;
-  category: CategoryRef;
-  imageRef: string | null;         // 없거나 실패 시 앱이 Placeholder
-  isOpen: boolean;                 // Seed 값 (FR-STORE-009)
-  representativeMenu: MenuPriceRef | null;
-  reviewSummary: ReviewSummary;
-  isFavorite: boolean | null;      // null = Guest(조회 불가) — 질문 3
-};
-
-type StoreMenuItem = {
-  id: Uuid;
-  name: string;
-  description: string | null;
-  imageRef: string | null;
-  price: Won;                      // base_price
-  isSoldOut: boolean;
-  isPopular: boolean;
-};
-
-type StoreDetail = StoreCard & {
-  description: string | null;
-  menus: StoreMenuItem[];          // sort_order 순
-};
-
-type MenuOption = { id: Uuid; name: string; additionalPrice: Won; isSoldOut: boolean };
-
-type MenuOptionGroup = {
-  id: Uuid;
-  name: string;
-  minSelect: number;               // 0 <= min <= max, max >= 1
-  maxSelect: number;
-  options: MenuOption[];
-};
-
-// API-003 MenuDetail: id/storeId/name/price/catalogRevision/soldOut/groups[min,max,options]/image
-type MenuDetail = {
-  id: Uuid;
-  storeId: Uuid;
-  name: string;
-  description: string | null;
-  imageRef: string | null;
-  price: Won;
-  catalogRevision: number;         // Cart acknowledgedCatalogRevision에 사용
-  isSoldOut: boolean;
-  storeIsOpen: boolean;            // 영업 종료 가게 메뉴 담기 차단용 (5절 결정 1). 검색·배너·최근 본 항목에서 메뉴로 바로 들어오는 경우 대비
-  optionGroups: MenuOptionGroup[];
-};
-```
-
-## 3. 호출 제안 (API-002 catalog)
-
-| 논리 계약 | 요청 | 응답 | 주요 실패 |
-|---|---|---|---|
-| listStores | `{ categoryId?: Uuid; cursor?: string; pageSize?: number }` | `Page<StoreCard>` | NETWORK_UNAVAILABLE, INTERNAL |
-| getStore | `{ storeId: Uuid }` | `StoreDetail` | NOT_FOUND(비활성 포함), NETWORK_UNAVAILABLE |
-| getMenu | `{ menuId: Uuid }` | `MenuDetail` | NOT_FOUND, NETWORK_UNAVAILABLE |
-
-- `categoryId` 없음 = `전체` (`전체`는 DB 카테고리 행이 아님, DB-004).
-- Mock adapter와 Supabase adapter는 같은 interface를 구현 (API-004).
-
-## 4. 혜지와 정할 것
-
-1. **조회 방식:** Data API 직접 select로 할지 RPC로 할지. camelCase 변환은 어디서 할지.
-2. **listStores 페이지네이션:** cursor 방식과 정렬 키. 예: `is_recommended DESC, name, id`.
-3. **Guest 찜 표현:** `isFavorite: null`로 할지, 필드를 빼고 따로 조회할지.
-4. **비활성 가게·메뉴 상세 요청:** `NOT_FOUND`로 처리할지, 비활성 플래그를 응답에 넣을지. 장바구니에 남은 비활성 메뉴를 표시하는 경우와도 관련 있음.
-5. **이미지:** `imageRef` → URL 변환을 어디서 할지. 예: Storage public URL.
-6. **ReviewSummary:** 계산 위치(view·RPC 등). 리뷰 기능 전에는 `{count: 0, averageCravingRating: null}`로 고정할지.
-7. **대표 메뉴 선정 규칙:** `is_popular`인지 `popularity_score`인지 `sort_order`인지.
-8. **오류 코드:** 이름 목록. `NOT_FOUND`, `CATALOG_ENTITY_UNAVAILABLE` 중 무엇을 쓸지.
-9. **contractVersion:** 형식. 예: `catalog@0.1`.
-10. **`src/contracts/` 담당자 (제안):** 지우가 TS 파일을 작성하고 혜지가 PR 리뷰에서 승인합니다. 혜지는 이 계약에 맞춰 SQL·RPC signature를 고정합니다.
-11. **영업 종료 서버 검증:** 담기 차단은 앱에서 하지만, 장바구니 검증(`validate_my_cart`)과 주문 생성에서도 영업 종료 가게를 거절할지. 거절한다면 validation 값 이름(예: `STORE_CLOSED`)도 정해야 함.
-
-## 5. 결정된 제품 정책 (2026-10-01 승인, 기획서·PRD·개발 명세 반영 완료)
-
-1. **영업 종료(`isOpen=false`) 가게의 메뉴는 장바구니에 담을 수 없다.**
-   - 메뉴 상세의 담기 버튼을 비활성화한다.
-   - 이미 장바구니에 있는 항목을 어떻게 처리할지는 4절 질문 11의 서버 검증 결정을 따른다.
-2. **같은 메뉴·옵션 조합의 합산 수량이 10을 넘으면 담을 수 없다.**
-   - 자동으로 10에 맞춰 자르지 않고, 기존 장바구니를 그대로 둔다(CART-004 기술 최소 규칙과 같음).
-   - 메뉴 상세에서 담을 때와 장바구니에서 옵션을 바꿔 같은 조합이 겹칠 때 모두 적용한다.
-   - 안내 카피: `한 메뉴는 최대 10개까지 담을 수 있어요.`
+1. **영업 종료**
+   - 새 메뉴 담기 불가. 이미 담긴 Cart는 유지하되 신규 주문 불가.
+   - 안내: `지금은 영업이 종료됐어요`
+   - 서버도 Cart 검증·주문 생성에서 확인하고 `STORE_CLOSED` 사용.
+   - 이미 생성된 PENDING 주문의 이어가기·완료 확인은 막지 않음.
+2. **수량**
+   - 같은 메뉴·옵션 조합의 합산 최대 10개. 담기·옵션 변경으로 초과하면 그 동작을 거절.
+   - 기존 Cart를 유지하고 수량을 자동으로 줄이지 않음.
+   - 안내: `한 메뉴는 최대 10개까지 담을 수 있어요.`
+3. **리뷰 요약:** 실제 리뷰 전에는 `count: 0`, `averageCravingRating: null`. 리뷰 도입 후 실제 집계로 교체. 조회 실패를 리뷰 0개로 표시하지 않음.
+4. **대표 메뉴:** 1절 #7 규칙. 대표 메뉴를 실제 인기 메뉴처럼 표현하지 않음.
