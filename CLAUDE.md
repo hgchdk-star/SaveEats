@@ -12,6 +12,12 @@
 - 디자인 시스템·페이지 디자인: **현재 저장소에 없음.** 디자인 시스템은 Claude Design에서 관리하며, 디자인 자료가 전달되면 `docs/design.md`로 연결할 예정입니다.
   - 그 전까지 디자인 토큰·공통 UI 컴포넌트·화면 디자인을 임의로 만들거나 추측하지 마세요. 필요하면 사용자에게 디자인 자료를 요청하세요.
 
+제품 정책은 최신 서비스 기획서를 최상위 기준으로 합니다. PRD와 개발 명세는 기획서를 구체화하는 문서입니다.
+
+- 문서끼리 충돌하면 충돌 위치와 구현 영향을 사용자에게 알리고, 해당 부분의 구현을 보류하세요. 독립적인 작업은 계속 진행하세요.
+- 미결정 사항과 기술 검증 필요 항목을 임의로 확정하지 마세요.
+- 기준 문서가 없거나 경로가 다르면 실제 위치를 확인하고, 내용을 추정하지 마세요.
+
 ## 스택
 
 - Expo SDK 57 + Expo Router (라우트는 `src/app/`), TypeScript strict, npm (`package-lock.json`)
@@ -42,9 +48,23 @@
 ## 반드시 지킬 것
 
 - Supabase `service_role`/secret 키 등 서버 비밀키를 앱 코드나 `EXPO_PUBLIC_` 환경변수에 넣지 않기
-- 환경변수는 `process.env.EXPO_PUBLIC_*` 점 표기법으로만 읽기. 새 변수는 `.env.example`에 이름과 설명 추가
+- Expo 앱의 환경변수는 `process.env.EXPO_PUBLIC_*` 점 표기법으로 읽기. 앱에 포함돼도 되는 공개 설정만 사용하기
+- Supabase Edge Functions의 서버 환경변수는 `Deno.env.get(...)`으로 읽기
+- 새 환경변수는 해당 환경의 예시 파일에 이름과 설명 추가하기. 앱은 루트 `.env.example`, Edge Functions는 `supabase/functions/.env.example` 사용하기
+- 실제 값이 담긴 환경변수 파일은 커밋하지 않기. 예시 파일에는 비밀값을 넣지 않기
 - 원격 Supabase 연결(`supabase link`)·DB 반영(`db push`)·배포는 사용자가 명시적으로 요청할 때만
-- 패키지 추가는 `npx expo install <package>` 사용
+- 앱 패키지 추가는 `npx expo install <package>` 사용
 - `npm run reset-project` 실행 금지 (`src/` 전체를 옮겨버림)
 - `main`에 직접 커밋하지 말고 기능 브랜치 → PR로 작업
-- 작업 완료 전 `npx tsc --noEmit`, `npm run lint` 실행
+
+## 검증과 완료 보고
+
+- 앱 코드 변경 시 `npx tsc --noEmit`, `npm run lint` 실행
+- 백엔드 변경 시 관련 migration·RLS·Edge Functions 검증 수행
+- 로컬 환경이 없어 실행하지 못한 검증은 이유와 함께 보고
+- 앱 타입 검사·lint 통과를 DB·권한·서버 동작 검증 완료로 표현하지 않기
+- 완료 보고에 변경 파일, 검증 결과, 남은 문제를 짧게 정리하기
+
+## 지침 파일 관리
+
+이 파일은 저장소 루트의 `CLAUDE.md`로 사용합니다. `AGENTS.md`도 함께 관리한다면 공통 규칙이 서로 충돌하지 않도록 같은 변경을 반영하세요.
