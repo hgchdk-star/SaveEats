@@ -36,6 +36,8 @@ TS 계약: `src/contracts/catalog.ts`, `src/contracts/common.ts` — 지우 작�
 - `p_category_id` 없음 = `전체` (`전체`는 DB 카테고리 행이 아님, DB-004).
 - 업무 오류는 PostgREST `P0001`의 `message`로 온다. UUID 형식 오류(`22P02`)는 INVALID_INPUT, Guest의 실행 권한 오류(`42501`)는 AUTH_REQUIRED로 repository가 정규화한다.
 - 공통 실패 결과(`ApiFailure`)와 `Page`는 `src/contracts/common.ts` (API-001).
+- **API-001과의 차이:** 카탈로그 조회 RPC는 성공 응답을 `{data, contractVersion, correlationId}`로 감싸지 않고 DTO를 바로 반환한다. Guest 읽기 전용이라 correlationId 이득이 작고, 버전은 앱의 `CATALOG_CONTRACT_VERSION`으로 맞춘다. 장바구니·주문 등 명령 RPC의 응답 형식은 해당 계약(T04·T06)에서 다시 정한다.
+- 메뉴 목록 항목(`MenuSummaryDto`)에는 `isPopular`를 넣지 않는다. 홈 "지금 많이 찾는 메뉴"는 getHome 계약에서 정한다.
 - Mock adapter와 Supabase adapter는 같은 interface를 구현한다 (API-004).
 
 ## 3. 혜지 브랜치 대비 추가된 필드 (서버 반영 필요)
