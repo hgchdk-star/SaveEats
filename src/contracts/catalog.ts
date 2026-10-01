@@ -1,25 +1,22 @@
 /**
  * 카탈로그 조회 · 찜 계약 (가게 목록 · 가게 상세 · 메뉴 상세 · 찜)
  *
- * 상태: 초안 — 지우 검토·합의 전. 합의 후 한 사람만 수정한다 (CLAUDE.md 담당 영역).
- * 근거: 개발 명세 API-001, API-003, SEC-002, SEC-005, DB-004
+ * 상태: catalog@0.1 합의본 — 혜지 검수 대기.
+ * 설명 문서: docs/contracts/catalog-contract-draft.md
+ * 근거: 개발 명세 API-001, API-003, DB-004, DB-009, SEC-002, SEC-005, SEC-008
  * 서버 구현: supabase/migrations/20261001000000_catalog_read.sql
  *           supabase/migrations/20261001000100_profiles_favorites.sql
  *
- * - 서버 RPC는 아래 DTO와 같은 camelCase JSON을 반환한다. repository는 키 변환이 필요 없다.
+ * - 조회는 RPC. 서버가 아래 DTO와 같은 camelCase JSON을 반환하므로 repository는 키 변환이 필요 없다.
  * - 조회는 Guest(anon)와 로그인 사용자 모두 호출 가능. 활성 항목(활성 상위 항목 포함)만 반환한다.
  * - 찜/프로필 명령은 로그인 사용자만 호출 가능 (Guest 호출은 권한 오류 → AUTH_REQUIRED로 정규화).
  * - 품절(isSoldOut)은 숨기지 않고 표시용으로 내려준다. 담기 가능 여부는 앱이 판단한다.
- * - 아직 포함하지 않은 필드: 리뷰 요약(땡김도·리뷰 수) — 리뷰 기능(T09) 구현 시 추가.
+ * - 이미지는 imageRef 키만 내려주고 URL 변환은 앱에서 한다.
  */
 
-export const CATALOG_CONTRACT_VERSION = 'catalog-0.2-draft';
+import type { IsoTimestamp, Page, Uuid, Won } from './common';
 
-/** UUID 문자열 */
-export type Uuid = string;
-
-/** 원 단위 정수 금액 (KRW). DB CHECK로 JS 안전 정수 범위가 보장된다. */
-export type Won = number;
+export const CATALOG_CONTRACT_VERSION = 'catalog@0.1';
 
 export interface CategoryRef {
   id: Uuid;
@@ -31,15 +28,41 @@ export interface CategoryDto extends CategoryRef {
   sortOrder: number;
 }
 
+/**
+ * 리뷰 요약 (FR-STORE-013).
+ * 리뷰 기능(T09) 전에는 항상 { count: 0, averageCravingRating: null }. T09에서 실제 집계로 교체한다.
+ * 앱은 조회 실패를 이 값(리뷰 0개)으로 대신 표시하지 않는다.
+ */
+export interface ReviewSummaryDto {
+  count: number;
+  /** 활성 리뷰가 0개면 null */
+  averageCravingRating: number | null;
+}
+
+/**
+ * 대표 메뉴 (FR-STORE-012).
+ * 판매 가능한 활성 메뉴 중 sort_order → name → id 오름차순 첫 메뉴.
+ * 모두 품절이면 첫 활성 메뉴를 isSoldOut=true로 반환한다. 실제 인기 메뉴로 표현하지 않는다.
+ */
+export interface RepresentativeMenuDto {
+  id: Uuid;
+  name: string;
+  price: Won;
+  isSoldOut: boolean;
+}
+
 export interface StoreCardDto {
   id: Uuid;
   name: string;
   /** 이미지 참조. 없거나 로딩 실패 시 앱이 중립 Placeholder를 표시 (FR-STORE-003) */
   imageRef: string | null;
-  /** Seed 영업 상태. 영업시간 자동 계산 결과가 아님 */
+  /** Seed 영업 상태. 영업시간 자동 계산 결과가 아님. false면 새 메뉴 담기 불가 (FR-MENU-010) */
   isOpen: boolean;
   isRecommended: boolean;
   category: CategoryRef;
+  /** 활성 메뉴가 없으면 null */
+  representativeMenu: RepresentativeMenuDto | null;
+  reviewSummary: ReviewSummaryDto;
   /** 로그인 전(Guest)이면 null — 찜 여부를 알 수 없음. 로그인 사용자는 true/false */
   isFavorite: boolean | null;
 }
@@ -47,8 +70,7 @@ export interface StoreCardDto {
 /** 내 찜 목록 항목. 최근 찜 순으로 정렬된다 */
 export interface FavoriteStoreCardDto extends StoreCardDto {
   isFavorite: true;
-  /** 찜한 시각 (UTC RFC3339) */
-  favoritedAt: string;
+  favoritedAt: IsoTimestamp;
 }
 
 export interface MenuSummaryDto {
@@ -65,9 +87,11 @@ export interface StoreDetailDto {
   name: string;
   description: string | null;
   imageRef: string | null;
+  /** false면 새 메뉴 담기 불가 (FR-MENU-010) */
   isOpen: boolean;
   isRecommended: boolean;
   category: CategoryRef;
+  reviewSummary: ReviewSummaryDto;
   /** 로그인 전(Guest)이면 null, 로그인 사용자는 true/false */
   isFavorite: boolean | null;
   /** 활성 메뉴만, 정렬 순서대로. 품절 메뉴 포함 */
@@ -94,6 +118,11 @@ export interface MenuOptionGroupDto {
 export interface MenuDetailDto {
   id: Uuid;
   storeId: Uuid;
+  /**
+   * 메뉴가 속한 가게의 영업 상태. false면 담기 불가 (FR-MENU-010).
+   * 검색·배너·최근 본 항목에서 메뉴 상세로 바로 들어오는 경우를 위해 포함한다.
+   */
+  storeIsOpen: boolean;
   name: string;
   description: string | null;
   imageRef: string | null;
@@ -104,14 +133,6 @@ export interface MenuDetailDto {
   isSoldOut: boolean;
   /** 활성 그룹만, 정렬 순서대로. 옵션 없는 메뉴는 빈 배열 */
   optionGroups: MenuOptionGroupDto[];
-}
-
-/** 공통 목록 응답 (API-001) */
-export interface Page<T> {
-  items: T[];
-  /** 다음 페이지 요청에 그대로 넘기는 opaque 문자열. 마지막 페이지면 null */
-  nextCursor: string | null;
-  hasMore: boolean;
 }
 
 export const STORE_LIST_PAGE_SIZE_DEFAULT = 20;
@@ -131,6 +152,7 @@ export const CATALOG_RPC = {
   ensureMyProfile: 'ensure_my_profile',
 } as const;
 
+/** 가게 목록은 이름 → id 오름차순 */
 export interface ListStoresRpcArgs {
   /** null/생략 = 전체. 비활성·없는 카테고리는 빈 목록 */
   p_category_id?: Uuid | null;
@@ -194,5 +216,7 @@ export interface CatalogRpcResults {
  *   repository에서 INVALID_INPUT으로 정규화한다.
  * - AUTH_REQUIRED: 로그인 필요. Guest가 찜/프로필 RPC를 호출하면 실행 권한 오류(`42501`)가 오며
  *   repository에서 AUTH_REQUIRED로 정규화한다.
+ *
+ * STORE_CLOSED는 Cart 검증·주문 생성 계약(T04·T06)에서 정의한다.
  */
 export type CatalogErrorCode = 'INVALID_INPUT' | 'RESOURCE_NOT_FOUND' | 'AUTH_REQUIRED';
