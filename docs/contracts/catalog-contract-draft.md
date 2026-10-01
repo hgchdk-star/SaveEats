@@ -3,7 +3,11 @@
 범위: 카테고리 · 가게 목록 · 가게 상세 · 메뉴 상세 · 찜 (조회는 Guest 가능).
 근거: 개발 명세 DB-004, DB-009, API-001~004, SEC-008 / PRD 8·9·10·11.
 TS 계약: `src/contracts/catalog.ts`, `src/contracts/common.ts` — 지우 작성, 혜지 검수.
-서버 구현: `supabase/migrations/20261001000000_catalog_read.sql`, `20261001000100_profiles_favorites.sql` (혜지 브랜치 `feat/store-menu-read-api`).
+서버 구현: `supabase/migrations/20261001000000_catalog_read.sql`, `20261001000100_profiles_favorites.sql`, `20261001000200_catalog_contract_0_1.sql` (혜지 브랜치 `feat/store-menu-read-api`).
+
+**수정 이력**
+
+- **2026-10-01 수정 (혜지):** 3절의 추가 필드 3개를 서버에 반영하고 검수 결과를 적었다. 가게 상세 메뉴 목록 정렬을 대표 메뉴 규칙과 같게 맞췄다.
 
 ## 1. 합의 결과 (지우 질문 11개)
 
@@ -40,7 +44,13 @@ TS 계약: `src/contracts/catalog.ts`, `src/contracts/common.ts` — 지우 작�
 - 메뉴 목록 항목(`MenuSummaryDto`)에는 `isPopular`를 넣지 않는다. 홈 "지금 많이 찾는 메뉴"는 getHome 계약에서 정한다.
 - Mock adapter와 Supabase adapter는 같은 interface를 구현한다 (API-004).
 
-## 3. 혜지 브랜치 대비 추가된 필드 (서버 반영 필요)
+## 3. 혜지 브랜치 대비 추가된 필드 (서버 반영 완료, 2026-10-01)
+
+아래 3개 필드는 `20261001000200_catalog_contract_0_1.sql`에서 반영했다. 로컬 대체 DB(PGlite) 검증만 통과했고 실제 Supabase 환경 검증은 아직 하지 않았다.
+
+- `storeIsOpen` 검수 의견(혜지): 동의. 가게 조회 없이 메뉴 상세만으로 담기를 막을 수 있다. 서버는 메뉴가 속한 가게의 `is_open`을 그대로 내려준다.
+- 가게 상세의 `menus`는 `sort_order → name → id` 순이다. 대표 메뉴 규칙과 같은 정렬이라, 판매 가능한 첫 메뉴가 곧 대표 메뉴다.
+- `reviewSummary`는 서버가 고정값을 만든다. T09에서 같은 필드를 실제 집계로 바꾼다.
 
 | DTO | 필드 | 내용 |
 |---|---|---|
