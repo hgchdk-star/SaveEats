@@ -273,7 +273,7 @@ Guest Cart, 최근 검색어, 최근 본 항목(최대 10개), 온보딩 완료 
 
 옵션의 최소/최대 선택 수는 옵션 모델 표현 방식이다. 실제 Seed별 필수/복수 선택 규칙을 확인한 후 설정한다. MVP에서 같은 옵션을 중복 선택하거나 옵션 자체 수량을 추가하지 않는다. 음수 가격/할인 모델은 현재 명세 범위 밖이다.
 
-카탈로그 변경 시 관련 Menu의 revision을 서버가 증가시킨다. 주문 시 revision과 실제 이름/가격/판매 가능 상태를 다시 검사한다. 영업 상태 is_open은 Seed 표현이며 자동 영업시간 계산 완료를 의미하지 않는다. **확정 정책 (2026-10-01 결정):** is_open=false인 Store의 메뉴는 Cart에 새로 담을 수 없다(앱 담기 차단). 이미 Cart에 있는 항목에 대한 validate_my_cart/create_order 서버 거절 여부와 validation 값은 카탈로그 계약 합의 시 확정한다.
+카탈로그 변경 시 관련 Menu의 revision을 서버가 증가시킨다. 주문 시 revision과 실제 이름/가격/판매 가능 상태를 다시 검사한다. 영업 상태 is_open은 Seed 표현이며 자동 영업시간 계산 완료를 의미하지 않는다. **확정 정책 (2026-10-01 결정):** is_open=false인 Store의 메뉴는 Cart에 새로 담을 수 없다(앱 담기 차단, 안내 “지금은 영업이 종료됐어요”). 이미 담긴 Cart는 유지하되 validate_my_cart는 STORE_CLOSED로 주문 불가를 반환하고 create_order는 STORE_CLOSED로 거절한다(T04·T06에서 구현). 이미 생성된 PENDING Order의 이어가기·완료 확인은 is_open과 무관하게 허용한다.
 
 #### store_favorites
 
@@ -472,7 +472,7 @@ id uuid PK, object_path text NOT NULL UNIQUE, reason text NOT NULL, state text N
 - 공개 catalog 응답은 활성 항목만, 공개 리뷰는 deleted_at IS NULL만 반환한다.
 - 공개 리뷰 응답은 마스킹 표시명/땡김도/날짜/메뉴 Snapshot/본문/허용 이미지/주문금액/Helpful count로 제한한다. 계좌·이메일·원본 이름·내부 요청 hash는 반환하지 않는다.
 - 공개 Review를 위해 전체 orders를 Guest에게 SELECT 허용하지 않는다. 권한을 제한한 조회 RPC 또는 안전한 projection으로 필요한 Snapshot 필드만 반환한다. VIEW를 만들었다는 이유만으로 RLS 우회를 방지했다고 가정하지 않는다.
-- ReviewSummary는 활성 리뷰만 COUNT/AVG. 0개면 average=NULL, count=0. Seed 가짜 리뷰수/평균을 보충하지 않는다.
+- ReviewSummary는 활성 리뷰만 COUNT/AVG. 0개면 average=NULL, count=0. Seed 가짜 리뷰수/평균을 보충하지 않는다. **확정 정책 (2026-10-01 결정):** 리뷰 기능(T09) 전에는 {count: 0, averageCravingRating: null}을 반환하고 T09에서 실제 집계로 교체한다. 요약 조회 실패를 count=0으로 표현하지 않는다.
 - 기본 최신순은 (created_at DESC,id DESC). 도움순은 count DESC와 생성 시각/id를 보조키로 한다. rating 정렬은 craving_rating과 동일 보조키를 사용한다. UI 정렬 명칭은 SSOT 우선이며 PRD의 ‘땡김도 높은 순’ 표현은 변경 승인 전 제안으로 남긴다.
 - History는 생성 최신순 (created_at DESC,id DESC), 완료 재시각으로 재정렬하지 않는다. 페이지 크기 기술안 20, cursor pagination. Helpful 정렬처럼 값이 바뀌는 조회는 고정 Snapshot이 아니므로 REV-008의 ID dedupe/첫 page reset을 적용하며 값 변경 중 누락 방지를 보장하지 않는다.
 - 완료 집계는 MVP status=USER_CONFIRMED만. 월간 간단 요약은 completed_at의 KST 월 범위를 UTC 경계로 변환해 조회하는 기술안이다. PENDING/CANCELLED 금액 제외. 상세 지표/별도 통계 화면은 SHOULD를 유지한다.
@@ -762,6 +762,7 @@ Guest가 함수에 arbitrary user_id를 전달해 ‘내 선택 여부’를 조
 | CART_REVISION_CONFLICT / ACCOUNT_REVISION_CONFLICT | 확인 후 대상 변경 | 최신 상태 확인, 조용히 덮어쓰기 금지 |
 | IDEMPOTENCY_CONFLICT | 같은 생성키에 다른 내용 | 새 주문으로 자동 재시도 금지 |
 | INVALID_ORDER_TRANSITION | 이미 다른 상태 확정 | 서버 상태 조회 후 UI 일치 |
+| STORE_CLOSED | Cart 검증·주문 생성 시 Store 영업 종료 (2026-10-01 결정) | “지금은 영업이 종료됐어요”; Cart 유지, 기존 PENDING 이어가기·완료 확인은 허용 |
 | REVIEW_DEADLINE_EXCEEDED | 서버 기준 작성 만료 | 작성 기간 카피 |
 | ACTIVE_REVIEW_EXISTS | 이미 활성 리뷰 존재 | 기존 리뷰 보기 |
 | CONFIG_UNAVAILABLE | Toss 설정 확인 실패 | 직접 이어가기 |
@@ -950,6 +951,7 @@ Item: clientItemId, menuId, 선택 optionIds(정렬/중복 제거), quantity, ac
 | VALID | 현재 가격 일치, 구조/판매 가능 |
 | PRICE_CHANGED | 기존/현재 가격 표시; 확인 전 주문 불가 |
 | MENU_SOLD_OUT / OPTION_SOLD_OUT | 해당 항목 표시; 해결 전 주문 불가 |
+| STORE_CLOSED | “지금은 영업이 종료됐어요”; Cart 유지, 주문 불가 (2026-10-01 결정) |
 | INACTIVE_ENTITY | 이용 불가 표시; 삭제/교체 필요 |
 | OPTIONS_INVALID | 옵션 재선택 필요 |
 | VALIDATION_UNAVAILABLE | “옵션 정보를 불러오지 못했어요. 다시 불러와주세요.”; 주문 불가 |
@@ -2037,7 +2039,7 @@ My 간단 요약은 getMySummary에서 기간(KST)을 검증하고 완료 주문
 
 | DTO | 최소 필드 |
 |---|---|
-| StoreCard | id/name/category/imageRef/대표 또는 matchingMenu/activeReviewSummary/favorite |
+| StoreCard | id/name/category/imageRef/대표 또는 matchingMenu/activeReviewSummary/favorite. 대표 메뉴 (2026-10-01 결정): 판매 가능한 활성 메뉴 중 sort_order→name→id 첫 메뉴, 모두 품절이면 첫 활성 메뉴(품절 표시), 활성 메뉴 없으면 null |
 | MenuDetail | id/storeId/name/price/catalogRevision/soldOut/groups[min,max,options]/image |
 | Cart | cartId/storeId/items/serverRevision/validation; Guest는 local envelope |
 | Order | orderId/status/statusRevision/createdAt/completedAt/cancelledAt/Snapshot |
