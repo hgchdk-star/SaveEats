@@ -1,0 +1,56 @@
+# Supabase DB 검증: migration + seed를 실제 로컬 Supabase에 적용하고 pgTAP 테스트를 실행한다.
+# 근거: 개발 명세 SEC-010, DB-014, OPS-005 (테스트는 supabase/tests/database/)
+# 로컬 PC에 Docker가 없어도 GitHub 서버에서 실제 Supabase 환경 검증을 할 수 있게 한다.
+# 이 워크플로는 원격(운영/스테이징) Supabase에 연결하거나 배포하지 않는다. 비밀 키도 쓰지 않는다.
+name: Supabase DB 검증
+
+on:
+  pull_request:
+    paths:
+      - 'supabase/**'
+      - '.github/workflows/supabase-db.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'supabase/**'
+      - '.github/workflows/supabase-db.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  db:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      # 버전을 고정하려면 version에 CLI 버전(예: 2.119.0)을 적는다.
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: 로컬 Supabase 시작 (migration + seed 적용)
+        run: supabase start
+
+      - name: 처음부터 다시 적용 (db reset)
+        run: supabase db reset
+
+      # seed는 여러 번 적용해도 데이터가 중복되지 않아야 한다 (OPS-004).
+      # 이후 pgTAP이 행 수를 검사하므로 중복이 생기면 테스트가 실패한다.
+      - name: seed 재적용 (멱등성)
+        run: psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -f supabase/seed.sql
+
+      - name: pgTAP 테스트
+        run: supabase test db
+
+      - name: 실패 시 상태 출력
+        if: failure()
+        run: |
+          supabase status || true
+          docker ps -a || true
+
+      - name: 정리
+        if: always()
+        run: supabase stop --no-backup
