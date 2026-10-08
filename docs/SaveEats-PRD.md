@@ -1,8 +1,8 @@
 # SaveEats PRD
 
-> **Version:** 1.0 Draft  
+> **Version:** 1.1 Draft (2026-09-30: 리뷰 정렬 문구 확정, 상위 기획서 v1.2 반영)  
 > **기준일:** 2026-09-30  
-> **상위 기준 문서:** `SaveEats 최종 서비스 기획서 v1.1`  
+> **상위 기준 문서:** `SaveEats 최종 서비스 기획서 v1.2`  
 > **문서 목적:** 확정된 SaveEats 제품 정책을 실제 개발 가능한 수준의 요구사항으로 구체화한다.  
 > **주의:** 본 PRD는 새로운 제품 방향을 정하는 문서가 아니다. 상위 기획서와 충돌할 경우 최신 최종 서비스 기획서를 우선한다.
 
@@ -563,7 +563,7 @@ SaveEats의 핵심 경험과 실제 결과를 최초 사용자에게 짧게 설�
 - **FR-ACC-009** 삭제 시 미등록 상태.
 - **FR-ACC-010** Masked Format 예: `토스뱅크 •••• 1234`
 - **FR-ACC-011** 과거 Order는 당시 계좌 Snapshot 유지.
-- **FR-ACC-012** 복수계좌 UI 미리 구현하지 않음.
+- **FR-ACC-012** 복수계좌 UI 미리 구현하지 않음. (디자인 시스템의 AccountSelector는 LATER 대비로 유지하되 MVP 화면에서 쓰지 않는다.)
 - **FR-ACC-013** 입력 행위는 `등록`, 실제 금융 API 전에는 `연결` 표현 금지.
 
 ### 13.8 Acceptance Criteria
@@ -966,7 +966,7 @@ USER_CONFIRMED 기반으로 SaveEats만의 완료 경험을 제공한다.
 - **FR-REV-006** 기본 정렬 최신순.
 - **FR-REV-007** 정렬:
   - 최신순
-  - 도움순
+  - 리뷰 도움순
   - 땡김도 높은 순
   - 땡김도 낮은 순
 - **FR-REV-008** 추천순은 LATER.
@@ -1729,4 +1729,4 @@ USER_CONFIRMED 기반으로 SaveEats만의 완료 경험을 제공한다.
 
 ---
 
-**End of SaveEats PRD v1.0 Draft**
+**End of SaveEats PRD v1.1 Draft**

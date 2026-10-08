@@ -1,6 +1,6 @@
 # SaveEats 통합 개발 명세서
 
-버전: **v0.1 통합 설계 초안** / 작성일: 2026-09-30 (Asia/Seoul)
+버전: **v0.2 통합 설계 초안** / 작성일: 2026-09-30 (Asia/Seoul) / v0.2: 기획서 v1.2의 리뷰 정렬 확정 반영
 
 **수정 이력**
 
@@ -11,7 +11,7 @@
   - 가게 목록 이름순, 카탈로그 조회 응답 형식: API-001, API-002
   - 개발 단계 가상 데이터: OPS-003, OPEN-DB-009
 
-상위 기준은 **SaveEats 최종 서비스 기획서 v1.1(20260930)**이다. PRD v1.0과 개발 명세 Step 1~9를 근거로 통합했다. 기존 FR/AC와 ARCH/DB/AUTH/SEC/CART/ORD/TRF/REV/IMG/HIST/REC/OPS/EVT/API/TASK ID는 유지한다. 이 문서는 구현·배포·실기기 검증 완료를 의미하지 않는다. 제품 규칙과 기술 제안이 충돌하면 상위 기획서를 우선하고 정책 변경은 별도 반영한다.
+상위 기준은 **SaveEats 최종 서비스 기획서 v1.2(20260930)**이다. PRD v1.1과 개발 명세 Step 1~9를 근거로 통합했다. 기존 FR/AC와 ARCH/DB/AUTH/SEC/CART/ORD/TRF/REV/IMG/HIST/REC/OPS/EVT/API/TASK ID는 유지한다. 이 문서는 구현·배포·실기기 검증 완료를 의미하지 않는다. 제품 규칙과 기술 제안이 충돌하면 상위 기획서를 우선하고 정책 변경은 별도 반영한다.
 
 ## 문서 사용과 범위
 
@@ -176,9 +176,9 @@ DB 시각은 UTC, 표시/월 경계는 Asia/Seoul이다. completedAt은 서버 �
 | OPEN-ARCH-006 | Cart 승격 revision/빈 상태 충돌 | 설계안 작성 완료, 구현 검증 전 | CART-005~010 |
 | OPEN-ARCH-007 | 완료확인 작업 유실·재시도·경합 | 설계 후 테스트 필요 | 주문 구현 완료 전 |
 | OPEN-ARCH-008 | Calendar/Badge/신고/알림/통계 확장 | SHOULD | 일정에 따라 범위 결정 |
-| OPEN-ARCH-009 | 리뷰 정렬 카피 변경 및 최소 요약 상세 지표 | 정책/범위 확인 필요 | 해당 화면 명세 시 |
+| OPEN-ARCH-009 | 최소 요약 상세 지표 (리뷰 정렬 카피는 v1.2에서 확정) | 범위 확인 필요 | 해당 화면 명세 시 |
 
-PRD 검수의 리뷰 정렬 카피 변경은 제안으로 취급한다. 상위 기획서의 `별점 높은 순/낮은 순`을 승인 없이 확정 변경하지 않는다. 마이의 요약 영역은 유지하되 상세 지표를 임의로 MUST에 승격하지 않는다.
+리뷰 정렬 카피는 기획서 v1.2에서 `최신순 / 리뷰 도움순 / 땡김도 높은 순 / 땡김도 낮은 순`으로 확정됐다. 마이의 요약 영역은 유지하되 상세 지표를 임의로 MUST에 승격하지 않는다.
 
 ### 12. 아키텍처 검증 완료 조건
 
@@ -482,7 +482,7 @@ id uuid PK, object_path text NOT NULL UNIQUE, reason text NOT NULL, state text N
 - 공개 리뷰 응답은 마스킹 표시명/땡김도/날짜/메뉴 Snapshot/본문/허용 이미지/주문금액/Helpful count로 제한한다. 계좌·이메일·원본 이름·내부 요청 hash는 반환하지 않는다.
 - 공개 Review를 위해 전체 orders를 Guest에게 SELECT 허용하지 않는다. 권한을 제한한 조회 RPC 또는 안전한 projection으로 필요한 Snapshot 필드만 반환한다. VIEW를 만들었다는 이유만으로 RLS 우회를 방지했다고 가정하지 않는다.
 - ReviewSummary는 활성 리뷰만 COUNT/AVG. 0개면 average=NULL, count=0. Seed 가짜 리뷰수/평균을 보충하지 않는다. **확정 정책 (2026-10-01 결정):** 리뷰 기능(T09) 전에는 {count: 0, averageCravingRating: null}을 반환하고 T09에서 실제 집계로 교체한다. 요약 조회 실패를 count=0으로 표현하지 않는다.
-- 기본 최신순은 (created_at DESC,id DESC). 도움순은 count DESC와 생성 시각/id를 보조키로 한다. rating 정렬은 craving_rating과 동일 보조키를 사용한다. UI 정렬 명칭은 SSOT 우선이며 PRD의 ‘땡김도 높은 순’ 표현은 변경 승인 전 제안으로 남긴다.
+- 기본 최신순은 (created_at DESC,id DESC). 도움순은 count DESC와 생성 시각/id를 보조키로 한다. rating 정렬은 craving_rating과 동일 보조키를 사용한다. UI 정렬 명칭은 최신순/리뷰 도움순/땡김도 높은 순/땡김도 낮은 순(기획서 v1.2 확정).
 - History는 생성 최신순 (created_at DESC,id DESC), 완료 재시각으로 재정렬하지 않는다. 페이지 크기 기술안 20, cursor pagination. Helpful 정렬처럼 값이 바뀌는 조회는 고정 Snapshot이 아니므로 REV-008의 ID dedupe/첫 page reset을 적용하며 값 변경 중 누락 방지를 보장하지 않는다.
 - 완료 집계는 MVP status=USER_CONFIRMED만. 월간 간단 요약은 completed_at의 KST 월 범위를 UTC 경계로 변환해 조회하는 기술안이다. PENDING/CANCELLED 금액 제외. 상세 지표/별도 통계 화면은 SHOULD를 유지한다.
 
@@ -1662,7 +1662,7 @@ soft delete/사진 교체 후 신규 URL 발급 차단. 기존 signed URL은 Aut
 
 ### REV-008 조회·Summary·정렬
 
-공개 list Scope는 storeId 또는 menuId, 기본 최신순. sort enum은 LATEST / HELPFUL / RATING_DESC / RATING_ASC. 실제 UI 정렬 문구는 SSOT의 최신순/리뷰 도움순/별점 높은 순/별점 낮은 순을 우선하며 ‘땡김도 높은 순’은 기존 검수의 변경 제안으로 유지한다.
+공개 list Scope는 storeId 또는 menuId, 기본 최신순. sort enum은 LATEST / HELPFUL / RATING_DESC / RATING_ASC. 실제 UI 정렬 문구는 기획서 v1.2의 최신순/리뷰 도움순/땡김도 높은 순/땡김도 낮은 순이다.
 
 active만 COUNT/AVG, count=0이면 average=null. 삭제를 제외한 Helpful count, 작성일+id 보조 정렬키. my_reviews는 본인 active createdAt DESC, 수정시각으로 재정렬 금지. stale list의 삭제 항목 detail 조회는 활성 없음으로 처리하며 공개 API에 삭제 본문을 다시 반환하지 않는다.
 
@@ -2159,7 +2159,7 @@ Analytics schema/Mock/작업 분해는 SaveEats 설계안이다. 실제 라이�
 | OPEN-CART-001 | 같은 옵션 조합의 합산/변경 충돌 UX | **결정됨 (2026-10-01 결정)** — 10 초과 동작 거절, 기존 Cart 유지, 안내 카피 CART-004 | Cart 편집 UX |
 | OPEN-CART-002 | 일반 로그인 이후 기기 간 Cart 충돌 | 로컬 적용/서버 불러오기 제안을 검수; 무조건 merge 금지 | conflict 화면 |
 | OPEN-CART-003 | Cart 비우는 시점 | 추천은 PENDING 성공 시 source revision 조건부 clear; 생성 미확정/실패·후속 편집 보존 | 주문 생성의 Cart 변경 |
-| OPEN-ARCH-009 | 리뷰 정렬 카피·My 상세 요약 범위 | 현재 별점 높은/낮은 순 유지; 땡김도 카피는 제안, 상세 지표 MUST 추가 금지 | 정렬 UI·확장 요약 |
+| OPEN-ARCH-009 | My 상세 요약 범위 (정렬 카피는 v1.2에서 땡김도 높은/낮은 순으로 확정) | 상세 지표 MUST 추가 금지 | 확장 요약 |
 | OPEN-DB-008 | 여러 메뉴 주문 리뷰의 메뉴 연결 | 기술안은 주문의 서로 다른 모든 menuId 연결, Review는 1개; UI/PRD 검수 | 메뉴별 리뷰·집계 |
 | DB-007 (HIST-010 참조) | 최초 PENDING 이벤트의 빨간 점 의미 | 이력 최초 이벤트 생성안과 사용자 인지 검수; 새 OPEN ID를 임의 재번호화하지 않음 | 최초 unread UX |
 
