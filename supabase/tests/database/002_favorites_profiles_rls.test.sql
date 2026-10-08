@@ -15,6 +15,16 @@ exception when others then
 end;
 $$;
 
+-- 오류 없이 끝나면 'NO ERROR', 오류가 나면 그 SQLSTATE를 돌려준다 (진단용)
+create function public.test_errstate(p_sql text) returns text language plpgsql as $$
+begin
+  execute p_sql;
+  return 'NO ERROR';
+exception when others then
+  return sqlstate;
+end;
+$$;
+
 -- 사용자 A, B (Auth 사용자 행만 필요하다. 롤백으로 사라짐)
 insert into auth.users (id) values
   ('aaaaaaaa-0000-4000-8000-000000000001'),
@@ -137,9 +147,10 @@ reset role;
 select is((select count(*)::int from public.store_favorites where user_id = 'aaaaaaaa-0000-4000-8000-000000000001'), 2,
   'B가 A의 찜을 지우려 해도 영향이 없다');
 
--- ON DELETE RESTRICT 위반의 SQLSTATE는 23001
-select ok(public.test_err($$delete from auth.users where id = 'aaaaaaaa-0000-4000-8000-000000000001'$$, '23001'),
-  '프로필이 있는 Auth 사용자는 삭제할 수 없다(주문·기록 보호, CASCADE 없음)');
+-- 삭제가 막히는지 확인한다. ON DELETE RESTRICT의 SQLSTATE는 23001(RESTRICT 위반) 또는 23503(외래 키 위반).
+-- 실패하면 실제 받은 코드가 진단 메시지(have:)로 출력된다 ('NO ERROR'면 삭제가 막히지 않은 것).
+select matches(public.test_errstate($$delete from auth.users where id = 'aaaaaaaa-0000-4000-8000-000000000001'$$),
+  '^(23001|23503)$', '프로필이 있는 Auth 사용자는 삭제할 수 없다(주문·기록 보호, CASCADE 없음)');
 
 select * from finish();
 rollback;

@@ -18,6 +18,24 @@ exception when others then
 end;
 $$;
 
+-- 목록을 끝까지 순회하는 도우미 (호출한 역할의 권한으로 실행된다. 역할 전환 전에 만들어야 한다)
+create function public.test_walk_pages(p_size int) returns jsonb language plpgsql as $$
+declare
+  v_ids text[] := '{}';
+  v_cursor text := null;
+  v_page jsonb;
+  v_pages int := 0;
+begin
+  loop
+    v_page := public.list_stores(null, v_cursor, p_size);
+    v_ids := v_ids || array(select e ->> 'id' from jsonb_array_elements(v_page -> 'items') e);
+    v_cursor := v_page ->> 'nextCursor';
+    v_pages := v_pages + 1;
+    exit when v_cursor is null or v_pages > 100;
+  end loop;
+  return jsonb_build_object('ids', to_jsonb(v_ids), 'pages', v_pages);
+end $$;
+
 -- 기대값 (superuser로 계산)
 create temp table exp as
 select
@@ -60,26 +78,15 @@ select ok((select array_agg(k order by k) from jsonb_object_keys(public.list_sto
   '[anon] list_stores: 카드 응답 키');
 
 -- 페이지네이션: 3개씩 끝까지 따라가면 중복·누락 없이 전체와 같은 순서
-do $$
-declare
-  v_all jsonb := public.list_stores(null, null, 50) -> 'items';
-  v_seen text[] := '{}';
-  v_cursor text := null;
-  v_page jsonb;
-  v_pages int := 0;
-begin
-  loop
-    v_page := public.list_stores(null, v_cursor, 3);
-    v_seen := v_seen || array(select e ->> 'id' from jsonb_array_elements(v_page -> 'items') e);
-    v_cursor := v_page ->> 'nextCursor';
-    v_pages := v_pages + 1;
-    exit when v_cursor is null or v_pages > 100;
-  end loop;
-  perform ok(v_seen = array(select e ->> 'id' from jsonb_array_elements(v_all) e),
-    '[anon] list_stores: 3개씩 순회하면 전체와 같은 순서, 중복·누락 없음');
-  perform ok(v_pages = ceil(jsonb_array_length(v_all) / 3.0)::int,
-    '[anon] list_stores: 페이지 수가 올림(전체/3)');
-end $$;
+-- (test_walk_pages는 위에서 만든 도우미. DO 블록 안의 perform ok(...)는 TAP 줄을 출력하지 않아 번호가 어긋나므로,
+--  값을 돌려주는 함수로 계산하고 ok()는 반드시 select로 호출한다.)
+select ok((public.test_walk_pages(3) -> 'ids') = (
+    select jsonb_agg(e ->> 'id' order by ord)
+    from jsonb_array_elements(public.list_stores(null, null, 50) -> 'items') with ordinality as t(e, ord)),
+  '[anon] list_stores: 3개씩 순회하면 전체와 같은 순서, 중복·누락 없음');
+select ok((public.test_walk_pages(3) ->> 'pages')::int
+    = ceil(jsonb_array_length(public.list_stores(null, null, 50) -> 'items') / 3.0)::int,
+  '[anon] list_stores: 페이지 수가 올림(전체/3)');
 
 select ok((select array_agg(e ->> 'name' order by e ->> 'name')
   from jsonb_array_elements(public.list_stores('10000000-0000-4000-8000-000000000001', null, 50) -> 'items') e)

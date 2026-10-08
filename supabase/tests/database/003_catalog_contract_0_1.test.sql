@@ -15,6 +15,16 @@ exception when others then
 end;
 $$;
 
+-- 오류 없이 끝나면 'NO ERROR', 오류가 나면 그 SQLSTATE를 돌려준다 (진단용)
+create function public.test_errstate(p_sql text) returns text language plpgsql as $$
+begin
+  execute p_sql;
+  return 'NO ERROR';
+exception when others then
+  return sqlstate;
+end;
+$$;
+
 -- 대표 메뉴를 가게 카드 목록에서 읽는 도우미 (역할은 호출 시점 그대로 사용)
 create function public.test_rep(p_store uuid) returns jsonb language sql stable as $$
   select e -> 'representativeMenu'
@@ -121,9 +131,10 @@ select ok(public.test_err(
 select ok(public.test_err(
     $$insert into public.menu_option_groups (menu_id, name, min_select, max_select) values ('30000000-0000-4000-8000-000000000101', 'x', 0, 0)$$, '23514'),
   '옵션 그룹: max_select >= 1');
--- ON DELETE RESTRICT 위반의 SQLSTATE는 23001 (NO ACTION의 23503과 다르다)
-select ok(public.test_err($$delete from public.stores where id = '20000000-0000-4000-8000-000000000001'$$, '23001'),
-  '메뉴가 있는 가게는 삭제할 수 없다(FK RESTRICT)');
+-- 삭제가 막히는지 확인한다. ON DELETE RESTRICT의 SQLSTATE는 23001(RESTRICT 위반) 또는 23503(외래 키 위반).
+-- 실패하면 실제 받은 코드가 진단 메시지(have:)로 출력된다 ('NO ERROR'면 삭제가 막히지 않은 것).
+select matches(public.test_errstate($$delete from public.stores where id = '20000000-0000-4000-8000-000000000001'$$),
+  '^(23001|23503)$', '메뉴가 있는 가게는 삭제할 수 없다(FK RESTRICT)');
 
 select * from finish();
 rollback;
