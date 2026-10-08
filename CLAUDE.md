@@ -9,8 +9,8 @@
 - 서비스 기획서: `docs/SaveEats-service-plan.md`
 - PRD: `docs/SaveEats-PRD.md`
 - 개발 명세: `docs/SaveEats-development-spec.md`
-- 디자인 시스템·페이지 디자인: **현재 저장소에 없음.** 디자인 시스템은 Claude Design에서 관리하며, 디자인 자료가 전달되면 `docs/design.md`로 연결할 예정입니다.
-  - 그 전까지 디자인 토큰·공통 UI 컴포넌트·화면 디자인을 임의로 만들거나 추측하지 마세요. 필요하면 사용자에게 디자인 자료를 요청하세요.
+- 디자인 시스템·페이지 디자인: `docs/design.md` (Claude Design 정본 링크, 토큰 규칙, 앱으로 옮기지 않는 것)
+  - 디자인 토큰 값을 새로 만들거나 바꾸지 마세요. 디자인에 없는 화면·컴포넌트를 임의로 디자인해 채우지 말고, 필요하면 사용자에게 디자인 자료를 요청하세요.
 
 제품 정책은 최신 서비스 기획서를 최상위 기준으로 합니다. PRD와 개발 명세는 기획서를 구체화하는 문서입니다.
 
@@ -29,7 +29,8 @@
 - `src/app/` — 라우트(화면)와 `_layout.tsx`만. 로직·컴포넌트는 두지 않음
 - `src/features/<기능>/` — 기능별 화면 구성 요소·훅·로직
 - `src/components/ui/` — 기능에 종속되지 않는 공통 UI 컴포넌트
-- `src/theme/` — 디자인 토큰 (`@/theme`). 현재 `index.ts`는 Expo 템플릿 기본값이며 SaveEats 디자인이 아님. 디자인 자료 전달 후 교체
+- `src/theme/` — 디자인 토큰 (`@/theme`). 값은 디자인 시스템 `tokens.json`을 그대로 옮긴 것 (`tokens.ts`)
+- `src/config/` — 앱 설정 한 곳. 미결정 항목의 현재 값, 한도·상수, 확정 전 초안 문구
 - `src/services/supabase/` — Supabase 클라이언트·호출 코드
 - `src/contracts/` — FE/BE 공통 요청·응답·오류 타입
 - `src/mocks/` — 개발용 Mock 데이터
