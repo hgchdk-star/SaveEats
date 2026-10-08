@@ -1,6 +1,5 @@
-import { TabScreenPlaceholder } from '@/features/navigation/tab-screen-placeholder';
+import { HomeScreen } from '@/features/home/home-screen';
 
-/** 홈 */
 export default function HomeRoute() {
-  return <TabScreenPlaceholder />;
+  return <HomeScreen />;
 }

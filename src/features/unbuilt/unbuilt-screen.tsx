@@ -1,9 +1,10 @@
 import { useRouter } from 'expo-router';
 import { StyleSheet, Text, View } from 'react-native';
 
+import { Screen } from '@/components/ui/screen';
 import { TopNavigation } from '@/components/ui/top-navigation';
 import { draftCopy } from '@/config/draft-copy';
-import { colors, spacing, typography } from '@/theme';
+import { colors, spacing, text } from '@/theme';
 
 /**
  * 아직 디자인이 없는 화면의 공용 빈 화면.
@@ -13,20 +14,15 @@ export function UnbuiltScreen() {
   const router = useRouter();
 
   return (
-    <View style={styles.screen}>
-      <TopNavigation onBack={() => (router.canGoBack() ? router.back() : router.replace('/'))} />
+    <Screen top={<TopNavigation onBack={() => (router.canGoBack() ? router.back() : router.replace('/'))} />}>
       <View style={styles.body}>
         <Text style={styles.message}>{draftCopy.unbuiltScreen}</Text>
       </View>
-    </View>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: colors.bg,
-  },
   body: {
     flex: 1,
     alignItems: 'center',
@@ -34,7 +30,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing[5],
   },
   message: {
-    ...typography.body1,
+    ...text.body1,
     color: colors.inkSecondary,
     textAlign: 'center',
   },
