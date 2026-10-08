@@ -1,11 +1,16 @@
 /**
- * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
- * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
+ * SaveEats 디자인 토큰은 `./tokens`에 있다 (colors, typography, spacing, radius, shadow, size).
+ * 새 코드는 그 토큰만 쓴다.
+ *
+ * 아래 `Colors`, `Fonts`, `Spacing`, `BottomTabInset`, `MaxContentWidth`는 Expo 템플릿 기본값이며
+ * SaveEats 디자인이 아니다. 템플릿 화면을 걷어낼 때 함께 지운다. 새 코드에서 쓰지 않는다.
  */
 
 import '@/global.css';
 
 import { Platform } from 'react-native';
+
+export * from './tokens';
 
 export const Colors = {
   light: {
