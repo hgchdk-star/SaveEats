@@ -71,6 +71,6 @@ React Native에 맞춰 형식만 바꿨다.
 
 ## 남은 작업
 
-- **글꼴**: 디자인 시스템의 글꼴 파일은 `PretendardVariable.woff2` 하나다. 네이티브 앱에서 쓸 파일 형식과 로딩 방법은 Expo SDK 57 문서로 확인한 뒤 연결한다. 그 전까지 앱은 시스템 글꼴로 보인다.
+- **글꼴**: 디자인 시스템의 글꼴 파일은 `PretendardVariable.woff2` 하나지만, Expo SDK 57은 가변 글꼴과 WOFF2를 Android에서 지원하지 않는다. 그래서 같은 Pretendard(OFL 1.1)의 정적 OTF 4개(Regular·Medium·SemiBold·Bold)를 `assets/fonts/`에 두고 `src/theme/text.ts`에서 굵기별 `fontFamily`로 고른다. 글자 크기·줄 높이·자간 값은 토큰 그대로다. SDK 58에서 가변 글꼴을 지원하면 파일 하나로 바꿀 수 있다.
 - **그림자**: `shadow` 토큰은 CSS `box-shadow` 문자열 그대로다. 컴포넌트를 만들 때 실제 기기에서 표시를 확인한다.
 - **공통 UI 컴포넌트**: 디자인 시스템 컴포넌트는 웹 React 코드라 그대로 쓸 수 없다. `src/components/ui/`에 React Native로 다시 만든다.
