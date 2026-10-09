@@ -9,6 +9,7 @@ import { FoodCategoryChip } from '@/components/ui/food-category-chip';
 import { IconButton } from '@/components/ui/icon-button';
 import { Screen } from '@/components/ui/screen';
 import { SearchBarButton } from '@/components/ui/search-bar';
+import { confirmedCopy } from '@/config/confirmed-copy';
 import { draftCopy } from '@/config/draft-copy';
 import { UNDECIDED } from '@/config/undecided';
 import { useCartQuantity } from '@/features/cart/use-cart-quantity';
@@ -24,7 +25,6 @@ import { BannerCarousel } from './banner-carousel';
 import { RecentSection } from './recent-section';
 import { SectionHeader } from './section-header';
 
-const SEARCH_PLACEHOLDER = '오늘은 뭐가 먹고 싶으세요?'; // 기획서 11.4 · FR-HOME-003 확정 문구
 const ALL = 'all';
 
 /**
@@ -40,7 +40,7 @@ export function HomeScreen() {
 
   const categories = useAsync('home:categories', () => catalogRepository.listCategories());
   const banners = useAsync('home:banners', () => mockHome.listBanners());
-  const recommended = useAsync('home:recommended', () => mockHome.listRecommendedStores());
+  const recommended = useAsync(`home:recommended:${session.isMember}`, () => mockHome.listRecommendedStores());
 
   // 세 섹션이 모두 실패했다면 홈 전체 오류로 본다 (오프라인·서버 오류)
   const allFailed = categories.status === 'error' && banners.status === 'error' && recommended.status === 'error';
@@ -72,7 +72,7 @@ export function HomeScreen() {
     <Screen top={header}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.search}>
-          <SearchBarButton placeholder={SEARCH_PLACEHOLDER} onPress={() => router.navigate('/search')} />
+          <SearchBarButton placeholder={confirmedCopy.searchPlaceholder} onPress={() => router.navigate('/search')} />
         </View>
 
         {allFailed ? (
