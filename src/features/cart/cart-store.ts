@@ -39,6 +39,11 @@ type CartState = {
   setQuantity: (clientItemId: string, quantity: number) => Promise<CartEditResult>;
   remove: (clientItemId: string) => Promise<CartEditResult>;
   clear: () => Promise<CartEditResult>;
+  /**
+   * 주문 생성에 쓴 장바구니 버전(localRevision)이 지금과 같을 때만 비운다 (ORD-013).
+   * 그사이 더 새로 담은 내용이 있으면 건드리지 않는다.
+   */
+  clearIfRevision: (localRevision: number) => Promise<CartEditResult>;
   acknowledgePrices: () => Promise<CartEditResult>;
   /** 읽을 수 없는 저장 값을 버리고 빈 장바구니로 다시 시작한다 */
   resetStorage: () => Promise<CartEditResult>;
@@ -100,6 +105,8 @@ export const useCartStore = create<CartState>((set, get) => {
     setQuantity: (clientItemId, quantity) => commit((cart) => setQuantity(cart, clientItemId, quantity)),
     remove: (clientItemId) => commit((cart) => removeItem(cart, clientItemId)),
     clear: () => commit((cart) => clearCart(cart), { resetValidation: true }),
+    clearIfRevision: (localRevision) =>
+      commit((cart) => (cart.localRevision === localRevision ? clearCart(cart) : cart), { resetValidation: true }),
     acknowledgePrices: () => commit((cart) => acknowledgePrices(cart, get().validation)),
     resetStorage: () => commit(() => clearCart(createEmptyCart()), { resetValidation: true, allowWhenBroken: true }),
 
