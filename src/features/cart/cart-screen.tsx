@@ -1,4 +1,4 @@
-import { useFocusEffect, useRouter } from 'expo-router';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
@@ -13,15 +13,17 @@ import { Notice } from '@/components/ui/notice';
 import { OrderSummary } from '@/components/ui/order-summary';
 import { Screen } from '@/components/ui/screen';
 import { TopNavigation } from '@/components/ui/top-navigation';
+import { confirmedCopy } from '@/config/confirmed-copy';
 import { draftCopy } from '@/config/draft-copy';
-import { goAccount, goLogin, goOrderConfirm } from '@/features/order/pending-routes';
+import { goAccountRegisterForOrder, goLogin, goOrderConfirm } from '@/features/order/flow-routes';
 import { showToast } from '@/features/toast/toast-store';
 import { useAsync } from '@/hooks/use-async';
 import { catalogRepository } from '@/services';
 import { resolveImageUrl } from '@/services/image';
-import { getSession } from '@/services/session';
+import { useSession } from '@/services/session';
 import { colors, spacing, text } from '@/theme';
 
+import { ctaNoteFor, noticeFor } from './cart-block-copy';
 import { cartTotal, checkoutBlock, isPriceChanged, validationOf, type CartItem as CartItemData, type CartValidation } from './cart-model';
 import { useCartStore } from './cart-store';
 
@@ -33,13 +35,19 @@ export function CartScreen() {
   const cart = useCartStore((s) => s.cart);
   const validation = useCartStore((s) => s.validation);
   const [sheet, setSheet] = useState<SheetKind>(null);
-  const session = getSession();
+  const session = useSession();
+  const params = useLocalSearchParams<{ sheet?: string }>();
 
   // 화면에 들어올 때마다 가격·품절을 서버에서 다시 확인한다. 담긴 내용은 그대로 두고 주문만 막는다 (CART-008)
+  // 로그인하고 돌아왔는데 계좌가 없으면 '계좌 필요' 시트를 바로 보여준다 (로그인 성공만으로 주문을 만들지 않는다, AUTH-003)
   useFocusEffect(
     useCallback(() => {
       void useCartStore.getState().validate();
-    }, []),
+      if (params.sheet === 'needAccount') {
+        setSheet('needAccount');
+        router.setParams({ sheet: undefined });
+      }
+    }, [params.sheet, router]),
   );
 
   const goBack = () => (router.canGoBack() ? router.back() : router.replace('/'));
@@ -90,7 +98,10 @@ export function CartScreen() {
   }
 
   const block = checkoutBlock(cart, validation);
-  const notice = noticeFor(block, () => void useCartStore.getState().acknowledgePrices(), () => void useCartStore.getState().validate());
+  const notice = noticeFor(block, {
+    acknowledge: () => void useCartStore.getState().acknowledgePrices(),
+    retry: () => void useCartStore.getState().validate(),
+  });
   const ctaNote = ctaNoteFor(block);
 
   const order = () => {
@@ -146,18 +157,18 @@ export function CartScreen() {
         }}
       />
 
-      {/* 기획서 10.1 확정 문구 */}
+      {/* 기획서 10.1 확정 문구. 계좌를 등록하면 장바구니를 그대로 둔 채 최종 주문 확인으로 돌아온다 */}
       <ConfirmSheet
         visible={sheet === 'needAccount'}
         onClose={() => setSheet(null)}
-        title="돈을 배달받을 계좌가 필요해요"
-        descriptions={['주문금액이 도착할 계좌를 등록해주세요.']}
+        title={confirmedCopy.needAccountTitle}
+        descriptions={[confirmedCopy.needAccountDesc]}
         secondary={{ label: '취소', onPress: () => setSheet(null) }}
         primary={{
-          label: '계좌 등록하기',
+          label: confirmedCopy.needAccountAction,
           onPress: () => {
             setSheet(null);
-            goAccount();
+            goAccountRegisterForOrder();
           },
         }}
       />
@@ -231,58 +242,6 @@ function CartRow({
   );
 }
 
-type NoticeProps = React.ComponentProps<typeof Notice>;
-
-/** 주문이 막힌 이유를 화면 위에 알린다. 한 번에 하나만, 가장 먼저 풀어야 할 것을 보여준다 */
-function noticeFor(block: ReturnType<typeof checkoutBlock>, acknowledge: () => void, retry: () => void): NoticeProps | null {
-  if (!block.blocked) return null;
-  switch (block.reason) {
-    case 'VALIDATION_UNAVAILABLE':
-      // 개발 명세 CART-008 · FR-MENU-008 원문
-      return { tone: 'danger', title: '옵션 정보를 불러오지 못했어요. 다시 불러와주세요.', action: { label: '다시 시도', onPress: retry } };
-    case 'STORE_CLOSED':
-      return { tone: 'danger', title: draftCopy.cart.storeClosedTitle, description: draftCopy.cart.storeClosedDesc };
-    case 'PRICE_CHANGED':
-      return {
-        icon: 'refresh',
-        title: draftCopy.cart.priceChangedTitle(block.count ?? 0),
-        description: draftCopy.cart.priceChangedDesc,
-        action: { label: draftCopy.cart.priceChangedAction, onPress: acknowledge },
-      };
-    case 'SOLD_OUT':
-      return { tone: 'danger', title: draftCopy.cart.soldOutTitle, description: draftCopy.cart.soldOutDesc };
-    case 'INACTIVE_ENTITY':
-      return { tone: 'danger', title: draftCopy.cart.inactiveTitle, description: draftCopy.cart.inactiveDesc };
-    case 'OPTIONS_INVALID':
-      return { tone: 'danger', title: draftCopy.cart.optionsInvalidTitle, description: draftCopy.cart.optionsInvalidDesc };
-    default:
-      return null;
-  }
-}
-
-/** CTA 바 위 한 줄. 주문하기가 왜 막혔는지 알린다 */
-function ctaNoteFor(block: ReturnType<typeof checkoutBlock>): string | undefined {
-  if (!block.blocked) return undefined;
-  switch (block.reason) {
-    case 'NETWORK_UNAVAILABLE':
-      return '주문하려면 인터넷 연결이 필요해요.'; // 개발 명세 CART-009 카피 제안
-    case 'VALIDATION_UNAVAILABLE':
-      return draftCopy.cart.noteValidationUnavailable;
-    case 'VALIDATING':
-      return draftCopy.cart.noteValidating;
-    case 'STORE_CLOSED':
-      return draftCopy.menu.noteStoreClosed;
-    case 'PRICE_CHANGED':
-      return '바뀐 가격을 확인해야 주문할 수 있어요.';
-    case 'SOLD_OUT':
-    case 'INACTIVE_ENTITY':
-      return draftCopy.cart.soldOutDesc;
-    case 'OPTIONS_INVALID':
-      return draftCopy.cart.optionsInvalidDesc;
-    default:
-      return undefined;
-  }
-}
 
 const styles = StyleSheet.create({
   centered: {

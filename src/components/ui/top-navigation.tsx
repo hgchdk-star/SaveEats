@@ -10,6 +10,10 @@ type TopNavigationProps = {
   title?: string;
   /** 넘기면 왼쪽에 뒤로 버튼이 생긴다 */
   onBack?: () => void;
+  /** 넘기면 왼쪽에 닫기(X) 버튼이 생긴다. 뒤로 가는 곳이 아니라 흐름을 끝내는 화면에 쓴다 */
+  onClose?: () => void;
+  /** 처리 중에는 나가지 못하게 막는다 */
+  leadingDisabled?: boolean;
   /** 오른쪽 액션 (IconButton, TextButton) */
   actions?: ReactNode;
   /** 스크롤 시 하단 구분선 */
@@ -22,7 +26,7 @@ type TopNavigationProps = {
 };
 
 /** 56px 상단 바: 왼쪽 뒤로, 가운데 제목, 오른쪽 액션 */
-export function TopNavigation({ title, onBack, actions, divider = false, overlay }: TopNavigationProps) {
+export function TopNavigation({ title, onBack, onClose, leadingDisabled = false, actions, divider = false, overlay }: TopNavigationProps) {
   const insets = useSafeAreaInsets();
   const solid = !overlay || overlay.solid;
   const showTitle = !!title && solid;
@@ -38,7 +42,8 @@ export function TopNavigation({ title, onBack, actions, divider = false, overlay
       ]}>
       <View style={styles.bar}>
         <View style={styles.side}>
-          {onBack ? <BackButton onPress={onBack} floating={!solid} /> : null}
+          {onBack ? <IconButton icon="back" label="뒤로" disabled={leadingDisabled} onPress={onBack} variant={!solid ? 'overlay' : 'plain'} /> : null}
+          {!onBack && onClose ? <IconButton icon="close" label="닫기" disabled={leadingDisabled} onPress={onClose} /> : null}
         </View>
         {showTitle ? (
           <Text accessibilityRole="header" numberOfLines={1} style={styles.title}>
@@ -49,10 +54,6 @@ export function TopNavigation({ title, onBack, actions, divider = false, overlay
       </View>
     </View>
   );
-}
-
-function BackButton({ onPress, floating }: { onPress: () => void; floating: boolean }) {
-  return <IconButton icon="back" label="뒤로" onPress={onPress} variant={floating ? 'overlay' : 'plain'} />;
 }
 
 const styles = StyleSheet.create({
