@@ -1,6 +1,6 @@
-import { TabScreenPlaceholder } from '@/features/navigation/tab-screen-placeholder';
+import { MyScreen } from '@/features/my/my-screen';
 
 /** 마이 */
 export default function MyRoute() {
-  return <TabScreenPlaceholder />;
+  return <MyScreen />;
 }

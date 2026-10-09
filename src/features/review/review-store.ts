@@ -23,6 +23,8 @@ type ReviewState = {
   upsert: (review: MockReview) => void;
   markDeleted: (reviewId: string, deletedAt: string) => void;
   bumpMutation: () => void;
+  /** 로그아웃·계정 전환: 내 리뷰 표시와 도움돼요 상태를 지운다 (AUTH-004) */
+  reset: () => void;
   toggleHelpful: (review: MockReview, next: boolean) => Promise<void>;
 };
 
@@ -36,6 +38,7 @@ export const useReviewStore = create<ReviewState>((set, get) => ({
   upsert: (review) => set((s) => ({ byId: { ...s.byId, [review.reviewId]: review } })),
   markDeleted: (reviewId, deletedAt) => set((s) => (s.byId[reviewId] ? { byId: { ...s.byId, [reviewId]: { ...s.byId[reviewId], deletedAt } } } : s)),
   bumpMutation: () => set((s) => ({ mutationVersion: s.mutationVersion + 1 })),
+  reset: () => set((s) => ({ byId: {}, helpfulOverlay: {}, inflight: {}, mutationVersion: s.mutationVersion + 1 })),
 
   /**
    * 도움돼요 (REV-007). 로그인이 필요하고, 리뷰당 한 번이며, 다시 누르면 취소된다. 내 리뷰는 누를 수 없다.
