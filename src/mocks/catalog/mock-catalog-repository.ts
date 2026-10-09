@@ -8,7 +8,7 @@ import type {
 } from '@/contracts/catalog';
 import { STORE_LIST_PAGE_SIZE_DEFAULT, STORE_LIST_PAGE_SIZE_MAX } from '@/contracts/catalog';
 import type { IsoTimestamp, Page, Uuid } from '@/contracts/common';
-import { mockDelay, mockScenario } from '@/mocks/scenario';
+import { failOnce, mockDelay, mockScenario } from '@/mocks/scenario';
 import { useMockSession } from '@/mocks/session/mock-session';
 import { RepositoryError, type CatalogFailureCode, type CatalogRepository } from '@/services/catalog/catalog-repository';
 
@@ -34,8 +34,21 @@ async function request(): Promise<void> {
 
 const isMember = () => useMockSession.getState().isMember;
 
-/** 이번 실행 동안만 유지되는 찜 상태 */
+/**
+ * 이번 실행 동안만 유지되는 찜 상태 (서버에 저장된 찜을 흉내 낸다).
+ * 시나리오에 따라 처음 값이 다르다. 골목 칼국수(107)는 운영하지 않는 가게라 찜해 두어도 어디에도 보이지 않는다 (FR-FAV-006).
+ */
 const favorites = new Map<Uuid, IsoTimestamp>();
+{
+  const daysAgo = (n: number) => new Date(Date.now() - n * 24 * 60 * 60 * 1000).toISOString();
+  const mode = mockScenario.favorites;
+  if (mode === 'seeded' || mode === 'loadFailOnce') {
+    favorites.set('00000000-0000-4000-8000-000000000101', daysAgo(2));
+    favorites.set('00000000-0000-4000-8000-000000000107', daysAgo(5));
+  } else if (mode === 'onlyInactive') {
+    favorites.set('00000000-0000-4000-8000-000000000107', daysAgo(5));
+  }
+}
 
 const byName = (a: { name: string; id: string }, b: { name: string; id: string }) =>
   a.name < b.name ? -1 : a.name > b.name ? 1 : a.id < b.id ? -1 : 1;
@@ -119,6 +132,8 @@ export function createMockCatalogRepository(): CatalogRepository {
 
     async listStores({ categoryId, cursor, pageSize }) {
       await request();
+      // 카테고리 칩을 고른 뒤의 첫 조회만 실패시킨다 (칩은 그대로 쓸 수 있어야 한다)
+      if (categoryId && !cursor && mockScenario.storeList === 'failOnce' && failOnce('storeList:first')) fail('NETWORK_UNAVAILABLE');
       const code = categoryId ? mockCategories.find((c) => c.id === categoryId)?.code : undefined;
       const stores = activeStores()
         .filter((s) => (categoryId ? s.categoryCode === code : true))
@@ -169,6 +184,7 @@ export function createMockCatalogRepository(): CatalogRepository {
     async setFavorite(storeId, desired) {
       await request();
       if (!isMember()) fail('AUTH_REQUIRED');
+      if (mockScenario.favoriteSave === 'failOnce' && failOnce('favorite:save')) fail('NETWORK_UNAVAILABLE');
       if (desired) {
         if (!activeStores().some((s) => s.id === storeId)) fail('RESOURCE_NOT_FOUND');
         if (!favorites.has(storeId)) favorites.set(storeId, new Date().toISOString());
@@ -181,6 +197,7 @@ export function createMockCatalogRepository(): CatalogRepository {
     async listMyFavorites({ cursor, pageSize }) {
       await request();
       if (!isMember()) fail('AUTH_REQUIRED');
+      if (!cursor && mockScenario.favorites === 'loadFailOnce' && failOnce('favorites:first')) fail('NETWORK_UNAVAILABLE');
       const items: FavoriteStoreCardDto[] = activeStores()
         .filter((s) => favorites.has(s.id))
         .map((s) => ({ ...toStoreCard(s), isFavorite: true as const, favoritedAt: favorites.get(s.id) as IsoTimestamp }))

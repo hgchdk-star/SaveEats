@@ -73,4 +73,28 @@ export const UNDECIDED = {
   reviewNotifications: false,
   /** 묶음3 #8 · 이번 달 요약의 "가장 많이 고른 음식"은 카테고리 기준, 동률이면 최근 주문 쪽 (PRD 41.9) */
   monthlyTopFoodBasis: 'category',
+
+  /* ---------- 검색·찜·마이·시작 (묶음 4의 [미결정 #1~#8]) ---------- */
+
+  /** 묶음4 #1 · 최근 검색어는 최대 10개(LIMITS.recentSearchMax), 이 기기에만 저장하고 계정과 분리한다. 검색을 확정했을 때(엔터·검색어 칩·결과 가게 열기)만 저장한다 */
+  recentSearchStorage: 'deviceOnly',
+  /** 묶음4 #2 · 인기 검색어는 Seed 5~8개. 순위 변동·검색 횟수 표시 없음. 나중에 실제 검색 데이터로 교체 (FR-SRCH-009·010) */
+  popularSearchSource: 'seed',
+  /** 묶음4 #3 · 로그아웃은 확인 시트 없이 바로 한다. 토큰 정리만 하고 주문 취소·기록 삭제·계좌 삭제가 아니다 (AUTH-004) */
+  logoutConfirm: false,
+  /**
+   * 묶음4 #3 · 로그아웃해도 기기의 Guest 장바구니 영역은 지우지 않고(로그인 장바구니를 복제하지도 않음), PENDING 주문은 계정에 남는다.
+   * 완료 확인 큐·읽음 대기는 사용자별 키로 격리해 남기고 다른 계정으로는 처리하지 않는다 (AUTH-004).
+   */
+  logoutKeeps: 'guestCartAndAccountOrders',
+  /** 묶음4 #4 · 탈퇴 후 주문·리뷰 보존/익명화는 미정(OPEN-DB-004·005). 확인 시트까지만 만들고 "탈퇴하기"는 "준비 중" 화면으로 보낸다. 탈퇴 처리는 하지 않는다 */
+  withdrawAfter: null,
+  /** 묶음4 #5 · 알림 설정은 유형별 ON/OFF 한 화면. 주문 상태·작성할 수 있는 리뷰·월간 기록. 혜택·추천(마케팅)은 따로, 이번에 없음 (PRD 45) */
+  notificationSettings: 'perTypeOneScreen',
+  /** 묶음4 #6 · 마이의 누적 기록은 한 줄. USER_CONFIRMED만, 잔액·그래프·칭찬 문구 없음 (PRD 42) */
+  lifetimeRecord: 'oneLine',
+  /** 묶음4 #7 · 프로필은 마스킹 이름 · 마스킹 이메일만 보여주고 편집은 없다. 공개 닉네임은 LATER (OPEN-DB-004) */
+  profileDisplay: 'maskedNameAndEmail',
+  /** 묶음4 #8 · 온보딩 다시 보기는 설정 › SaveEats 이용 방법에서만 */
+  onboardingReentry: 'settingsHowToOnly',
 } as const;

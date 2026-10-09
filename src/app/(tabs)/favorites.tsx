@@ -1,6 +1,6 @@
-import { TabScreenPlaceholder } from '@/features/navigation/tab-screen-placeholder';
+import { FavoritesScreen } from '@/features/favorites/favorites-screen';
 
 /** 찜 */
 export default function FavoritesRoute() {
-  return <TabScreenPlaceholder />;
+  return <FavoritesScreen />;
 }

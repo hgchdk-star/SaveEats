@@ -7,6 +7,7 @@ import type { MockHistoryRow, MockMonthlySummary, MockUnreadSummary } from '@/mo
 import { loadConfirmQueue } from '@/features/order/order-persistence';
 import { showToast } from '@/features/toast/toast-store';
 import { historyService } from '@/services';
+import { userScopedKey } from '@/services/session';
 import { monthKeyOf } from '@/utils/date';
 
 import { hasUnreadUpdate, mergeLatest } from './history-model';
@@ -18,7 +19,9 @@ import { hasUnreadUpdate, mergeLatest } from './history-model';
  * - 내역 탭의 점은 불러온 페이지가 아니라 서버가 알려준 "모든 본인 주문의 읽지 않은 이벤트"로 정한다 (HIST-005)
  * - 읽음은 화면에 먼저 반영하고(overlay) 서버에는 그 이벤트 id만 보낸다. 저장이 실패해도 알리지 않고 조용히 다시 시도한다 (HIST-007)
  */
-const PENDING_READ_KEY = 'saveeats.history.pendingRead.v1';
+const PENDING_READ_BASE = 'saveeats.history.pendingRead.v2';
+/** 읽음 대기 목록은 사용자별로 나눠 저장한다 (AUTH-004) */
+const PENDING_READ_KEY = () => userScopedKey(PENDING_READ_BASE);
 
 type Load = 'idle' | 'loading' | 'ok' | 'error';
 type UnreadEvents = MockUnreadSummary['unreadEvents'];
@@ -56,7 +59,7 @@ let listGeneration = 0;
 
 function persistPending(pending: Record<string, true>) {
   // 저장에 실패해도 화면은 읽음 그대로 둔다. 다시 켰을 때 점이 다시 보일 수 있는 한계가 있다
-  AsyncStorage.setItem(PENDING_READ_KEY, JSON.stringify(Object.keys(pending))).catch(() => undefined);
+  AsyncStorage.setItem(PENDING_READ_KEY(), JSON.stringify(Object.keys(pending))).catch(() => undefined);
 }
 
 export const useHistoryStore = create<HistoryState>((set, get) => {
@@ -179,7 +182,7 @@ export const useHistoryStore = create<HistoryState>((set, get) => {
 
     hydrateLocal: async () => {
       try {
-        const raw = await AsyncStorage.getItem(PENDING_READ_KEY);
+        const raw = await AsyncStorage.getItem(PENDING_READ_KEY());
         const ids = (raw ? (JSON.parse(raw) as unknown) : []) as unknown;
         const list = Array.isArray(ids) ? ids.filter((x): x is string => typeof x === 'string') : [];
         if (list.length > 0) {

@@ -12,6 +12,8 @@ export type LoginIntent =
   | { action: 'FAVORITE'; storeId: Uuid }
   | { action: 'ACCOUNT' }
   | { action: 'HISTORY' }
+  /** 찜 탭 · 마이 · 설정에서 로그인을 시작했다. 로그인하면 그 화면으로 돌아온다 */
+  | { action: 'TAB'; tab: 'favorites' | 'my' | 'settings' }
   | { action: 'HELPFUL'; reviewId: string };
 
 type LoginIntentState = {
