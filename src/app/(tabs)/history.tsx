@@ -1,6 +1,6 @@
-import { TabScreenPlaceholder } from '@/features/navigation/tab-screen-placeholder';
+import { HistoryScreen } from '@/features/history/history-screen';
 
 /** 내역 */
 export default function HistoryRoute() {
-  return <TabScreenPlaceholder />;
+  return <HistoryScreen />;
 }

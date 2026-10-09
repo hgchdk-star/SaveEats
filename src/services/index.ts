@@ -1,6 +1,9 @@
 import { createMockAccountService } from '@/mocks/account/mock-account';
 import { createMockAuthService } from '@/mocks/auth/mock-auth';
 import { createMockCatalogRepository } from '@/mocks/catalog/mock-catalog-repository';
+import { createMockHistoryService } from '@/mocks/history/mock-history';
+import { createMockReviewService } from '@/mocks/history/mock-review';
+import type { HistoryService, ReviewService } from '@/mocks/history/types';
 import { createMockOrderService } from '@/mocks/order/mock-order';
 import { createMockTransferService } from '@/mocks/order/mock-transfer';
 import type { AccountService, AuthService, OrderService, TransferService } from '@/mocks/order/types';
@@ -16,3 +19,5 @@ export const authService: AuthService = createMockAuthService();
 export const accountService: AccountService = createMockAccountService();
 export const orderService: OrderService = createMockOrderService();
 export const transferService: TransferService = createMockTransferService();
+export const historyService: HistoryService = createMockHistoryService();
+export const reviewService: ReviewService = createMockReviewService();

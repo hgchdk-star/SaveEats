@@ -1,6 +1,7 @@
 import { router } from 'expo-router';
 
 import { useFavoritesStore } from '@/features/favorites/favorites-store';
+import { useReviewStore } from '@/features/review/review-store';
 import { getSession } from '@/services/session';
 
 import type { LoginIntent } from './login-intent-store';
@@ -28,6 +29,13 @@ export function resumeAfterLogin(intent: LoginIntent | null): void {
       router.back();
       void useFavoritesStore.getState().toggle(intent.storeId, true);
       return;
+    case 'HELPFUL': {
+      // 도움돼요도 목표값 명령이라 안전하다. 로그인 전에 받은 리뷰가 아직 있을 때만 이어간다
+      router.back();
+      const review = useReviewStore.getState().byId[intent.reviewId];
+      if (review) void useReviewStore.getState().toggleHelpful(review, true);
+      return;
+    }
     default:
       if (router.canGoBack()) router.back();
       else router.replace('/');

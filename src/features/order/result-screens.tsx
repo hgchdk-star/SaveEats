@@ -190,7 +190,7 @@ export function DoneScreen() {
   return (
     <Screen
       top={<TopNavigation onClose={goHome} />}
-      bottom={<ActionStack primary={{ label: copy.doneReview, onPress: goReviewWrite }} secondary={{ label: copy.toHistory, onPress: goHistory }} />}>
+      bottom={<ActionStack primary={{ label: copy.doneReview, onPress: () => goReviewWrite(order.orderId) }} secondary={{ label: copy.toHistory, onPress: goHistory }} />}>
       <ScrollView contentContainerStyle={styles.doneContent}>
         <Text accessibilityRole="header" style={styles.doneHeader}>
           {copy.doneHeader}
