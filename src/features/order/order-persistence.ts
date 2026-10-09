@@ -41,6 +41,30 @@ export async function clearAttempt(): Promise<void> {
   await AsyncStorage.removeItem(ATTEMPT_KEY).catch(() => undefined);
 }
 
+/** 앱을 다시 켰을 때 결과를 모르는 주문 생성 시도가 남아 있는지 읽는다. 읽지 못하거나 모양이 다르면 없는 것으로 본다 */
+export async function loadAttempt(): Promise<CreateAttempt | null> {
+  try {
+    const raw = await AsyncStorage.getItem(ATTEMPT_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as CreateAttempt;
+    return parsed?.request?.idempotencyKey && (parsed.via === 'TOSS' || parsed.via === 'DIRECT') ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+/** 서버에 아직 저장하지 못한 완료 확인이 있는지 읽는다 */
+export async function loadConfirmQueue(): Promise<ConfirmQueueEntry | null> {
+  try {
+    const raw = await AsyncStorage.getItem(CONFIRM_QUEUE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as ConfirmQueueEntry;
+    return parsed?.version === 1 && parsed.orderId && parsed.operationId ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
 export async function saveConfirmQueue(entry: ConfirmQueueEntry): Promise<void> {
   await AsyncStorage.setItem(CONFIRM_QUEUE_KEY, JSON.stringify(entry));
 }

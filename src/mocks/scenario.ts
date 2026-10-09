@@ -50,6 +50,31 @@ export type MockScenario = {
   cancel: 'ok' | 'unknownOnce';
   /** 클립보드 쓰기 실패 (TRF-007) */
   clipboardFails: boolean;
+
+  /**
+   * 내역 목록 (HIST-003).
+   * empty: 주문 0개 / firstPageFailOnce: 첫 페이지 실패 → 전체 오류 / nextPageFailOnce: 다음 페이지 실패 → 기존 목록 유지 + 다시 시도
+   * long: 주문 40개를 더해 여러 페이지로 나눈다
+   */
+  history: 'ok' | 'empty' | 'firstPageFailOnce' | 'nextPageFailOnce' | 'long';
+  /** 읽음 저장 (HIST-007): 실패해도 화면에는 알리지 않고 조용히 다시 시도한다 */
+  readSave: 'ok' | 'failOnce';
+  /** 이번 달 요약 조회 */
+  monthly: 'ok' | 'failOnce';
+  /** 공개 리뷰 목록 조회: empty는 리뷰가 하나도 없는 상태, failOnce는 조회 실패 (빈 목록과 구분해서 보여준다) */
+  reviewList: 'ok' | 'empty' | 'failOnce';
+  /** 내가 쓴 리뷰: long은 25개(여러 페이지, 읽기 전용), nextPageFailOnce는 long에서 다음 페이지 실패 */
+  myReviews: 'ok' | 'empty' | 'failOnce' | 'long' | 'nextPageFailOnce';
+  /**
+   * 리뷰 작성·수정 저장 (REV-004~005, IMG-002).
+   * photoUploadFailOnce: 사진 올리기 실패 / saveFailOnce: 저장 실패 / deadlineExceeded: 제출 순간 작성 기간 만료
+   * revisionConflictOnce: 수정 중 다른 곳에서 먼저 바뀜
+   */
+  reviewWrite: 'ok' | 'photoUploadFailOnce' | 'saveFailOnce' | 'deadlineExceeded' | 'revisionConflictOnce';
+  /** 리뷰 삭제 (REV-006) */
+  reviewDelete: 'ok' | 'failOnce';
+  /** 도움돼요 (REV-007) */
+  helpful: 'ok' | 'failOnce';
   /** 응답 지연(ms). 로딩 상태를 보기 위한 값 */
   delayMs: number;
 };
@@ -69,6 +94,14 @@ const BASE: MockScenario = {
   confirm: 'ok',
   cancel: 'ok',
   clipboardFails: false,
+  history: 'ok',
+  readSave: 'ok',
+  monthly: 'ok',
+  reviewList: 'ok',
+  myReviews: 'ok',
+  reviewWrite: 'ok',
+  reviewDelete: 'ok',
+  helpful: 'ok',
   delayMs: 400,
 };
 
@@ -109,6 +142,26 @@ const SCENARIOS = {
   confirmSaveFails: { ...BASE, auth: 'member', confirm: 'failOnce' },
   cancelUnknown: { ...BASE, auth: 'member', cancel: 'unknownOnce' },
   clipboardFails: { ...BASE, auth: 'member', clipboardFails: true },
+
+  // ---- 묶음 3: 내역·리뷰 (Guest로 시작하면 내역·리뷰 쓰기의 로그인 유도를 볼 수 있다) ----
+  historyEmpty: { ...BASE, auth: 'member', history: 'empty' },
+  historyFirstPageFails: { ...BASE, auth: 'member', history: 'firstPageFailOnce' },
+  historyNextPageFails: { ...BASE, auth: 'member', history: 'nextPageFailOnce' },
+  historyLong: { ...BASE, auth: 'member', history: 'long' },
+  readSaveFails: { ...BASE, auth: 'member', readSave: 'failOnce' },
+  monthlyFails: { ...BASE, auth: 'member', monthly: 'failOnce' },
+  reviewsEmpty: { ...BASE, auth: 'member', reviewList: 'empty' },
+  reviewListFails: { ...BASE, auth: 'member', reviewList: 'failOnce' },
+  myReviewsEmpty: { ...BASE, auth: 'member', myReviews: 'empty' },
+  myReviewsFails: { ...BASE, auth: 'member', myReviews: 'failOnce' },
+  myReviewsLong: { ...BASE, auth: 'member', myReviews: 'long' },
+  myReviewsNextPageFails: { ...BASE, auth: 'member', myReviews: 'nextPageFailOnce' },
+  photoUploadFails: { ...BASE, auth: 'member', reviewWrite: 'photoUploadFailOnce' },
+  reviewSaveFails: { ...BASE, auth: 'member', reviewWrite: 'saveFailOnce' },
+  reviewDeadlineExceeded: { ...BASE, auth: 'member', reviewWrite: 'deadlineExceeded' },
+  reviewConflict: { ...BASE, auth: 'member', reviewWrite: 'revisionConflictOnce' },
+  reviewDeleteFails: { ...BASE, auth: 'member', reviewDelete: 'failOnce' },
+  helpfulFails: { ...BASE, auth: 'member', helpful: 'failOnce' },
 } satisfies Record<string, MockScenario>;
 
 export type MockScenarioName = keyof typeof SCENARIOS;

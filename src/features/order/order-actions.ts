@@ -5,7 +5,10 @@ import { UNDECIDED } from '@/config/undecided';
 import { draftCopy } from '@/config/draft-copy';
 import { confirmedCopy } from '@/config/confirmed-copy';
 import { useCartStore } from '@/features/cart/cart-store';
+import { toOrder } from '@/features/history/history-model';
+import { useHistoryStore } from '@/features/history/history-store';
 import { showToast } from '@/features/toast/toast-store';
+import type { MockHistoryRow } from '@/mocks/history/types';
 import type { CreateOrderRequest, MockDestinationAccount, MockOrder } from '@/mocks/order/types';
 import { orderService, transferService } from '@/services';
 import { copyToClipboard } from '@/services/clipboard';
@@ -14,7 +17,7 @@ import { createLocalId } from '@/utils/id';
 
 import type { CartEnvelope } from '@/features/cart/cart-model';
 
-import { clearAttempt, clearConfirmQueue, saveAttempt, saveConfirmQueue } from './order-persistence';
+import { clearAttempt, clearConfirmQueue, loadConfirmQueue, saveAttempt, saveConfirmQueue } from './order-persistence';
 import { useOrderFlowStore, type RejectedReason } from './order-flow-store';
 
 /**
@@ -29,6 +32,14 @@ import { useOrderFlowStore, type RejectedReason } from './order-flow-store';
  */
 
 const flow = () => useOrderFlowStore.getState();
+
+/** 주문이 만들어지거나 상태가 바뀐 뒤: 내역 탭의 점과 이미 열려 있는 내역 목록을 서버 기준으로 다시 맞춘다 */
+function syncHistory(): void {
+  const history = useHistoryStore.getState();
+  void history.refreshQueue();
+  void history.refreshUnread();
+  if (history.load === 'ok') void history.refreshLatest();
+}
 
 /* ---------- 주문 생성 (ORD-004 · 005 · 006) ---------- */
 
@@ -127,13 +138,14 @@ async function onCreated(order: MockOrder, via: 'TOSS' | 'DIRECT', cartRevision:
   void clearAttempt();
   // 미결정 묶음2 #5(= 묶음1 #10): 주문 생성에 성공했을 때 비운다. 생성에 쓴 버전만 비우고 그사이 더 담은 것은 둔다 (ORD-013)
   if (UNDECIDED.cartClearTiming === 'onPendingCreated') await useCartStore.getState().clearIfRevision(cartRevision);
+  syncHistory();
   await openTransfer(via);
 }
 
 /* ---------- 이어가기 (TRF-005 ~ 007) ---------- */
 
 /** 실행 직전에 원격 설정을 조회한다. 3초 안에 답이 없으면 직접 이어가기로 간다 (TRF-005) */
-export async function openTransfer(via: 'TOSS' | 'DIRECT'): Promise<void> {
+export async function openTransfer(via: 'TOSS' | 'DIRECT', how: 'replace' | 'push' = 'replace'): Promise<void> {
   const timeout = new Promise<{ tossDeepLinkEnabled: boolean }>((resolve) =>
     setTimeout(() => resolve({ tossDeepLinkEnabled: false }), LIMITS.tossConfigTimeoutMs),
   );
@@ -147,7 +159,10 @@ export async function openTransfer(via: 'TOSS' | 'DIRECT'): Promise<void> {
     rawAvailable: true,
     awaitingReturn: false,
   });
-  router.replace(direct ? '/order/direct' : '/order/continue');
+  const target = direct ? '/order/direct' : '/order/continue';
+  // 내역 탭에서 들어올 때는 push. replace하면 탭 화면 자체가 바뀐다
+  if (how === 'push') router.push(target);
+  else router.replace(target);
 }
 
 /** '토스로 주문 이어가기'. 실패하면 같은 주문의 직접 이어가기로 간다 (송금 실패라고 말하지 않는다) */
@@ -311,6 +326,7 @@ export async function confirmOrder(opts: { navigateToQuestion: boolean }): Promi
     const confirmed = await orderService.confirmOrder(order.orderId, operationId);
     void clearConfirmQueue();
     flow().set({ order: confirmed, work: 'SERVER_CONFIRMED' });
+    syncHistory();
     router.replace('/order/done');
   } catch (error) {
     if (errorCode(error) === 'INVALID_ORDER_TRANSITION') {
@@ -332,6 +348,7 @@ export async function cancelOrder(): Promise<void> {
   try {
     const cancelled = await orderService.cancelOrder(order.orderId, operationId);
     flow().set({ order: cancelled, work: 'READY' });
+    syncHistory();
     router.replace('/order/cancelled');
   } catch {
     flow().set({ work: 'CANCEL_UNKNOWN' });
@@ -348,4 +365,57 @@ export function resumeCurrentOrder(): void {
   const { transfer } = flow();
   flow().setTransfer({ tossFailed: false });
   router.replace(transfer.tossConfigEnabled ? '/order/continue' : '/order/direct');
+}
+
+/* ---------- 내역에서 이어가기 (HIST-004 · 009) ---------- */
+
+/**
+ * 내역의 '주문 이어하기': 같은 주문(orderId)으로 이어가기 화면을 다시 연다. 새 주문을 만들지 않는다.
+ * 열기 전에 서버 상태를 다시 읽는다. 그사이 완료·취소됐으면 이어가기 대신 목록만 새로 맞춘다.
+ * 이 주문의 완료 확인이 기기에 저장돼 있으면 이어가기가 아니라 '저장 다시 시도' 화면으로 보낸다.
+ * 내역 탭 위에 쌓아야 하므로 replace가 아니라 push로 연다.
+ */
+export async function resumeOrderFromHistory(row: MockHistoryRow): Promise<boolean> {
+  const { work } = flow();
+  if (work === 'CREATE_UNKNOWN' || work === 'CREATE_SAVING' || work === 'CONFIRM_SYNCING') {
+    showToast({ message: draftCopy.history.resumeBusy });
+    return false;
+  }
+  let latest: MockOrder;
+  try {
+    latest = await orderService.getOrderStatus(row.orderId);
+  } catch {
+    showToast({ message: draftCopy.history.resumeFailed, tone: 'error' });
+    return false;
+  }
+  if (latest.status !== 'PENDING') {
+    // 이미 끝난 주문: 새 상태를 목록에 반영하고 이어가지 않는다
+    showToast({ message: draftCopy.history.resumeAlreadyDone });
+    syncHistory();
+    void useHistoryStore.getState().loadFirst({ refresh: true });
+    return false;
+  }
+  const queue = await loadConfirmQueue();
+  const queued = queue?.orderId === latest.orderId;
+  flow().set({ order: latest, attempt: null, rejectedReason: null, cancelOperationId: null, confirmOperationId: queued && queue ? queue.operationId : null });
+  if (queued) {
+    flow().set({ work: 'CONFIRM_SAVE_FAILED' });
+    router.push('/order/question');
+    return true;
+  }
+  flow().set({ work: 'PENDING_READY' });
+  await openTransfer('TOSS', 'push');
+  return true;
+}
+
+/** 내역의 '상태 저장 다시 시도': 기기에 저장된 같은 operationId로 완료 확인을 다시 보낸다 */
+export async function retryQueuedConfirm(row: MockHistoryRow): Promise<void> {
+  const queue = await loadConfirmQueue();
+  if (!queue || queue.orderId !== row.orderId) {
+    void useHistoryStore.getState().refreshQueue();
+    return;
+  }
+  flow().set({ order: toOrder(row), attempt: null, confirmOperationId: queue.operationId, work: 'CONFIRM_SAVE_FAILED' });
+  router.push('/order/question');
+  await confirmOrder({ navigateToQuestion: false });
 }
