@@ -69,9 +69,13 @@ export type CreateOrderRequest = {
 
 /** 주문 당시 값. 이후 가게·메뉴·계좌가 바뀌어도 그대로 보여준다 (ORD-007) */
 export type MockOrderSnapshot = {
+  storeId: Uuid;
   storeName: string;
   storeImageRef: string | null;
+  /** 주문 당시 카테고리 이름 (이번 달 요약의 "가장 많이 고른 음식") */
+  categoryName: string;
   items: {
+    menuId: Uuid;
     menuName: string;
     menuImageRef: string | null;
     unitPrice: Won;
