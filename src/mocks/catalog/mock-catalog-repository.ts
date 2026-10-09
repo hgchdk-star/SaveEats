@@ -9,6 +9,7 @@ import type {
 import { STORE_LIST_PAGE_SIZE_DEFAULT, STORE_LIST_PAGE_SIZE_MAX } from '@/contracts/catalog';
 import type { IsoTimestamp, Page, Uuid } from '@/contracts/common';
 import { mockDelay, mockScenario } from '@/mocks/scenario';
+import { useMockSession } from '@/mocks/session/mock-session';
 import { RepositoryError, type CatalogFailureCode, type CatalogRepository } from '@/services/catalog/catalog-repository';
 
 import { mockCategories, mockMenus, mockStores, type MockMenu, type MockStore } from './data';
@@ -31,7 +32,7 @@ async function request(): Promise<void> {
   if (mockScenario.network === 'error') fail('INTERNAL_ERROR');
 }
 
-const isMember = () => mockScenario.auth !== 'guest';
+const isMember = () => useMockSession.getState().isMember;
 
 /** 이번 실행 동안만 유지되는 찜 상태 */
 const favorites = new Map<Uuid, IsoTimestamp>();
