@@ -1,7 +1,8 @@
 # 홈 · 검색 API 계약 초안 catalog@0.2 (혜지 → 지우 논의용, 미합의)
 
 작성: 2026-10-08 (혜지). 이 문서는 **제안**이며 합의 전에는 서버·`src/contracts/`에 반영하지 않는다.
-범위: 검색(`searchStores`, 인기 검색어), 홈(배너, 추천 가게, 최근 본 항목). 홈 "지금 많이 찾는 메뉴"와 홈 계좌 표시·이번 달 기록은 아래 5절처럼 제외한다.
+**수정 이력:** 2026-10-12 (혜지) — 서정이 2026-10-08에 승인한 홈 "지금 많이 찾는 메뉴"의 기준(6.1절)을 계약으로 옮겼다(4.4절 추가, 5절 "보류" 해제). 지우의 Mock(#7·#10) 검토에서 나온 합의 필요 항목 2개(4.1·4.3절)를 표시했다.
+범위: 검색(`searchStores`, 인기 검색어), 홈(배너, 추천 가게, 최근 본 항목, 지금 많이 찾는 메뉴). 홈 계좌 표시·이번 달 기록은 아래 5절처럼 제외한다.
 근거: 개발 명세 API-001~004, DB-004, DB-009, OPS-003 / PRD FR-HOME-001~012, FR-SRCH-001~011 / 기획서 11~13장.
 기존 계약: `catalog@0.1` (`docs/contracts/catalog-contract-draft.md`). 이 초안은 그 계약에 **필드를 더하기만** 하므로 버전을 `catalog@0.2`로 올리는 것을 제안한다.
 
@@ -20,6 +21,11 @@
 | 7 | 추천 가게 | `is_recommended` 활성 가게, 이름순, 기본 10개 (4.2절) |
 | 8 | 인기 검색어 | Seed 문구 목록만. 검색 횟수 같은 숫자는 내려주지 않는다 (3.3절) |
 | 9 | 계약 버전 | `catalog@0.2` |
+| 10 | 지금 많이 찾는 메뉴 (2026-10-12 추가) | 서정 승인(6.1절)대로 `list_popular_menus`를 만든다. 응답은 `MenuCardDto[]`, 점수·순위 숫자는 내려주지 않는다 (4.4절) |
+
+**2026-10-12 지우 Mock 검토에서 나온 합의 필요 항목** (지우 확인 전):
+- 배너 Mock이 `{id}`뿐이라 이동 대상이 없다. 4.1절의 `title`·`target`을 Mock에도 넣을지.
+- 최근 본 메뉴 Mock 타입에는 `store`가 없다. 4.3절의 `MenuCardDto`에 맞출지, 아니면 계약에서 `store`를 뺄지.
 
 제품 결정이 필요해서 서정 확인을 받아야 하는 것은 6절에 따로 모았다. (2026-10-08 서정 답변 반영)
 
@@ -38,9 +44,9 @@ type HomeSections = {
   categories: HomeSection<CategoryDto[]>;        // list_categories (catalog@0.1)
   banners: HomeSection<BannerDto[]>;             // list_banners
   recommendedStores: HomeSection<StoreCardDto[]>; // list_recommended_stores
+  popularMenus: HomeSection<MenuCardDto[]>;       // list_popular_menus (4.4절)
   // recentItems는 로컬 id를 서버로 풀어야 하므로 4.3절
 };
-// popularMenus: 5절 보류
 ```
 
 ## 3. 검색
@@ -115,6 +121,7 @@ type BannerDto = {
 - 대상(가게·메뉴·카테고리)이 비활성이면 그 배너는 응답에서 뺀다. 앱이 열었을 때 "없음"이 뜨지 않게 하려는 것이다.
 - 정렬은 `sort_order → id`. Seed 배너 2~3개 (FR-HOME-006).
 - 배너 제목에는 `참기`, `저축`, `절약`을 핵심 문구로 쓰지 않는다 (FR-HOME-012). 실제 카피는 서정 확인 전까지 Seed에서 가상 문구를 쓴다.
+- 지우 Mock의 `MockBanner`는 `{id}`뿐이라 `target`이 없다. 화면이 문구 없이 자리만 그리더라도 눌렀을 때 이동할 곳(`target`)은 필요하므로, Mock도 `title`·`imageRef`·`target`을 갖추는 것을 제안한다 (1절 합의 필요 항목).
 
 ### 4.2 추천 가게 (합의 #7)
 
@@ -148,13 +155,29 @@ type MenuCardDto = {
 
 - 응답은 **요청한 id 순서를 유지**하고, 비활성이거나 없는 id는 빠진다 (RESOURCE_NOT_FOUND를 내지 않는다). 앱은 응답에 없는 id를 로컬 목록에서 지울 수 있다.
 - 10개를 넘기면 `INVALID_INPUT`.
-- `MenuCardDto`는 나중에 홈 인기 메뉴(5절)에서도 재사용할 수 있다.
+- `MenuCardDto`는 홈 인기 메뉴(4.4절)에서도 그대로 재사용한다.
+- 지우 Mock의 `MockRecentMenu`는 `store`가 없다 (`{id, name, imageRef, price, isSoldOut}`). 지금 화면(최근 본 타일)은 이름·이미지만 쓰므로 동작에는 문제없지만, 계약과 Mock의 모양을 하나로 맞춰야 한다 (1절 합의 필요 항목).
+
+### 4.4 지금 많이 찾는 메뉴 (합의 #10, 서정 승인 2026-10-08)
+
+| 계약 | RPC | 인자 | 응답 |
+|---|---|---|---|
+| listPopularMenus | `list_popular_menus` | `p_limit?` (1~20, 기본 10) | `MenuCardDto[]` |
+
+- **대상:** `is_popular = true`인 활성 메뉴 (활성 가게·활성 카테고리의 것). **품절 메뉴는 뺀다.**
+- **정렬:** `popularity_score` 내림차순 → 이름 → id.
+- **개수:** 기본 10개 상한. 대상이 없으면 빈 배열이고, 앱은 섹션을 숨긴다 (구현 노트 "빈 섹션 숨김").
+- **숫자를 내려주지 않는다:** 응답에 `popularityScore`, 순위, 주문 수, 조회 수를 넣지 않는다. 화면에도 보여주지 않는다 (FR-HOME-005, FR-DATA-024). 점수는 순서를 정하는 서버 내부 값이다.
+- **응답 모양:** `MenuCardDto`(4.3절)와 같다. 나중에 실제 집계로 바꿔도 모양은 그대로다 (기획서 11.1, FR-EXT-001).
+- Guest와 로그인 사용자 모두 호출할 수 있다.
+- 섹션 제목 "지금 많이 찾는 메뉴"는 지금 그대로 쓴다. 실서비스 공개 전에 바꿀지는 서정이 따로 정한다 (6.1절). 앱은 제목을 상수 한 곳에 둔다.
+- **현재 서버 seed에는 `is_popular = true`인 메뉴가 없다.** 구현할 때 시연용 데이터에서 어떤 메뉴를 인기로 표시할지 정해야 한다 (7절).
 
 ## 5. 이번 계약에서 제외하거나 보류하는 것
 
 | 항목 | 상태 | 이유 |
 |---|---|---|
-| 홈 "지금 많이 찾는 메뉴" | **보류** (지우와 합의: `getHome` 계약 때까지) | 6절 질문 1·2 참고 |
+| 홈 "지금 많이 찾는 메뉴" | **포함으로 변경 (2026-10-12)** — 4.4절 | 서정이 2026-10-08에 기준을 승인함 (6.1절). 이전에는 `getHome` 계약 때까지 보류였음 |
 | 홈 계좌 표시 | 제외 | 계좌 정책(T05) 미결정 |
 | 이번 달 기록 | 제외 | T10, 완료 주문 조회 계약 이후 |
 | 초성·오타 검색 | 제외 | 명세에서 추가 범위로 분류 (미검증) |
@@ -212,6 +235,6 @@ type MenuCardDto = {
 
 ## 7. 합의되면 혜지가 할 일
 
-- 새 migration: `banners`, `popular_search_terms` 테이블(+ 공개 읽기 권한), `search_stores`, `list_popular_search_terms`, `list_banners`, `list_recommended_stores`, `list_stores_by_ids`, `list_menu_cards_by_ids`
-- 개발용 Seed: 배너 2~3개, 인기 검색어 몇 개 (모두 가상)
-- 로컬 대체 DB 검증 추가: 검색(가게·메뉴·카테고리 일치, 중복 제거, 이스케이프, 매칭 메뉴, 입력 범위), 비활성 숨김, 최근 본 항목의 순서 유지와 누락 처리, 배너 target 숨김
+- 새 migration: `banners`, `popular_search_terms` 테이블(+ 공개 읽기 권한), `search_stores`, `list_popular_search_terms`, `list_banners`, `list_recommended_stores`, `list_stores_by_ids`, `list_menu_cards_by_ids`, `list_popular_menus`
+- 개발용 Seed: 배너 2~3개(문구는 임시인 게 드러나게), 인기 검색어 5~8개(결과가 실제로 나오는 단어만), 인기 표시 메뉴 몇 개 (모두 가상, 점수 순서가 눈에 보이게 서로 다른 값)
+- DB 테스트(`supabase/tests/database/`) 추가: 검색(가게·메뉴·카테고리 일치, 중복 제거, 이스케이프, 매칭 메뉴, 입력 범위), 비활성 숨김, 최근 본 항목의 순서 유지와 누락 처리, 배너 target 숨김, 인기 메뉴(품절 제외, 점수 순서, 숫자 비노출, 개수 상한). Guest가 실행할 수 있는 함수 목록 테스트(001)도 함께 갱신한다.
