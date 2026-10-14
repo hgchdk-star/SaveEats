@@ -95,7 +95,20 @@ export function HomeScreen() {
             {/* 배너는 장식이라 실패하거나 비어 있으면 자리를 접는다 */}
             {banners.status === 'ok' && banners.data.length > 0 ? (
               <View style={styles.section}>
-                <BannerCarousel count={banners.data.length} />
+                <BannerCarousel
+                  count={banners.data.length}
+                  onOpen={(i) => {
+                    const target = banners.data[i]?.target;
+                    if (!target) return;
+                    if (target.type === 'STORE') router.push({ pathname: '/store/[storeId]', params: { storeId: target.id } });
+                    else if (target.type === 'MENU') router.push({ pathname: '/menu/[menuId]', params: { menuId: target.id } });
+                    else {
+                      // 카테고리 id → code (카테고리를 못 받았으면 이동하지 않는다)
+                      const code = categories.status === 'ok' ? categories.data.find((c) => c.id === target.id)?.code : undefined;
+                      if (code) goCategoryStoreList(code);
+                    }
+                  }}
+                />
               </View>
             ) : null}
 

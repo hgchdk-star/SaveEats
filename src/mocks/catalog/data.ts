@@ -15,13 +15,13 @@ const id = (n: number): Uuid => `00000000-0000-4000-8000-${String(n).padStart(12
 
 export const mockCategories: CategoryDto[] = [
   { id: id(1), code: 'chicken', name: '치킨', sortOrder: 1 },
-  { id: id(2), code: 'snack', name: '분식', sortOrder: 2 },
+  { id: id(2), code: 'bunsik', name: '분식', sortOrder: 2 },
   { id: id(3), code: 'pizza', name: '피자', sortOrder: 3 },
   { id: id(4), code: 'korean', name: '한식', sortOrder: 4 },
   { id: id(5), code: 'chinese', name: '중식', sortOrder: 5 },
   { id: id(6), code: 'japanese', name: '일식', sortOrder: 6 },
   { id: id(7), code: 'burger', name: '버거', sortOrder: 7 },
-  { id: id(8), code: 'cafe', name: '카페·디저트', sortOrder: 8 },
+  { id: id(8), code: 'cafe_dessert', name: '카페·디저트', sortOrder: 8 },
 ];
 
 export type MockStore = {
@@ -43,10 +43,10 @@ export type MockStore = {
 
 export const mockStores: MockStore[] = [
   { id: id(101), name: '바삭마을 치킨 역삼점', description: '후라이드와 양념 반반을 주로 만드는 동네 치킨집이에요.', imageRef: 'stores/bsm.jpg', isOpen: true, isRecommended: true, isActive: true, categoryCode: 'chicken', reviewCount: 128, reviewAverage: 4.8 },
-  { id: id(102), name: '빨간솥 떡볶이', description: '국물 떡볶이와 튀김을 함께 내는 분식집이에요.', imageRef: 'stores/rsd.jpg', isOpen: true, isRecommended: true, isActive: true, categoryCode: 'snack', reviewCount: 42, reviewAverage: 4.6 },
+  { id: id(102), name: '빨간솥 떡볶이', description: '국물 떡볶이와 튀김을 함께 내는 분식집이에요.', imageRef: 'stores/rsd.jpg', isOpen: true, isRecommended: true, isActive: true, categoryCode: 'bunsik', reviewCount: 42, reviewAverage: 4.6 },
   { id: id(103), name: '한그릇 비빔밥', description: '돌솥에 담아 내는 비빔밥 가게예요.', imageRef: 'stores/hgb.jpg', isOpen: true, isRecommended: true, isActive: true, categoryCode: 'korean', reviewCount: 0, reviewAverage: null },
   { id: id(104), name: '화덕공방 피자', description: '화덕에 굽는 얇은 도우 피자 가게예요.', imageRef: 'stores/hdp.jpg', isOpen: false, isRecommended: true, isActive: true, categoryCode: 'pizza', reviewCount: 17, reviewAverage: 4.5 },
-  { id: id(105), name: '달콤오븐', description: '조각 케이크와 구움과자를 파는 가게예요.', imageRef: 'stores/dov.jpg', isOpen: true, isRecommended: true, isActive: true, categoryCode: 'cafe', reviewCount: 0, reviewAverage: null },
+  { id: id(105), name: '달콤오븐', description: '조각 케이크와 구움과자를 파는 가게예요.', imageRef: 'stores/dov.jpg', isOpen: true, isRecommended: true, isActive: true, categoryCode: 'cafe_dessert', reviewCount: 0, reviewAverage: null },
   { id: id(106), name: '옛날 가마솥 통닭과 매콤 양념 반반 전문 바삭마을 치킨 역삼 본점', description: '가게명이 긴 경우와 대표 사진이 없는 경우를 보는 가상 가게예요.', imageRef: null, isOpen: true, isRecommended: false, isActive: true, categoryCode: 'chicken', reviewCount: 9, reviewAverage: 4.4 },
   { id: id(107), name: '골목 칼국수', description: '지금은 운영하지 않는 가상 가게예요.', imageRef: null, isOpen: false, isRecommended: false, isActive: false, categoryCode: 'korean', reviewCount: 0, reviewAverage: null },
 ];
