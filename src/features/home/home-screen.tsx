@@ -21,6 +21,7 @@ import { getSession } from '@/services/session';
 import { colors, spacing } from '@/theme';
 
 import { BannerCarousel } from './banner-carousel';
+import { PopularMenuSection } from './popular-menu-section';
 import { RecentSection } from './recent-section';
 import { SectionHeader } from './section-header';
 
@@ -40,13 +41,15 @@ export function HomeScreen() {
 
   const categories = useAsync('home:categories', () => catalogRepository.listCategories());
   const banners = useAsync('home:banners', () => mockHome.listBanners());
+  const popular = useAsync(`home:popular:${session.isMember}`, () => mockHome.listPopularMenus());
   const recommended = useAsync('home:recommended', () => mockHome.listRecommendedStores());
 
   // 세 섹션이 모두 실패했다면 홈 전체 오류로 본다 (오프라인·서버 오류)
-  const allFailed = categories.status === 'error' && banners.status === 'error' && recommended.status === 'error';
+  const allFailed = categories.status === 'error' && banners.status === 'error' && popular.status === 'error' && recommended.status === 'error';
   const retryAll = () => {
     categories.reload();
     banners.reload();
+    popular.reload();
     recommended.reload();
   };
 
@@ -117,7 +120,8 @@ export function HomeScreen() {
               </View>
             ) : null}
 
-            {/* 홈 "지금 많이 찾는 메뉴": 노출 기준과 문구가 정해질 때까지 자리만 비워 둔다 (getHome 계약에서 결정) */}
+            {/* 지금 많이 찾는 메뉴: 0개면 섹션을 숨기고, 실패하면 이 섹션만 오류 */}
+            <PopularMenuSection state={popular} />
 
             {/* 추천 가게: 0개면 섹션을 숨긴다 */}
             {recommended.status === 'loading' ? (
