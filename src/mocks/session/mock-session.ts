@@ -11,6 +11,10 @@ import type { MockDestinationAccount } from '@/mocks/order/types';
  */
 type MockSessionState = {
   isMember: boolean;
+  /** 로그인한 사용자 id. Guest면 null. 기기에 저장하는 개인 기록의 키를 사용자별로 나누는 데 쓴다 (AUTH-004) */
+  userId: string | null;
+  /** 로그인에 쓴 이메일(원문). 화면에는 마스킹해서만 보여준다 */
+  email: string | null;
   destinationAccount: MockDestinationAccount | null;
 };
 
@@ -23,7 +27,12 @@ export const PRESET_ACCOUNT: MockDestinationAccount = {
   last4: '1234',
 };
 
+/** 시나리오가 처음부터 로그인 상태일 때의 가상 사용자 */
+export const PRESET_USER = { userId: 'mock-user-1', email: 'saveeats.test@example.com' };
+
 export const useMockSession = create<MockSessionState>(() => ({
   isMember: mockScenario.auth !== 'guest',
+  userId: mockScenario.auth !== 'guest' ? PRESET_USER.userId : null,
+  email: mockScenario.auth !== 'guest' ? PRESET_USER.email : null,
   destinationAccount: mockScenario.auth === 'member' ? PRESET_ACCOUNT : null,
 }));

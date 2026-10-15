@@ -16,6 +16,7 @@ import { errorCode } from '@/services/service-error';
 import { colors, spacing, text } from '@/theme';
 
 import { useLoginIntentStore, type LoginIntent } from './login-intent-store';
+import { afterLogin } from './session-lifecycle';
 import { resumeAfterLogin } from './resume-intent';
 
 type Mode = 'login' | 'signup';
@@ -33,6 +34,8 @@ function reasonFor(intent: LoginIntent | null): string {
       return copy.reasonAccount;
     case 'HISTORY':
       return draftCopy.history.reasonHistory;
+    case 'TAB':
+      return intent.tab === 'favorites' ? draftCopy.favorites.reasonTab : intent.tab === 'my' ? draftCopy.my.reasonMy : draftCopy.my.reasonSettings;
     case 'HELPFUL':
       return draftCopy.review.helpfulLoginReason;
     default:
@@ -88,6 +91,7 @@ export function LoginScreen() {
     setBusy(false);
     setPassword(''); // 비밀번호는 성공하는 즉시 지운다
     setIntent(null);
+    afterLogin();
     resumeAfterLogin(intent);
     showToast({ message: signup ? copy.toastSignedUp : copy.toastLoggedIn });
   };

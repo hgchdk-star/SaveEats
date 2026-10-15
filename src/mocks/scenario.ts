@@ -75,6 +75,27 @@ export type MockScenario = {
   reviewDelete: 'ok' | 'failOnce';
   /** 도움돼요 (REV-007) */
   helpful: 'ok' | 'failOnce';
+  /** 가게 검색: failOnce는 첫 검색이 실패 (결과 없음과 구분해서 보여준다) */
+  search: 'ok' | 'failOnce';
+  /** 인기 검색어: failOnce는 그 섹션만 실패 / empty는 Seed가 비어 있음 */
+  popular: 'ok' | 'failOnce' | 'empty';
+  /** 카테고리 가게 목록(칩을 고른 뒤): failOnce는 첫 조회가 실패 */
+  storeList: 'ok' | 'failOnce';
+  /**
+   * 내 찜 목록. seeded: 활성 가게 1곳 + 운영하지 않는 가게 1곳(골목 칼국수, 어디에도 안 보임) / empty: 찜 없음 /
+   * onlyInactive: 운영하지 않는 가게만 찜 → 목록은 빈 상태 / loadFailOnce: 첫 조회 실패
+   */
+  favorites: 'seeded' | 'empty' | 'onlyInactive' | 'loadFailOnce';
+  /** 찜 저장: failOnce는 첫 저장이 실패 → 화면을 되돌리고 토스트 */
+  favoriteSave: 'ok' | 'failOnce';
+  /** 마이의 누적 기록: newUser는 주문이 하나도 없는 사용자(Zero State) / failOnce는 누적 기록 섹션만 실패 */
+  myRecord: 'ok' | 'newUser' | 'failOnce';
+  /** 알림 설정: loadFailOnce는 첫 조회 실패 / saveFailOnce는 첫 저장 실패 → 스위치를 되돌리고 토스트 */
+  notif: 'ok' | 'loadFailOnce' | 'saveFailOnce';
+  /** 앱 실행 절차: firstRun은 매번 처음 실행처럼 온보딩부터 / readFails는 완료 여부를 읽지 못함(처음으로 본다) */
+  launch: 'normal' | 'firstRun' | 'readFails';
+  /** 최근 검색어: seeded는 기기에 저장된 것이 없을 때 예시 10개를 보여준다 */
+  recentSearches: 'none' | 'seeded';
   /** 응답 지연(ms). 로딩 상태를 보기 위한 값 */
   delayMs: number;
 };
@@ -102,6 +123,15 @@ const BASE: MockScenario = {
   reviewWrite: 'ok',
   reviewDelete: 'ok',
   helpful: 'ok',
+  search: 'ok',
+  popular: 'ok',
+  storeList: 'ok',
+  favorites: 'seeded',
+  favoriteSave: 'ok',
+  myRecord: 'ok',
+  notif: 'ok',
+  launch: 'normal',
+  recentSearches: 'none',
   delayMs: 400,
 };
 
@@ -162,6 +192,23 @@ const SCENARIOS = {
   reviewConflict: { ...BASE, auth: 'member', reviewWrite: 'revisionConflictOnce' },
   reviewDeleteFails: { ...BASE, auth: 'member', reviewDelete: 'failOnce' },
   helpfulFails: { ...BASE, auth: 'member', helpful: 'failOnce' },
+
+  // ---- 묶음 4: 검색·찜·마이·시작 (Guest로 시작하면 찜·마이의 로그인 유도를 볼 수 있다) ----
+  searchFails: { ...BASE, search: 'failOnce' },
+  popularFails: { ...BASE, popular: 'failOnce' },
+  popularEmpty: { ...BASE, popular: 'empty' },
+  recentSeeded: { ...BASE, recentSearches: 'seeded' },
+  categoryFails: { ...BASE, storeList: 'failOnce' },
+  favoritesEmpty: { ...BASE, auth: 'member', favorites: 'empty' },
+  favoritesOnlyInactive: { ...BASE, auth: 'member', favorites: 'onlyInactive' },
+  favoritesFails: { ...BASE, auth: 'member', favorites: 'loadFailOnce' },
+  favoriteSaveFails: { ...BASE, auth: 'member', favoriteSave: 'failOnce' },
+  myNewUser: { ...BASE, auth: 'member', myRecord: 'newUser', history: 'empty' },
+  myRecordFails: { ...BASE, auth: 'member', myRecord: 'failOnce' },
+  notifLoadFails: { ...BASE, auth: 'member', notif: 'loadFailOnce' },
+  notifSaveFails: { ...BASE, auth: 'member', notif: 'saveFailOnce' },
+  firstRun: { ...BASE, launch: 'firstRun' },
+  launchReadFails: { ...BASE, launch: 'readFails' },
 } satisfies Record<string, MockScenario>;
 
 export type MockScenarioName = keyof typeof SCENARIOS;

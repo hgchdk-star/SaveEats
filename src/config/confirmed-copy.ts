@@ -55,4 +55,15 @@ export const confirmedCopy = {
   reviewWrite: '리뷰 쓰기',
   reviewWritten: '리뷰 작성 완료 · 보기',
   reviewExpired: '리뷰 작성 기간이 지났어요',
+
+  /** 기획서 11.4 · FR-HOME-003 검색창 문구. 홈 검색창과 검색 탭이 같은 문구를 쓴다 */
+  searchPlaceholder: '오늘은 뭐가 먹고 싶으세요?',
+
+  /** 기획서 44 · FR-ONB-003 온보딩 3페이지 제목, FR-ONB-004 마지막 CTA */
+  onboardingTitles: ['먹고 싶은 메뉴를\n평소처럼 골라보세요', '음식 대신 주문금액이\n내 계좌로 배달돼요', '주문하듯,\n내 계좌로'],
+  onboardingStart: 'SaveEats 시작하기',
+
+  /** 기획서 37 · FR-MY-006 주문이 하나도 없는 사용자의 마이 */
+  myZeroTitle: '아직 SaveEats 주문이 없어요.',
+  myZeroAction: '메뉴 둘러보기',
 } as const;

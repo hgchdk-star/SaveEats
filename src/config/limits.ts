@@ -36,6 +36,19 @@ export const LIMITS = {
   unreadPollMs: 15000,
   /** 읽음 저장 실패 시 조용히 다시 시도하는 간격 (HIST-007: 1·2·4초, 최대 3회) */
   readRetryDelaysMs: [1000, 2000, 4000],
+
+  /** 최근 검색어 최대 개수. 이 기기에만 저장한다 (묶음4 #1 · API-002) */
+  recentSearchMax: 10,
+  /** 입력 후 검색까지 기다리는 시간 (API-002 기술안) */
+  searchDebounceMs: 300,
+  /** 검색어는 앞뒤 공백을 지운 뒤 1자 이상 (계약 초안 3.1 · 서정 확인 2026-10-08) */
+  searchMinLength: 1,
+  /** 검색 입력창은 50자까지만 입력된다. 서버 보호용 상한이라 오류 문구는 띄우지 않는다 (계약 초안 6.2) */
+  searchMaxLength: 50,
+  /** 검색·카테고리·찜 목록 한 번에 불러오는 수 (계약 초안 3.1 기본 20, 최대 50) */
+  storeListPageSize: 20,
+  /** Splash 최소 표시 시간. PRD 1.9 미결정이라 시안 값 (묶음4 Splash) */
+  splashMinMs: 900,
 } as const;
 
 /** 최종 주문 확인 고지 버전. 표시한 고지 문구의 버전을 요청에 함께 보낸다 (ORD-004) */
