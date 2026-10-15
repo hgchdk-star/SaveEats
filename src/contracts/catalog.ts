@@ -67,6 +67,18 @@ export interface StoreCardDto {
   isFavorite: boolean | null;
 }
 
+/**
+ * 검색 결과 가게 카드 (`search_stores`, 계약 home-search 3.1절).
+ * 가게 카드에 매칭 메뉴가 더해진다. 카드에는 `matchingMenu ?? representativeMenu`를 보여준다.
+ */
+export interface SearchStoreCardDto extends StoreCardDto {
+  /**
+   * 메뉴 이름이 검색어와 일치해서 걸린 경우의 매칭 메뉴 (FR-SRCH-005).
+   * 가게 이름·카테고리로만 걸리면 null. 품절 메뉴도 검색되며 isSoldOut으로 표시한다.
+   */
+  matchingMenu: RepresentativeMenuDto | null;
+}
+
 /** 내 찜 목록 항목. 최근 찜 순으로 정렬된다 */
 export interface FavoriteStoreCardDto extends StoreCardDto {
   isFavorite: true;
