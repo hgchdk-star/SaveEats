@@ -7,4 +7,6 @@ export const LIMITS = {
   /** 기획서 11.3 · FR-HOME-009 */
   recentViewedMax: 10,
   toastDurationMs: 3000,
+  /** 서버(Supabase) 조회 제한 시간. 넘으면 실패로 보고 오류 상태를 보여준다 */
+  serverRequestTimeoutMs: 10000,
 } as const;
