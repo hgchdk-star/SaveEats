@@ -364,3 +364,39 @@ from v
 on conflict (id) do update set
   group_id = excluded.group_id, name = excluded.name, additional_price = excluded.additional_price,
   is_active = excluded.is_active, is_sold_out = excluded.is_sold_out, sort_order = excluded.sort_order;
+
+-- ===========================================================================
+-- 3부. 홈 "지금 많이 찾는 메뉴"용 인기 표시 (list_popular_menus 확인용, 가상 값)
+-- ===========================================================================
+-- 새 가게·메뉴를 추가하지 않고 기존 가상 메뉴에 is_popular / popularity_score만 준다.
+-- popularity_score는 순서를 정하는 서버 내부 값이다. 앱 응답과 화면에는 나오지 않는다 (FR-HOME-005).
+-- 실제 이용 횟수가 아니라 개발용 가상 순서다.
+--
+-- 노출 대상 12개: 점수가 서로 달라 순서가 눈에 보이고, 김치찌개·아메리카노는 같은 점수(이름순 확인용).
+--   기본 10개 상한이면 점수 55까지 10개, 20개까지 요청하면 12개가 나온다.
+-- 일부러 제외되는 3개(점수를 가장 높게 줘서, 제외 규칙이 없으면 맨 위에 보이게 함):
+--   반반치킨(품절), QA 비활성 메뉴(비활성), 페퍼로니 피자(영업 종료 가게 '테스트 피자집')
+-- 값이 이미 같으면 UPDATE하지 않으므로 다시 적용해도 catalog_revision이 오르지 않는다.
+-- (처음 적용할 때 표시가 바뀌는 메뉴는 catalog_revision이 1 오른다. 트리거가 모든 컬럼 변경을 추적하기 때문)
+with v (menu_id, score) as (values
+  ('30000000-0000-4000-8000-000000000701'::uuid, 95),                -- 치즈버거
+  (md5('dev-seed-v1:menu:ca-fried')::uuid,       90),                -- 오후 후라이드
+  (md5('dev-seed-v1:menu:cm-malatang')::uuid,    85),                -- 마라탕
+  (md5('dev-seed-v1:menu:bm-rose')::uuid,        80),                -- 로제떡볶이
+  ('30000000-0000-4000-8000-000000000101'::uuid, 75),                -- 후라이드치킨
+  (md5('dev-seed-v1:menu:kg-pork')::uuid,        70),                -- 돼지국밥
+  (md5('dev-seed-v1:menu:cf-latte')::uuid,       65),                -- 카페라떼
+  ('30000000-0000-4000-8000-000000000401'::uuid, 60),                -- 김치찌개 (아메리카노와 같은 점수)
+  ('30000000-0000-4000-8000-000000000801'::uuid, 60),                -- 아메리카노
+  (md5('dev-seed-v1:menu:jr-tonkotsu')::uuid,    55),                -- 돈코츠라멘
+  (md5('dev-seed-v1:menu:bg-classic')::uuid,     50),                -- 클래식버거
+  ('30000000-0000-4000-8000-000000000802'::uuid, 45),                -- 치즈케이크
+  ('30000000-0000-4000-8000-000000000103'::uuid, 100),               -- 반반치킨 (품절 → 제외)
+  ('30000000-0000-4000-8000-000000000105'::uuid, 99),                -- QA 비활성 메뉴 (비활성 → 제외)
+  ('30000000-0000-4000-8000-000000000301'::uuid, 98)                 -- 페퍼로니 피자 (영업 종료 가게 → 제외)
+)
+update public.menus m
+set is_popular = true, popularity_score = v.score
+from v
+where m.id = v.menu_id
+  and (m.is_popular is distinct from true or m.popularity_score is distinct from v.score);
