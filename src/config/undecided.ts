@@ -50,4 +50,27 @@ export const UNDECIDED = {
   pendingAutoExpiry: null,
   /** 묶음2 #8 · 토스에 은행·계좌·금액을 미리 채워 열지 않는다. 실기기 PoC 전까지 끈다 */
   tossPrefill: false,
+
+  /* ---------- 내역·리뷰 (묶음 3의 [미결정 #1~#8]) ---------- */
+
+  /** 묶음3 #1 · 처음 만든 PENDING(NULL→PENDING) 이벤트에도 빨간 점을 단다. 명세 초기 기술안이며 UX 검수 전 (DB-007) */
+  initialPendingEventUnread: true,
+  /** 묶음3 #2 · 리뷰 작성자는 실명을 마스킹한 표시명만 보여준다. 탈퇴 사용자 처리는 없다 (OPEN-DB-004·005) */
+  reviewAuthorDisplay: 'maskedRealName',
+  /** 묶음3 #3 · 여러 메뉴를 주문했으면 "대표 메뉴 외 N개"로 보여준다 (OPEN-DB-008) */
+  multiMenuOrderLabel: 'firstMenuPlusCount',
+  /**
+   * 묶음3 #4 · 리뷰 신고(SHOULD)는 시트에 항목만 두고 신고 접수 화면은 "준비 중" 화면으로 보낸다.
+   * 신고 진입 위치: 프로토타입은 SaveEats 리뷰 화면에만 두었지만, 이번 구현 요청에 따라 가게 상세 리뷰 탭에도 둔다.
+   */
+  reviewReport: 'sheetItemsOnly',
+  reviewReportEntries: { reviewListScreen: true, storeReviewTab: true },
+  /** 묶음3 #5 · 내역 상단 카드와 이번 달 요약 화면이 같은 컴포넌트(MonthlySummary)를 쓴다 */
+  monthlySummaryComponent: 'shared',
+  /** 묶음3 #6 · 사진 업로드가 실패하면 사진만 다시 시도한다. 땡김도·글은 유지하고, 사진을 몰래 빼고 저장하지 않는다 (OPEN-DB-007) */
+  reviewPhotoUploadFailure: 'retryPhotoKeepText',
+  /** 묶음3 #7 · 리뷰 알림 발송과 알림함은 이번에 없다. 알림 설정의 스위치는 설정값일 뿐이다 */
+  reviewNotifications: false,
+  /** 묶음3 #8 · 이번 달 요약의 "가장 많이 고른 음식"은 카테고리 기준, 동률이면 최근 주문 쪽 (PRD 41.9) */
+  monthlyTopFoodBasis: 'category',
 } as const;
