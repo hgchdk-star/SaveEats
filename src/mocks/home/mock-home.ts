@@ -1,7 +1,8 @@
 import type { StoreCardDto } from '@/contracts/catalog';
 import type { Uuid, Won } from '@/contracts/common';
-import { mockCategories } from '@/mocks/catalog/data';
+import { mockCategories, mockPopularMenus } from '@/mocks/catalog/data';
 import { mockCatalog } from '@/mocks/catalog/mock-catalog-repository';
+import { UNDECIDED } from '@/config/undecided';
 import { mockDelay, mockScenario } from '@/mocks/scenario';
 import { RepositoryError } from '@/services/catalog/catalog-repository';
 
@@ -20,6 +21,9 @@ export type MockBannerTarget = { type: 'STORE' | 'MENU' | 'CATEGORY'; id: Uuid }
 
 /** 임시 타입: 배너. 문구·내용이 미결정(묶음1 #9)이라 화면은 자리만 그리고 title은 보여주지 않는다 */
 export type MockBanner = { id: string; title: string; imageRef: string | null; target: MockBannerTarget };
+
+/** 임시 타입: 메뉴 카드 (계약 초안 MenuCardDto). 홈 인기 메뉴와 최근 본 메뉴가 같이 쓴다 */
+export type MockMenuCard = MockRecentMenu;
 
 /** 임시 타입: 최근 본 메뉴 (계약 초안 4.3절 MenuCardDto와 같은 모양). 가게 정보가 있어 영업 종료 여부를 알 수 있다 */
 export type MockRecentMenu = {
@@ -70,6 +74,35 @@ export const mockHome = {
     }
     if (mockScenario.homeRecommended === 'empty') return [];
     return mockCatalog.recommendedStoreCards();
+  },
+
+  /**
+   * 홈 인기 메뉴 (계약 초안 6.1절 list_popular_menus). 응답은 MenuCardDto이고 점수·순위는 없다.
+   * 기준: is_popular인 활성 메뉴(활성 가게) 중 popularity_score 내림차순 → 이름 → id. 품절 메뉴는 뺀다.
+   * 영업 종료 가게의 메뉴는 서버가 뺀다(서정 확인 전, UNDECIDED.popularMenusExcludeClosedStores). 개수는 기본 10, 1~20.
+   */
+  async listPopularMenus(limit = 10): Promise<MockMenuCard[]> {
+    await request();
+    if (!Number.isInteger(limit) || limit < 1 || limit > 20) {
+      throw new RepositoryError({ code: 'INVALID_INPUT', category: 'VALIDATION', retryable: false, outcomeUnknown: false, correlationId: null });
+    }
+    if (mockScenario.homePopular === 'error') {
+      throw new RepositoryError({ code: 'INTERNAL_ERROR', category: 'INTERNAL', retryable: true, outcomeUnknown: false, correlationId: null });
+    }
+    if (mockScenario.homePopular === 'empty') return [];
+    const cards: { score: number; card: MockMenuCard }[] = [];
+    for (const [menuId, score] of Object.entries(mockPopularMenus)) {
+      const menu = mockCatalog.activeMenu(menuId);
+      const store = menu ? mockCatalog.store(menu.storeId) : null;
+      if (!menu || !store || menu.isSoldOut) continue;
+      if (UNDECIDED.popularMenusExcludeClosedStores && !store.isOpen) continue;
+      cards.push({
+        score,
+        card: { id: menu.id, name: menu.name, imageRef: menu.imageRef, price: menu.price, isSoldOut: menu.isSoldOut, store: { id: store.id, name: store.name, isOpen: store.isOpen } },
+      });
+    }
+    cards.sort((a, b) => b.score - a.score || (a.card.name < b.card.name ? -1 : a.card.name > b.card.name ? 1 : a.card.id < b.card.id ? -1 : 1));
+    return cards.slice(0, limit).map((c) => c.card);
   },
 
   /** 최근 본 가게: 요청한 id 순서를 유지하고, 비활성·없는 id는 빠진다 */

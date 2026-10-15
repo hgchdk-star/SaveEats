@@ -12,6 +12,8 @@ export type MockScenario = {
   network: 'online' | 'offline' | 'error';
   /** 홈 추천 가게: ok / empty(0개) / error(그 섹션만 실패) */
   homeRecommended: 'ok' | 'empty' | 'error';
+  /** 홈 인기 메뉴: ok / empty(0개 → 섹션 숨김) / error(그 섹션만 실패) */
+  homePopular: 'ok' | 'empty' | 'error';
   /** 장바구니 서버 확인(CART-008) 결과 */
   cartValidation:
     | 'valid'
@@ -32,6 +34,7 @@ const BASE: MockScenario = {
   auth: 'guest',
   network: 'online',
   homeRecommended: 'ok',
+  homePopular: 'ok',
   cartValidation: 'valid',
   cartSaveFails: false,
   delayMs: 400,
@@ -46,6 +49,8 @@ const SCENARIOS = {
   error: { ...BASE, network: 'error', cartValidation: 'unavailable' },
   homeEmpty: { ...BASE, homeRecommended: 'empty' },
   homeSectionError: { ...BASE, homeRecommended: 'error' },
+  homePopularEmpty: { ...BASE, homePopular: 'empty' },
+  homePopularError: { ...BASE, homePopular: 'error' },
   cartPriceChanged: { ...BASE, auth: 'member', cartValidation: 'priceChanged' },
   cartMenuSoldOut: { ...BASE, auth: 'member', cartValidation: 'menuSoldOut' },
   cartOptionSoldOut: { ...BASE, auth: 'member', cartValidation: 'optionSoldOut' },
