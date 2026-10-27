@@ -152,7 +152,7 @@ export function MyReviewsScreen({ focusReviewId }: { focusReviewId?: string }) {
                 </>
               )}
             </View>
-          ) : null
+          ) : undefined
         }
         renderItem={({ item: r }) => (
           <MyReviewCard
