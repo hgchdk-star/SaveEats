@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, type ComponentRef } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
 
 import { draftCopy } from '@/config/draft-copy';
@@ -25,7 +25,7 @@ const copy = draftCopy.start;
  */
 export function OnboardingPager({ pages, page, onPageChange }: OnboardingPagerProps) {
   const { width } = useWindowDimensions();
-  const scroll = useRef<ScrollView>(null);
+  const scroll = useRef<ComponentRef<typeof ScrollView>>(null);
   const current = useRef(page);
 
   // 버튼으로 페이지가 바뀌면 그 위치로 옮긴다

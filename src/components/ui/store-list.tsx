@@ -33,7 +33,7 @@ export function StoreList<T>({ data, keyExtractor, renderItem, countLabel, heade
           <Text style={styles.count}>{countLabel}</Text>
         </View>
       }
-      ListFooterComponent={footer ? <View style={styles.footer}>{footer}</View> : null}
+      ListFooterComponent={footer ? <View style={styles.footer}>{footer}</View> : undefined}
       contentContainerStyle={styles.content}
       onEndReachedThreshold={0.5}
       onEndReached={onEndReached}
