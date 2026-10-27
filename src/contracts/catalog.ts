@@ -82,6 +82,20 @@ export interface MenuSummaryDto {
   isSoldOut: boolean;
 }
 
+/**
+ * 메뉴 카드 (계약 home-search 4.3절). 홈 "지금 많이 찾는 메뉴"(`list_popular_menus`)와
+ * 최근 본 메뉴(`list_menu_cards_by_ids`)가 같이 쓴다. 점수·순위·주문 수 같은 숫자는 담지 않는다 (FR-HOME-005).
+ */
+export interface MenuCardDto {
+  id: Uuid;
+  name: string;
+  imageRef: string | null;
+  price: Won;
+  isSoldOut: boolean;
+  /** 메뉴가 속한 가게. isOpen=false면 새로 담을 수 없다 (FR-MENU-010) */
+  store: { id: Uuid; name: string; isOpen: boolean };
+}
+
 export interface StoreDetailDto {
   id: Uuid;
   name: string;
