@@ -80,6 +80,12 @@ function checkStoreCard(v: unknown): StoreCardDto {
   return s as unknown as StoreCardDto;
 }
 
+/** list_recommended_stores 응답: StoreCardDto[] (페이지 없음) */
+export function parseStoreCardList(data: unknown): StoreCardDto[] {
+  need(Array.isArray(data));
+  return (data as unknown[]).map(checkStoreCard);
+}
+
 /** list_stores 응답: { items, nextCursor, hasMore } */
 export function parseStoreCardPage(data: unknown): Page<StoreCardDto> {
   need(isObj(data) && Array.isArray(data.items) && isBool(data.hasMore) && isStrOrNull(data.nextCursor));

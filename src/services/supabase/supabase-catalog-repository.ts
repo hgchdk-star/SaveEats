@@ -1,9 +1,9 @@
-import { CATALOG_RPC } from '@/contracts/catalog';
+import { CATALOG_RPC, type StoreCardDto } from '@/contracts/catalog';
 import { LIMITS } from '@/config/limits';
 import { RepositoryError, type CatalogRepository } from '@/services/catalog/catalog-repository';
 
 import { getSupabaseClient } from './client';
-import { parseCategories, parseMenuDetail, parseStoreCardPage, parseStoreDetail, toRepositoryError } from './rpc-result';
+import { parseCategories, parseMenuDetail, parseStoreCardList, parseStoreCardPage, parseStoreDetail, toRepositoryError } from './rpc-result';
 
 /**
  * RPC 하나를 부르고 계약 모양으로 바꿔 돌려준다. 오류는 모두 RepositoryError로 정규화한다.
@@ -28,6 +28,18 @@ async function call<T>(name: string, args: Record<string, unknown> | undefined, 
   } finally {
     clearTimeout(timer);
   }
+}
+
+/** 홈 추천 가게 RPC. 계약 catalog@0.2의 이름이라 아직 CATALOG_RPC(catalog@0.1)에 없다. 계약이 합쳐지면 그쪽으로 옮긴다 */
+const LIST_RECOMMENDED_STORES = 'list_recommended_stores';
+
+/**
+ * 홈 추천 가게 (계약 4.2절). is_recommended인 활성 가게를 이름 → id 순으로 `limit`곳(1~20, 서버 기본 10).
+ * 영업 종료 가게도 isOpen=false로 포함된다. 범위 밖이면 서버가 INVALID_INPUT을 낸다.
+ * 홈 화면이 CatalogRepository가 아니라 이 함수를 직접 쓴다(홈 계약은 catalog@0.2라 저장소 인터페이스에 아직 넣지 않았다).
+ */
+export function listRecommendedStoresFromServer(limit?: number): Promise<StoreCardDto[]> {
+  return call(LIST_RECOMMENDED_STORES, { p_limit: limit ?? null }, parseStoreCardList);
 }
 
 /**
