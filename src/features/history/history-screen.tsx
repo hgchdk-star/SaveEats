@@ -1,6 +1,6 @@
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, AppState, FlatList, RefreshControl, StyleSheet, Text, View, type ViewToken } from 'react-native';
+import { ActivityIndicator, AppState, FlatList, RefreshControl, StyleSheet, Text, View, type FlatListProps } from 'react-native';
 
 import { PrimaryButton, SecondaryButton } from '@/components/ui/button';
 import { EmptyState, ErrorState } from '@/components/ui/feedback-states';
@@ -20,6 +20,9 @@ import { formatOrderDate } from '@/utils/date';
 
 import { orderMenuLabel, reviewButtonOf, rowStatus, unreadEventIdsOf } from './history-model';
 import { useHistoryStore } from './history-store';
+
+/** SDK 58(RN 0.88)부터 ViewToken이 react-native에서 바로 나오지 않아 FlatList 속성에서 가져온다 */
+type ViewableChange = Parameters<NonNullable<FlatListProps<unknown>['onViewableItemsChanged']>>[0];
 
 const copy = draftCopy.history;
 
@@ -41,7 +44,7 @@ export function HistoryScreen() {
   const activeRef = useRef(AppState.currentState === 'active');
 
   // FlatList는 이 콜백과 설정이 렌더마다 바뀌면 안 되므로 한 번만 만든다
-  const [onViewableItemsChanged] = useState(() => ({ viewableItems }: { viewableItems: ViewToken[] }) => {
+  const [onViewableItemsChanged] = useState(() => ({ viewableItems }: ViewableChange) => {
     if (!focusedRef.current || !activeRef.current) return;
     const { pendingReadIds: pending, markRead } = useHistoryStore.getState();
     const ids = viewableItems.flatMap((token) => (token.isViewable && token.item ? unreadEventIdsOf(token.item as MockHistoryRow, pending) : []));
@@ -165,7 +168,7 @@ export function HistoryScreen() {
         ListHeaderComponent={header}
         ListEmptyComponent={<EmptyState icon="receipt" title={copy.emptyTitle} action={<SecondaryButton onPress={() => router.navigate('/')}>{copy.emptyAction}</SecondaryButton>} />}
         ListFooterComponent={
-          rows.length === 0 ? null : (
+          rows.length === 0 ? undefined : (
             <View style={styles.footer}>
               {pageLoad === 'loading' ? (
                 <View accessibilityLabel={copy.loadingMore} style={styles.footerRow}>
