@@ -20,7 +20,7 @@
 
 ## 스택
 
-- Expo SDK 57 + Expo Router (라우트는 `src/app/`), TypeScript strict, npm (`package-lock.json`)
+- Expo SDK 58 + Expo Router (라우트는 `src/app/`), TypeScript strict, npm (`package-lock.json`)
 - 경로 별칭: `@/*` → `src/*`, `@/assets/*` → `assets/*`
 - 백엔드: Supabase (`supabase/`)
 
