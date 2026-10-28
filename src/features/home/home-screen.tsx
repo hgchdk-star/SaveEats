@@ -22,6 +22,8 @@ import { useSession } from '@/services/session';
 import { colors, spacing } from '@/theme';
 
 import { BannerCarousel } from './banner-carousel';
+import { homeUsesServer, listHomePopularMenus, listHomeRecommendedStores } from './home-data';
+import { PopularMenuSection } from './popular-menu-section';
 import { RecentSection } from './recent-section';
 import { SectionHeader } from './section-header';
 
@@ -39,14 +41,16 @@ export function HomeScreen() {
   const [categoryCode, setCategoryCode] = useState(ALL);
 
   const categories = useAsync('home:categories', () => catalogRepository.listCategories());
-  const banners = useAsync('home:banners', () => mockHome.listBanners());
-  const recommended = useAsync(`home:recommended:${session.isMember}`, () => mockHome.listRecommendedStores());
+  const banners = useAsync('home:banners', () => (homeUsesServer ? Promise.resolve([]) : mockHome.listBanners()));
+  const popular = useAsync(`home:popular:${session.isMember}`, () => listHomePopularMenus());
+  const recommended = useAsync(`home:recommended:${session.isMember}`, () => listHomeRecommendedStores());
 
   // 세 섹션이 모두 실패했다면 홈 전체 오류로 본다 (오프라인·서버 오류)
-  const allFailed = categories.status === 'error' && banners.status === 'error' && recommended.status === 'error';
+  const allFailed = categories.status === 'error' && banners.status === 'error' && popular.status === 'error' && recommended.status === 'error';
   const retryAll = () => {
     categories.reload();
     banners.reload();
+    popular.reload();
     recommended.reload();
   };
 
@@ -92,7 +96,7 @@ export function HomeScreen() {
               ) : null}
             </View>
 
-            {/* 배너는 장식이라 실패하거나 비어 있으면 자리를 접는다 */}
+            {/* 배너는 장식이라 실패하거나 비어 있으면 자리를 접는다. 서버 모드에서는 배너를 불러오지 않아 항상 접힌다 */}
             {banners.status === 'ok' && banners.data.length > 0 ? (
               <View style={styles.section}>
                 <BannerCarousel
@@ -112,7 +116,8 @@ export function HomeScreen() {
               </View>
             ) : null}
 
-            {/* 홈 "지금 많이 찾는 메뉴": 노출 기준과 문구가 정해질 때까지 자리만 비워 둔다 (getHome 계약에서 결정) */}
+            {/* 지금 많이 찾는 메뉴: 0개면 섹션을 숨기고, 실패하면 이 섹션만 오류 */}
+            <PopularMenuSection state={popular} />
 
             {/* 추천 가게: 0개면 섹션을 숨긴다 */}
             {recommended.status === 'loading' ? (
@@ -138,7 +143,8 @@ export function HomeScreen() {
               </View>
             ) : null}
 
-            <RecentSection />
+            {/* 서버 모드에서는 숨긴다: 최근 본 항목은 아직 Mock에서 찾아서 서버 id가 지워진다 (home-data.ts) */}
+            {homeUsesServer ? null : <RecentSection />}
           </>
         )}
       </ScrollView>

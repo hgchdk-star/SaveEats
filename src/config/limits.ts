@@ -7,6 +7,8 @@ export const LIMITS = {
   /** 기획서 11.3 · FR-HOME-009 */
   recentViewedMax: 10,
   toastDurationMs: 3000,
+  /** 서버(Supabase) 조회 제한 시간. 넘으면 실패로 보고 오류 상태를 보여준다 */
+  serverRequestTimeoutMs: 10000,
   /** 계좌번호 최소 자릿수 (프로토타입 값). 은행별 형식 검증은 서버가 한다 */
   accountNumberMinLength: 10,
   /** 비밀번호 최소 글자 수 (회원가입 도움말 "8자 이상") */

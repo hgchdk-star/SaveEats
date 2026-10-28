@@ -15,6 +15,11 @@ export const UNDECIDED = {
    * 서정 확정(10/11): 10/1 결정대로 막는다. 이전 10/8 "허용" 답은 10/1 결정을 놓친 것이었다.
    */
   preparingStoreOrderable: false,
+  /**
+   * 홈 "지금 많이 찾는 메뉴"에서 영업 종료 가게의 메뉴를 뺀다 (서버 list_popular_menus 규칙과 같게).
+   * 서정 확인 2026-10-14로 확정됐다 (계약 4.4절). 이 설정은 Mock에만 쓴다. 서버는 같은 규칙으로 뺀다. 품절 메뉴는 이 설정과 상관없이 항상 뺀다.
+   */
+  popularMenusExcludeClosedStores: true,
   /** 묶음1 #3 · 같은 메뉴·옵션 조합의 합계가 10을 넘으면 담지 않고 알린다. 자동으로 10개로 줄이지 않는다 */
   sameConfigurationOverLimit: 'rejectWithToast',
   /** 묶음1 #4 · 담기에 성공하면 이전 화면으로 돌아가 토스트 [보기]를 띄운다 */
