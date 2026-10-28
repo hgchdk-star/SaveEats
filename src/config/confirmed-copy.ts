@@ -28,4 +28,31 @@ export const confirmedCopy = {
   confirmSaveFailedSub: '송금을 이미 완료했다면 다시 송금하지 마세요.',
   confirmSaveRetry: '상태 저장 다시 시도',
   confirmSaveHistory: '내역 확인',
+
+  /** 리뷰: 제목은 어디서나 "SaveEats 리뷰". 점수는 "별점"이 아니라 "땡김도" (DS 11장 · 기획서 25~31) */
+  reviewTitle: 'SaveEats 리뷰',
+  /** 기획서 29 · PRD FR-MYREV-006 */
+  myReviewsEmpty: '아직 작성한 SaveEats 리뷰가 없어요.',
+  /** DS 11장: 리뷰 작성 가능 기간 안내 */
+  reviewWindowHelp: '리뷰는 주문 완료 후 30일 동안 작성할 수 있어요.',
+  /** DS 11장: 삭제 확인. 주문 완료 후 30일이 지난 리뷰는 경고 한 줄을 더한다 */
+  reviewDeleteTitle: '리뷰를 삭제할까요?',
+  reviewDeleteDesc: '삭제한 리뷰는 다시 복구할 수 없어요.',
+  reviewDeleteWarnPastWindow: '삭제하면 이 주문에는 리뷰를 다시 작성할 수 없어요.',
+  reviewDeleted: '리뷰가 삭제됐어요.',
+  /** REV-009 화면 카피 */
+  reviewDeadlineExceeded: '리뷰 작성 기간이 지났어요.',
+  reviewRevisionConflict: '리뷰가 변경됐어요. 최신 내용을 확인해주세요.',
+  reviewPhotoFailed: '사진을 올리지 못했어요. 다시 시도해주세요.',
+  reviewSaveFailed: '리뷰를 저장하지 못했어요. 다시 시도해주세요.',
+  /** 리뷰 정렬 (기획서 27): "별점" 표현을 쓰지 않는다 */
+  reviewSortLatest: '최신순',
+  reviewSortHelpful: '리뷰 도움순',
+  reviewSortRatingDesc: '땡김도 높은 순',
+  reviewSortRatingAsc: '땡김도 낮은 순',
+  reviewHelpful: '도움돼요',
+  reviewMine: '내 리뷰',
+  reviewWrite: '리뷰 쓰기',
+  reviewWritten: '리뷰 작성 완료 · 보기',
+  reviewExpired: '리뷰 작성 기간이 지났어요',
 } as const;

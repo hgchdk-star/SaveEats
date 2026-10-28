@@ -32,6 +32,7 @@ import { useCartStore } from '@/features/cart/cart-store';
 import { useCartQuantity } from '@/features/cart/use-cart-quantity';
 import { useFavorite } from '@/features/favorites/favorites-store';
 import { useRecentViewedStore } from '@/features/home/recent-viewed-store';
+import { ReviewListSection } from '@/features/review/review-list-section';
 import { useAsync } from '@/hooks/use-async';
 import { catalogRepository } from '@/services';
 import { resolveImageUrl } from '@/services/image';
@@ -182,24 +183,8 @@ export function StoreDetailScreen({ storeId }: { storeId: string }) {
         ) : null}
 
         {tab === 'review' ? (
-          // 리뷰 목록과 정렬·사진 필터는 묶음 3에서 만든다. 지금은 요약만 보여준다
-          <View style={styles.reviewSummary}>
-            <Text accessibilityRole="header" style={styles.reviewTitle}>
-              SaveEats 리뷰
-            </Text>
-            {reviewCount > 0 && rating !== null ? (
-              <>
-                <View style={styles.reviewScore}>
-                  <Text style={styles.reviewLabel}>땡김도</Text>
-                  <Text style={styles.reviewAverage}>{rating.toFixed(1)}</Text>
-                  <CravingRating value={rating} />
-                </View>
-                <Text style={styles.reviewCount}>SaveEats 리뷰 {formatCount(reviewCount)}</Text>
-              </>
-            ) : (
-              <Text style={styles.reviewCount}>아직 리뷰가 없어요</Text>
-            )}
-          </View>
+          // 목록·정렬·사진 필터·도움돼요·신고는 ReviewListSection이 맡는다. 조회 실패는 '리뷰 0개'와 다르게 보여준다
+          <ReviewListSection scope={{ type: 'store', id: loaded.id }} reportEnabled={UNDECIDED.reviewReportEntries.storeReviewTab} errorDescription={draftCopy.review.loadErrorDescInStore} />
         ) : null}
 
         {tab === 'info' ? (

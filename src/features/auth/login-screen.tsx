@@ -31,6 +31,10 @@ function reasonFor(intent: LoginIntent | null): string {
       return copy.reasonFavorite;
     case 'ACCOUNT':
       return copy.reasonAccount;
+    case 'HISTORY':
+      return draftCopy.history.reasonHistory;
+    case 'HELPFUL':
+      return draftCopy.review.helpfulLoginReason;
     default:
       return copy.reasonDefault;
   }

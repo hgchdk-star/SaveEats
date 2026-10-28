@@ -7,6 +7,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { useCartStore } from '@/features/cart/cart-store';
 import { useRecentViewedStore } from '@/features/home/recent-viewed-store';
+import { recoverOnStart } from '@/features/order/recovery';
 import { ReturnCoordinator } from '@/features/order/return-coordinator';
 import { colors, fontAssets } from '@/theme';
 
@@ -27,6 +28,11 @@ export default function RootLayout() {
     void useCartStore.getState().hydrate();
     void useRecentViewedStore.getState().hydrate();
   }, []);
+
+  // 장바구니를 읽은 뒤에 한 번: 기기에 남은 완료 확인 큐·결과를 모르는 주문 생성 시도를 정리하고 내역 점을 맞춘다
+  useEffect(() => {
+    if (cartStatus !== 'HYDRATING') void recoverOnStart();
+  }, [cartStatus]);
 
   // 글꼴을 못 불러와도 앱은 시스템 글꼴로 열린다
   const ready = (fontsLoaded || fontError) && cartStatus !== 'HYDRATING';
