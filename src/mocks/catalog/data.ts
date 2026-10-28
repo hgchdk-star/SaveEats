@@ -113,3 +113,18 @@ export const mockMenus: MockMenu[] = [
   { id: id(251), storeId: id(106), name: '옛날 가마솥 통닭 한 마리와 매콤 양념 소스, 무 피클 두 개가 함께 나오는 세트', description: '긴 메뉴명이 줄바꿈되는지 보는 가상 메뉴예요. 설명도 길면 카드에서는 두 줄까지만 보이고 상세에서는 모두 보여요.', imageRef: null, price: 24000, catalogRevision: CATALOG_REVISION, isSoldOut: false, isActive: true, sortOrder: 1, optionGroups: [] },
   { id: id(252), storeId: id(106), name: '매콤 양념 소스 추가 구성', description: '소스만 따로 담아요.', imageRef: null, price: 2000, catalogRevision: CATALOG_REVISION, isSoldOut: false, isActive: true, sortOrder: 2, optionGroups: [] },
 ];
+
+/**
+ * Seed 인기 값 (계약 초안 6.1절): is_popular인 메뉴와 popularity_score. 점수는 정렬에만 쓰고 화면·응답에는 내보내지 않는다.
+ * 일부러 넣어 둔 경우: 품절(204 순살 치즈 시즈닝 치킨), 영업 종료 가게(231 마르게리타 피자), 판매하지 않는 메뉴(209)도
+ * 인기로 표시해 두었지만 목록에서는 빠진다.
+ */
+export const mockPopularMenus: Record<Uuid, number> = {
+  [id(202)]: 90,
+  [id(211)]: 85,
+  [id(221)]: 80,
+  [id(201)]: 70,
+  [id(204)]: 95,
+  [id(231)]: 88,
+  [id(209)]: 99,
+};
