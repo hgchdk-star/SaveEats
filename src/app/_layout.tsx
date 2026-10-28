@@ -9,6 +9,7 @@ import { useCartStore } from '@/features/cart/cart-store';
 import { useRecentViewedStore } from '@/features/home/recent-viewed-store';
 import { recoverOnStart } from '@/features/order/recovery';
 import { ReturnCoordinator } from '@/features/order/return-coordinator';
+import { LaunchGate } from '@/features/start/launch-gate';
 import { colors, fontAssets } from '@/theme';
 
 SplashScreen.preventAutoHideAsync();
@@ -57,7 +58,9 @@ export default function RootLayout() {
         <Stack.Screen name="order/cancelled" options={{ gestureEnabled: false }} />
         <Stack.Screen name="order/not-yet" options={{ gestureEnabled: false }} />
         <Stack.Screen name="order/status-error" options={{ gestureEnabled: false }} />
+        <Stack.Screen name="onboarding" options={{ gestureEnabled: false }} />
       </Stack>
+      <LaunchGate />
     </SafeAreaProvider>
   );
 }

@@ -34,6 +34,139 @@ export const draftCopy = {
     toastSignedUp: '가입했어요',
   },
 
+  /** 검색 (㉑ ㉒). 검색창 문구는 확정 문구라 confirmed-copy.ts */
+  search: {
+    recentTitle: '최근 검색어',
+    recentClearAll: '전체 삭제',
+    recentRemove: (term: string) => `‘${term}’ 지우기`,
+    popularTitle: '인기 검색어',
+    popularLoading: '불러오는 중',
+    popularErrorText: '인기 검색어를 불러오지 못했어요',
+    popularRetry: '다시 시도',
+    categoriesTitle: '음식 카테고리',
+    searching: '검색하는 중',
+    errorTitle: '검색하지 못했어요',
+    emptyTitle: (query: string) => `‘${query}’에 맞는 가게가 없어요`,
+    emptyDesc: '가게 이름, 메뉴 이름, 음식 종류로 찾아보세요.',
+    resultCount: (n: number) => `가게 ${n}곳`,
+    /** 다음 페이지가 더 있어 전체 수를 모를 때 */
+    resultCountMore: (n: number) => `가게 ${n}곳 이상`,
+    clear: '지우기',
+    moreFailed: '더 불러오지 못했어요',
+    moreRetry: '다시 시도',
+    loadMore: '가게 더 보기',
+    categoriesError: '음식 카테고리를 불러오지 못했어요',
+  },
+
+  /** 카테고리 가게 목록 (㉓) */
+  category: {
+    all: '전체 가게',
+    errorTitle: '가게를 불러오지 못했어요',
+    emptyTitle: (name: string) => `아직 ${name} 가게가 없어요`,
+    emptyDesc: '다른 음식 카테고리를 골라보세요.',
+    resultCount: (n: number) => `가게 ${n}곳`,
+  },
+
+  /** 찜 (㉔) */
+  favorites: {
+    title: '찜',
+    guestTitle: '로그인하면 찜한 가게를 볼 수 있어요',
+    guestDesc: '가게의 하트를 누르면\n여기에서 다시 볼 수 있어요.',
+    guestAction: '로그인',
+    errorTitle: '찜한 가게를 불러오지 못했어요',
+    emptyTitle: '아직 찜한 가게가 없어요',
+    emptyDesc: '가게의 하트를 누르면\n여기에서 다시 볼 수 있어요.',
+    emptyAction: '메뉴 둘러보기',
+    count: (n: number) => `찜한 가게 ${n}곳`,
+    removed: '찜을 해제했어요',
+    undo: '되돌리기',
+    saveFailed: '찜하지 못했어요. 다시 시도해주세요.',
+    removeFailed: '찜을 해제하지 못했어요. 다시 시도해주세요.',
+    reasonTab: '찜한 가게를 보려면 로그인이 필요해요.',
+  },
+
+  /** 마이 (㉕) */
+  my: {
+    title: '마이',
+    guestTitle: '로그인하면 내 기록을 볼 수 있어요',
+    guestDesc: '주문 기록 · 돈이 배달될 계좌 · 내가 쓴 리뷰를\n여기에서 볼 수 있어요.',
+    guestAction: '로그인',
+    reasonMy: '내 기록을 보려면 로그인이 필요해요.',
+    reasonSettings: '로그인하고 이어서 이용해보세요.',
+    accountTitle: '돈이 배달될 계좌',
+    monthTitle: '이번 달 요약',
+    lifetimeTitle: '누적 기록',
+    lifetimeLine: (count: number, amountLabel: string) => `지금까지 주문 ${count}번 · 내 계좌로 ${amountLabel} 배달`,
+    lifetimeError: '누적 기록을 불러오지 못했어요',
+    lifetimeRetry: '다시 시도',
+    rowReviews: '내가 쓴 리뷰',
+    rowNotifications: '알림 설정',
+    rowSettings: '설정',
+  },
+
+  /** 설정 · 알림 설정 (㉖). 항목 구성은 기획서 60 · FR-SET-001 */
+  settings: {
+    title: '설정',
+    groupAccount: '계정 정보',
+    groupAccountGuest: '계정',
+    groupGeneral: '이용',
+    groupInfo: '정보',
+    name: '이름',
+    email: '이메일',
+    logout: '로그아웃',
+    loginSignup: '로그인 · 회원가입',
+    notifications: '알림 설정',
+    howTo: 'SaveEats 이용 방법',
+    terms: '이용약관',
+    privacy: '개인정보 처리방침',
+    version: '앱 버전',
+    withdraw: '회원 탈퇴',
+    toastLoggedOut: '로그아웃했어요',
+    withdrawTitle: '회원 탈퇴할까요?',
+    withdrawDescs: ['탈퇴하면 이 계정으로 다시 로그인할 수 없어요.', '진행 중인 주문이 있다면 먼저 내역에서 확인해주세요.'],
+    withdrawConfirm: '탈퇴하기',
+    withdrawCancel: '취소',
+  },
+  notifications: {
+    title: '알림 설정',
+    loading: '불러오는 중',
+    errorTitle: '알림 설정을 불러오지 못했어요',
+    groupOrder: '주문 알림',
+    groupRecord: '기록 · 리뷰 알림',
+    orderStatus: '주문 상태 알림',
+    orderStatusDesc: '주문 완료가 필요한 주문과 주문 완료 · 취소 소식',
+    reviewAvailable: '작성할 수 있는 리뷰',
+    reviewAvailableDesc: '주문 완료 후 SaveEats 리뷰를 남길 수 있을 때',
+    monthlyRecord: '월간 기록',
+    monthlyRecordDesc: '지난달 SaveEats 기록이 정리됐을 때',
+    footer: ['서비스 이용에 꼭 필요한 안내는 이 설정과 관계없이 보내요.', '혜택 · 추천 알림은 이 화면과 따로 관리해요.'],
+    saveFailed: '알림 설정을 바꾸지 못했어요. 다시 시도해주세요.',
+  },
+
+  /** Splash · 온보딩 · 이용 방법 (㉗ ㉘). 제목은 확정 문구라 confirmed-copy.ts */
+  start: {
+    splashSub: '주문하듯, 내 계좌로',
+    wordmark: 'SaveEats',
+    onboardingDescs: ['가게와 메뉴를 둘러보고 장바구니에 담아요.', '실제 음식은 주문되지 않아요.\n주문금액만큼 내가 등록한 계좌로 배달돼요.', '로그인 없이 먼저 둘러볼 수 있어요.'],
+    skip: '건너뛰기',
+    next: '다음',
+    howToConfirm: '확인',
+    howToTitle: 'SaveEats 이용 방법',
+    pageOf: (page: number, total: number) => `${page} / ${total}`,
+    artNoFood: '실제 음식 주문 없음',
+    artOrder: '주문하기',
+    artAccount: '내 계좌',
+  },
+
+  /**
+   * 사진 권한 안내 (iOS 사진 보관함 접근 문구). app.json의 expo-image-picker 플러그인 photosPermission과 같은 문장이어야 한다.
+   * app.json은 이 파일을 읽지 못해서 값을 두 곳에 둔다. 바꿀 때는 둘을 함께 고친다.
+   * 카메라·마이크는 쓰지 않아 플러그인에서 끈다 (Android CAMERA·RECORD_AUDIO 권한도 넣지 않음).
+   */
+  permissions: {
+    photosPermission: 'SaveEats 리뷰에 첨부할 사진을 고르려면 사진 보관함에 접근해야 해요.',
+  },
+
   /** 내역 (⑪ ⑬ ⑮) */
   history: {
     title: '내역',

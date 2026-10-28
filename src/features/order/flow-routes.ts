@@ -1,8 +1,6 @@
 import { router } from 'expo-router';
 
-import { draftCopy } from '@/config/draft-copy';
 import { useLoginIntentStore, type LoginIntent } from '@/features/auth/login-intent-store';
-import { showToast } from '@/features/toast/toast-store';
 import { getSession } from '@/services/session';
 
 /**
@@ -75,14 +73,20 @@ export function goHome(): void {
   router.dismissAll();
 }
 
-/* ---------- 아직 연결되지 않은 다른 묶음의 화면. 안내 토스트만 띄운다 ---------- */
-
-function notReady() {
-  showToast({ message: draftCopy.pendingNextStep });
+/** 카테고리 가게 목록. 홈 카테고리 칩 · 검색 전 카테고리 칩이 같은 화면으로 온다 (code가 'all'이면 전체) */
+export function goCategoryStoreList(categoryCode: string): void {
+  router.push({ pathname: '/category/[code]', params: { code: categoryCode } });
 }
 
-/** 홈 카테고리 칩 → 카테고리 가게 목록 (묶음 4) */
-export function goCategoryStoreList(categoryCode: string): void {
-  void categoryCode;
-  notReady();
+/** 마이 › 설정, 알림 설정, SaveEats 이용 방법 */
+export function goSettings(): void {
+  router.push('/settings');
+}
+
+export function goNotificationSettings(): void {
+  router.push('/notifications');
+}
+
+export function goHowTo(): void {
+  router.push('/howto');
 }
