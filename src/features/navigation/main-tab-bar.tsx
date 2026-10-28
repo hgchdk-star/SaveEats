@@ -18,16 +18,19 @@ type MainTabBarProps = BottomTabBarProps & {
   hasUnreadOrderUpdate?: boolean;
 };
 
-/** Expo Router 탭 상태를 BottomNavigation에 연결한다 */
-export function MainTabBar({ state, navigation, hasUnreadOrderUpdate = false }: MainTabBarProps) {
+/**
+ * Expo Router 탭 상태를 BottomNavigation에 연결한다.
+ * SDK 58부터 탭 바는 `navigation` 대신 `emitter`와 `navigateToTab(route.key)`를 받는다 (기본 탭 바와 같은 순서).
+ */
+export function MainTabBar({ state, emitter, navigateToTab, hasUnreadOrderUpdate = false }: MainTabBarProps) {
   const items = TABS.map((tab) => (tab.id === 'history' ? { ...tab, badge: hasUnreadOrderUpdate } : tab));
 
   const handleChange = (id: TabId) => {
     const route = state.routes.find((r) => r.name === id);
     if (!route) return;
-    const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
+    const event = emitter.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
     if (state.routes[state.index]?.key !== route.key && !event.defaultPrevented) {
-      navigation.navigate(route.name, route.params);
+      navigateToTab(route.key);
     }
   };
 
