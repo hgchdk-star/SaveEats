@@ -9,15 +9,16 @@ import { FoodCategoryChip } from '@/components/ui/food-category-chip';
 import { IconButton } from '@/components/ui/icon-button';
 import { Screen } from '@/components/ui/screen';
 import { SearchBarButton } from '@/components/ui/search-bar';
+import { confirmedCopy } from '@/config/confirmed-copy';
 import { draftCopy } from '@/config/draft-copy';
 import { UNDECIDED } from '@/config/undecided';
 import { useCartQuantity } from '@/features/cart/use-cart-quantity';
-import { goAccount, goCategoryStoreList, goLogin } from '@/features/order/pending-routes';
+import { goAccount, goCategoryStoreList } from '@/features/order/flow-routes';
 import { StoreCardItem } from '@/features/store/store-card-item';
 import { useAsync } from '@/hooks/use-async';
 import { mockHome } from '@/mocks/home/mock-home';
 import { catalogRepository } from '@/services';
-import { getSession } from '@/services/session';
+import { useSession } from '@/services/session';
 import { colors, spacing } from '@/theme';
 
 import { BannerCarousel } from './banner-carousel';
@@ -25,7 +26,6 @@ import { PopularMenuSection } from './popular-menu-section';
 import { RecentSection } from './recent-section';
 import { SectionHeader } from './section-header';
 
-const SEARCH_PLACEHOLDER = '오늘은 뭐가 먹고 싶으세요?'; // 기획서 11.4 · FR-HOME-003 확정 문구
 const ALL = 'all';
 
 /**
@@ -36,13 +36,13 @@ export function HomeScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const cartCount = useCartQuantity();
-  const session = getSession();
+  const session = useSession();
   const [categoryCode, setCategoryCode] = useState(ALL);
 
   const categories = useAsync('home:categories', () => catalogRepository.listCategories());
   const banners = useAsync('home:banners', () => mockHome.listBanners());
   const popular = useAsync(`home:popular:${session.isMember}`, () => mockHome.listPopularMenus());
-  const recommended = useAsync('home:recommended', () => mockHome.listRecommendedStores());
+  const recommended = useAsync(`home:recommended:${session.isMember}`, () => mockHome.listRecommendedStores());
 
   // 세 섹션이 모두 실패했다면 홈 전체 오류로 본다 (오프라인·서버 오류)
   const allFailed = categories.status === 'error' && banners.status === 'error' && popular.status === 'error' && recommended.status === 'error';
@@ -51,11 +51,6 @@ export function HomeScreen() {
     banners.reload();
     popular.reload();
     recommended.reload();
-  };
-
-  const onAccount = () => {
-    if (!session.isMember) goLogin({ action: 'ACCOUNT' });
-    else goAccount();
   };
 
   const pickCategory = (code: string) => {
@@ -70,7 +65,7 @@ export function HomeScreen() {
   const header = (
     <View style={[styles.header, { paddingTop: insets.top }]}>
       <View style={styles.headerRow}>
-        <AccountDestinationBar account={session.destinationAccount} onPress={onAccount} />
+        <AccountDestinationBar account={session.destinationAccount} onPress={goAccount} />
         <IconButton icon="cart" label="장바구니" badge={cartCount} onPress={() => router.push('/cart')} />
       </View>
     </View>
@@ -80,7 +75,7 @@ export function HomeScreen() {
     <Screen top={header}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.search}>
-          <SearchBarButton placeholder={SEARCH_PLACEHOLDER} onPress={() => router.navigate('/search')} />
+          <SearchBarButton placeholder={confirmedCopy.searchPlaceholder} onPress={() => router.navigate('/search')} />
         </View>
 
         {allFailed ? (
