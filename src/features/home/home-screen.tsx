@@ -22,7 +22,7 @@ import { useSession } from '@/services/session';
 import { colors, spacing } from '@/theme';
 
 import { BannerCarousel } from './banner-carousel';
-import { homeUsesServer, listHomeRecommendedStores } from './home-data';
+import { homeUsesServer, listHomePopularMenus, listHomeRecommendedStores } from './home-data';
 import { PopularMenuSection } from './popular-menu-section';
 import { RecentSection } from './recent-section';
 import { SectionHeader } from './section-header';
@@ -42,7 +42,7 @@ export function HomeScreen() {
 
   const categories = useAsync('home:categories', () => catalogRepository.listCategories());
   const banners = useAsync('home:banners', () => (homeUsesServer ? Promise.resolve([]) : mockHome.listBanners()));
-  const popular = useAsync(`home:popular:${session.isMember}`, () => (homeUsesServer ? Promise.resolve([]) : mockHome.listPopularMenus()));
+  const popular = useAsync(`home:popular:${session.isMember}`, () => listHomePopularMenus());
   const recommended = useAsync(`home:recommended:${session.isMember}`, () => listHomeRecommendedStores());
 
   // 세 섹션이 모두 실패했다면 홈 전체 오류로 본다 (오프라인·서버 오류)

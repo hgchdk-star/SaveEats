@@ -1,10 +1,10 @@
-import { CATALOG_RPC, type SearchStoreCardDto, type StoreCardDto } from '@/contracts/catalog';
+import { CATALOG_RPC, type MenuCardDto, type SearchStoreCardDto, type StoreCardDto } from '@/contracts/catalog';
 import type { Page } from '@/contracts/common';
 import { LIMITS } from '@/config/limits';
 import { RepositoryError, type CatalogRepository } from '@/services/catalog/catalog-repository';
 
 import { getSupabaseClient } from './client';
-import { parseCategories, parseMenuDetail, parseSearchStoreCardPage, parseStoreCardList, parseStoreCardPage, parseStoreDetail, toRepositoryError } from './rpc-result';
+import { parseCategories, parseMenuCardList, parseMenuDetail, parseSearchStoreCardPage, parseStoreCardList, parseStoreCardPage, parseStoreDetail, toRepositoryError } from './rpc-result';
 
 /**
  * RPC 하나를 부르고 계약 모양으로 바꿔 돌려준다. 오류는 모두 RepositoryError로 정규화한다.
@@ -41,6 +41,17 @@ const LIST_RECOMMENDED_STORES = 'list_recommended_stores';
  */
 export function listRecommendedStoresFromServer(limit?: number): Promise<StoreCardDto[]> {
   return call(LIST_RECOMMENDED_STORES, { p_limit: limit ?? null }, parseStoreCardList);
+}
+
+/** 홈 인기 메뉴 RPC. 계약 catalog@0.2의 이름이라 아직 CATALOG_RPC(catalog@0.1)에 없다 */
+const LIST_POPULAR_MENUS = 'list_popular_menus';
+
+/**
+ * 홈 "지금 많이 찾는 메뉴" (계약 4.4절). 서버가 정한 순서 그대로 `limit`개(1~20, 서버 기본 10).
+ * 품절 메뉴와 영업 종료 가게의 메뉴는 서버가 뺀다(서정 확인 2026-10-14). 점수·순위 숫자는 오지 않는다. 없으면 빈 배열.
+ */
+export function listPopularMenusFromServer(limit?: number): Promise<MenuCardDto[]> {
+  return call(LIST_POPULAR_MENUS, { p_limit: limit ?? null }, parseMenuCardList);
 }
 
 /** 가게 검색 RPC. 계약 catalog@0.2의 이름이라 아직 CATALOG_RPC(catalog@0.1)에 없다 */

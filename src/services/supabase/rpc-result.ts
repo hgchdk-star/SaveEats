@@ -1,4 +1,4 @@
-import type { CategoryDto, MenuDetailDto, MenuSummaryDto, SearchStoreCardDto, StoreCardDto, StoreDetailDto } from '@/contracts/catalog';
+import type { CategoryDto, MenuCardDto, MenuDetailDto, MenuSummaryDto, SearchStoreCardDto, StoreCardDto, StoreDetailDto } from '@/contracts/catalog';
 import type { Page } from '@/contracts/common';
 import { RepositoryError, type CatalogFailureCode } from '@/services/catalog/catalog-repository';
 
@@ -84,6 +84,17 @@ function checkStoreCard(v: unknown): StoreCardDto {
 export function parseStoreCardList(data: unknown): StoreCardDto[] {
   need(Array.isArray(data));
   return (data as unknown[]).map(checkStoreCard);
+}
+
+/** list_popular_menus 응답: MenuCardDto[] (페이지 없음). 점수·순위 같은 숫자는 오지 않는다 */
+export function parseMenuCardList(data: unknown): MenuCardDto[] {
+  need(Array.isArray(data));
+  return (data as unknown[]).map((row) => {
+    need(isObj(row) && isStr(row.id) && isStr(row.name) && isStrOrNull(row.imageRef) && isNum(row.price) && isBool(row.isSoldOut));
+    const store = (row as Obj).store;
+    need(isObj(store) && isStr(store.id) && isStr(store.name) && isBool(store.isOpen));
+    return row as unknown as MenuCardDto;
+  });
 }
 
 /** search_stores 항목: 가게 카드 + matchingMenu (메뉴 이름으로 걸리지 않았으면 null) */
