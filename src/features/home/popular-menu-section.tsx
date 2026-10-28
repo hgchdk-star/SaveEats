@@ -5,14 +5,14 @@ import { SectionError, Skeleton } from '@/components/ui/feedback-states';
 import { FoodImage } from '@/components/ui/food-image';
 import { Price } from '@/components/ui/price';
 import { draftCopy } from '@/config/draft-copy';
+import type { MenuCardDto } from '@/contracts/catalog';
 import type { AsyncState } from '@/hooks/use-async';
-import type { MockMenuCard } from '@/mocks/home/mock-home';
 import { resolveImageUrl } from '@/services/image';
 import { colors, radius, spacing, text } from '@/theme';
 
 import { SectionHeader } from './section-header';
 
-type Props = { state: AsyncState<MockMenuCard[]> & { reload: () => void } };
+type Props = { state: AsyncState<MenuCardDto[]> & { reload: () => void } };
 
 const TILE = 128;
 
