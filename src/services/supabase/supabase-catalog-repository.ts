@@ -1,9 +1,10 @@
-import { CATALOG_RPC, type StoreCardDto } from '@/contracts/catalog';
+import { CATALOG_RPC, type SearchStoreCardDto, type StoreCardDto } from '@/contracts/catalog';
+import type { Page } from '@/contracts/common';
 import { LIMITS } from '@/config/limits';
 import { RepositoryError, type CatalogRepository } from '@/services/catalog/catalog-repository';
 
 import { getSupabaseClient } from './client';
-import { parseCategories, parseMenuDetail, parseStoreCardList, parseStoreCardPage, parseStoreDetail, toRepositoryError } from './rpc-result';
+import { parseCategories, parseMenuDetail, parseSearchStoreCardPage, parseStoreCardList, parseStoreCardPage, parseStoreDetail, toRepositoryError } from './rpc-result';
 
 /**
  * RPC 하나를 부르고 계약 모양으로 바꿔 돌려준다. 오류는 모두 RepositoryError로 정규화한다.
@@ -40,6 +41,18 @@ const LIST_RECOMMENDED_STORES = 'list_recommended_stores';
  */
 export function listRecommendedStoresFromServer(limit?: number): Promise<StoreCardDto[]> {
   return call(LIST_RECOMMENDED_STORES, { p_limit: limit ?? null }, parseStoreCardList);
+}
+
+/** 가게 검색 RPC. 계약 catalog@0.2의 이름이라 아직 CATALOG_RPC(catalog@0.1)에 없다 */
+const SEARCH_STORES = 'search_stores';
+
+/**
+ * 가게 검색 (계약 3.1절). 검색 대상은 가게 이름 · 메뉴 이름 · 카테고리 이름이고, 같은 가게는 한 번, 가게 이름 → id 순이다.
+ * 메뉴 이름으로 걸리면 matchingMenu가 있다. 품절 메뉴도 검색된다. 결과가 없으면 items: [] (오류 아님).
+ * 앞뒤 공백을 지운 1~50자가 아니면 서버가 INVALID_INPUT을 낸다.
+ */
+export function searchStoresFromServer(args: { query: string; cursor?: string | null; pageSize?: number }): Promise<Page<SearchStoreCardDto>> {
+  return call(SEARCH_STORES, { p_query: args.query.trim(), p_cursor: args.cursor ?? null, p_page_size: args.pageSize ?? 20 }, parseSearchStoreCardPage);
 }
 
 /**

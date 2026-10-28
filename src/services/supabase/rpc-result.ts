@@ -1,4 +1,4 @@
-import type { CategoryDto, MenuDetailDto, MenuSummaryDto, StoreCardDto, StoreDetailDto } from '@/contracts/catalog';
+import type { CategoryDto, MenuDetailDto, MenuSummaryDto, SearchStoreCardDto, StoreCardDto, StoreDetailDto } from '@/contracts/catalog';
 import type { Page } from '@/contracts/common';
 import { RepositoryError, type CatalogFailureCode } from '@/services/catalog/catalog-repository';
 
@@ -84,6 +84,21 @@ function checkStoreCard(v: unknown): StoreCardDto {
 export function parseStoreCardList(data: unknown): StoreCardDto[] {
   need(Array.isArray(data));
   return (data as unknown[]).map(checkStoreCard);
+}
+
+/** search_stores 항목: 가게 카드 + matchingMenu (메뉴 이름으로 걸리지 않았으면 null) */
+function checkSearchStoreCard(v: unknown): SearchStoreCardDto {
+  const card = checkStoreCard(v);
+  const m = (v as Obj).matchingMenu;
+  need(m === null || (isObj(m) && isStr(m.id) && isStr(m.name) && isNum(m.price) && isBool(m.isSoldOut)));
+  return { ...card, matchingMenu: m as SearchStoreCardDto['matchingMenu'] };
+}
+
+/** search_stores 응답: { items, nextCursor, hasMore } */
+export function parseSearchStoreCardPage(data: unknown): Page<SearchStoreCardDto> {
+  need(isObj(data) && Array.isArray(data.items) && isBool(data.hasMore) && isStrOrNull(data.nextCursor));
+  const d = data as Obj;
+  return { items: (d.items as unknown[]).map(checkSearchStoreCard), nextCursor: d.nextCursor as string | null, hasMore: d.hasMore as boolean };
 }
 
 /** list_stores 응답: { items, nextCursor, hasMore } */
