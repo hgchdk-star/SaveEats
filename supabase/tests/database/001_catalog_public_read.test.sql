@@ -209,7 +209,7 @@ select is((select array_agg(p.proname::text order by p.proname) from pg_proc p
     where n.nspname = 'public' and p.proname not like 'test\_%'
       and not exists (select 1 from pg_depend d where d.objid = p.oid and d.deptype = 'e')
       and coalesce(p.proacl::text, '') ~ 'anon=X'),
-  array['get_menu','get_store','list_categories','list_popular_menus','list_stores'],
+  array['get_menu','get_store','list_categories','list_popular_menus','list_recommended_stores','list_stores','search_stores'],
   'Guest(anon)가 실행할 수 있는 public 함수는 조회 RPC뿐이다');
 -- 테이블 단위 권한(relacl)만 본다. 컬럼 단위 SELECT는 pg_attribute.attacl에 따로 있다.
 select ok(not exists (

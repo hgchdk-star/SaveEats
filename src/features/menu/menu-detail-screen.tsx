@@ -20,6 +20,7 @@ import { UNDECIDED } from '@/config/undecided';
 import { useCartStore } from '@/features/cart/cart-store';
 import { useCartQuantity } from '@/features/cart/use-cart-quantity';
 import { useRecentViewedStore } from '@/features/home/recent-viewed-store';
+import { MenuReviewLine } from '@/features/review/menu-review-line';
 import { showToast } from '@/features/toast/toast-store';
 import { useAsync } from '@/hooks/use-async';
 import { catalogRepository } from '@/services';
@@ -163,7 +164,7 @@ export function MenuDetailScreen({ menuId }: { menuId: string }) {
           <View style={styles.price}>
             <Price amount={menu.price} />
           </View>
-          {/* SaveEats 리뷰 줄(땡김도 평균 · 리뷰 수 → 메뉴 리뷰 목록)은 메뉴 리뷰 계약이 생기면 묶음 3에서 추가한다 */}
+          <MenuReviewLine menuId={menuId} />
         </View>
 
         {/* 품절 메뉴는 옵션을 보여주지 않는다. 옵션이 없는 메뉴는 수량만 */}

@@ -37,7 +37,7 @@ export type IconName = keyof typeof PATHS;
 
 type IconProps = {
   name: IconName;
-  size?: 16 | 20 | 24;
+  size?: 14 | 16 | 20 | 24 | 32;
   /** 기본은 본문 글자색. 아이콘만 Tomato로 칠하는 곳은 활성 찜·활성 탭·알림 점뿐 */
   color?: string;
   /** 상태를 뜻할 때만: 찜 켜짐, 땡김도 별, 활성 홈·찜 탭 */

@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, radius, shadow, spacing, text } from '@/theme';
 
 import { PrimaryButton, SecondaryButton } from './button';
+import { DangerButton } from './danger-button';
 
 type SheetAction = { label: string; onPress: () => void };
 
@@ -17,13 +18,15 @@ type ConfirmSheetProps = {
   descriptions?: string[];
   secondary: SheetAction;
   primary: SheetAction;
+  /** 되돌리기 어려운 행동(회원 탈퇴)이면 확인 버튼을 DangerButton으로 */
+  danger?: boolean;
 };
 
 /**
  * 하단 확인 시트: 취소 / 확인 두 버튼.
  * 시트 뒤 어두운 영역을 누르면 닫힌다.
  */
-export function ConfirmSheet({ visible, onClose, message, title, descriptions = [], secondary, primary }: ConfirmSheetProps) {
+export function ConfirmSheet({ visible, onClose, message, title, descriptions = [], secondary, primary, danger = false }: ConfirmSheetProps) {
   const insets = useSafeAreaInsets();
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose} statusBarTranslucent>
@@ -39,9 +42,15 @@ export function ConfirmSheet({ visible, onClose, message, title, descriptions = 
                 </SecondaryButton>
               </View>
               <View style={styles.primary}>
-                <PrimaryButton size="lg" block onPress={primary.onPress}>
-                  {primary.label}
-                </PrimaryButton>
+                {danger ? (
+                  <DangerButton block onPress={primary.onPress}>
+                    {primary.label}
+                  </DangerButton>
+                ) : (
+                  <PrimaryButton size="lg" block onPress={primary.onPress}>
+                    {primary.label}
+                  </PrimaryButton>
+                )}
               </View>
             </View>
           </SheetBody>
