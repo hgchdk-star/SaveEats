@@ -29,6 +29,25 @@ export const UNDECIDED = {
   homeMonthlyRecord: false,
   /** 묶음1 #9 · 홈 배너는 자리만 그리고 문구는 넣지 않는다 */
   homeBanner: 'placeholderOnly',
-  /** 묶음1 #10 · 장바구니는 주문(PENDING) 생성에 성공했을 때 비운다 */
+  /** 묶음1 #10 = 묶음2 #5 · 장바구니는 주문(PENDING) 생성에 성공했을 때 비운다 (OPEN-CART-003 · ORD-013). 생성에 쓴 버전만 비운다 */
   cartClearTiming: 'onPendingCreated',
+
+  /* ---------- 주문 흐름 (묶음 2의 [미결정 #1~#8]) ---------- */
+
+  /** 묶음2 #1 · 이메일 인증을 필수로 하지 않는다. 막지 않는다 (OPEN-ARCH-001) */
+  emailVerificationRequired: false,
+  /** 묶음2 #1 · 비밀번호 재설정 화면이 없다. 링크 자리만 두고 "준비 중" 화면으로 보낸다 */
+  passwordReset: 'linkOnly',
+  /** 묶음2 #2 · 회원가입에서 이름을 받지 않는다. 이메일 + 비밀번호만 */
+  signUpCollectsName: false,
+  /** 묶음2 #3 · 계좌 입력 항목은 은행 + 계좌번호. 예금주·본인 확인은 없다 */
+  accountFormFields: ['bankCode', 'accountNumber'],
+  /** 묶음2 #4 · 진행 중(PENDING) 주문이 있어도 계좌 변경·삭제를 막지 않고 안내만 한다. 현재 계좌를 과거 주문에 대신 쓰지 않는다 (OPEN-DB-002) */
+  pendingOrderAccountChange: 'allowWithNotice',
+  /** 묶음2 #6 · 주문 취소는 완료 확인 질문 화면의 보조 텍스트 버튼에서 시작한다 */
+  orderCancelEntry: 'confirmQuestionTextButton',
+  /** 묶음2 #7 · PENDING 주문은 자동으로 만료되지 않고, 만료 표시도 하지 않는다 */
+  pendingAutoExpiry: null,
+  /** 묶음2 #8 · 토스에 은행·계좌·금액을 미리 채워 열지 않는다. 실기기 PoC 전까지 끈다 */
+  tossPrefill: false,
 } as const;

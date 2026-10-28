@@ -12,12 +12,12 @@ import { SearchBarButton } from '@/components/ui/search-bar';
 import { draftCopy } from '@/config/draft-copy';
 import { UNDECIDED } from '@/config/undecided';
 import { useCartQuantity } from '@/features/cart/use-cart-quantity';
-import { goAccount, goCategoryStoreList, goLogin } from '@/features/order/pending-routes';
+import { goAccount, goCategoryStoreList } from '@/features/order/flow-routes';
 import { StoreCardItem } from '@/features/store/store-card-item';
 import { useAsync } from '@/hooks/use-async';
 import { mockHome } from '@/mocks/home/mock-home';
 import { catalogRepository } from '@/services';
-import { getSession } from '@/services/session';
+import { useSession } from '@/services/session';
 import { colors, spacing } from '@/theme';
 
 import { BannerCarousel } from './banner-carousel';
@@ -35,7 +35,7 @@ export function HomeScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const cartCount = useCartQuantity();
-  const session = getSession();
+  const session = useSession();
   const [categoryCode, setCategoryCode] = useState(ALL);
 
   const categories = useAsync('home:categories', () => catalogRepository.listCategories());
@@ -50,11 +50,6 @@ export function HomeScreen() {
     recommended.reload();
   };
 
-  const onAccount = () => {
-    if (!session.isMember) goLogin({ action: 'ACCOUNT' });
-    else goAccount();
-  };
-
   const pickCategory = (code: string) => {
     if (code === ALL) {
       setCategoryCode(ALL);
@@ -67,7 +62,7 @@ export function HomeScreen() {
   const header = (
     <View style={[styles.header, { paddingTop: insets.top }]}>
       <View style={styles.headerRow}>
-        <AccountDestinationBar account={session.destinationAccount} onPress={onAccount} />
+        <AccountDestinationBar account={session.destinationAccount} onPress={goAccount} />
         <IconButton icon="cart" label="장바구니" badge={cartCount} onPress={() => router.push('/cart')} />
       </View>
     </View>

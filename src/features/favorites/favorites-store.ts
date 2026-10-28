@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 
 import type { Uuid } from '@/contracts/common';
-import { goLogin } from '@/features/order/pending-routes';
+import { goLogin } from '@/features/order/flow-routes';
 import { showToast } from '@/features/toast/toast-store';
 import { catalogRepository } from '@/services';
 import { getSession } from '@/services/session';

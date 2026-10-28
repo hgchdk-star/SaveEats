@@ -12,13 +12,18 @@ type NoticeProps = {
   tone?: 'default' | 'danger';
   icon?: IconName;
   action?: { label: string; onPress: () => void };
+  /** 이미 좌우 여백이 있는 안쪽에 넣을 때 바깥 여백을 없앤다 */
+  flush?: boolean;
 };
 
 /** 화면 위쪽의 안내 띠. 장바구니에서 주문이 막힌 이유를 알린다 */
-export function Notice({ title, description, tone = 'default', icon = 'alert', action }: NoticeProps) {
+export function Notice({ title, description, tone = 'default', icon = 'alert', action, flush = false }: NoticeProps) {
   const danger = tone === 'danger';
   return (
-    <View accessibilityRole={danger ? 'alert' : undefined} accessibilityLiveRegion="polite" style={[styles.notice, danger && styles.noticeDanger]}>
+    <View
+      accessibilityRole={danger ? 'alert' : undefined}
+      accessibilityLiveRegion="polite"
+      style={[styles.notice, danger && styles.noticeDanger, flush && styles.flush]}>
       <View style={styles.icon}>
         <Icon name={icon} size={20} color={danger ? colors.danger : colors.inkSecondary} />
       </View>
@@ -47,6 +52,9 @@ const styles = StyleSheet.create({
   },
   noticeDanger: {
     borderColor: colors.danger,
+  },
+  flush: {
+    marginHorizontal: 0,
   },
   icon: {
     marginTop: 1,

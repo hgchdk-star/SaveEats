@@ -7,9 +7,13 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { useCartStore } from '@/features/cart/cart-store';
 import { useRecentViewedStore } from '@/features/home/recent-viewed-store';
+import { ReturnCoordinator } from '@/features/order/return-coordinator';
 import { colors, fontAssets } from '@/theme';
 
 SplashScreen.preventAutoHideAsync();
+
+/** 딥링크로 안쪽 화면에 바로 들어와도 뒤로 가면 홈(탭)이 나오게 한다 */
+export const unstable_settings = { anchor: '(tabs)' };
 
 /**
  * 루트 스택. 하단 탭은 `(tabs)` 안에서만 보이고, 그 밖의 화면은 탭 없이 위에 쌓인다.
@@ -36,7 +40,18 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <StatusBar style="dark" />
-      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg } }} />
+      <ReturnCoordinator />
+      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg } }}>
+        {/* 목록의 첫 화면이 앱의 시작 화면이 된다(주소 없이 QR로 열 때). 반드시 탭(홈)을 맨 앞에 둔다 */}
+        <Stack.Screen name="(tabs)" />
+        {/* 주문 결과 화면은 밀어서 뒤로 가지 못하게 한다. 닫기·내역 보기 같은 버튼으로만 나간다 */}
+        <Stack.Screen name="order/return-check" options={{ gestureEnabled: false }} />
+        <Stack.Screen name="order/question" options={{ gestureEnabled: false }} />
+        <Stack.Screen name="order/done" options={{ gestureEnabled: false }} />
+        <Stack.Screen name="order/cancelled" options={{ gestureEnabled: false }} />
+        <Stack.Screen name="order/not-yet" options={{ gestureEnabled: false }} />
+        <Stack.Screen name="order/status-error" options={{ gestureEnabled: false }} />
+      </Stack>
     </SafeAreaProvider>
   );
 }
