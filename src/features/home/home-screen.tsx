@@ -143,8 +143,7 @@ export function HomeScreen() {
               </View>
             ) : null}
 
-            {/* 서버 모드에서는 숨긴다: 최근 본 항목은 아직 Mock에서 찾아서 서버 id가 지워진다 (home-data.ts) */}
-            {homeUsesServer ? null : <RecentSection />}
+            <RecentSection />
           </>
         )}
       </ScrollView>

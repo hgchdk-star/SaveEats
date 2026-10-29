@@ -6,10 +6,10 @@ import { FoodImage } from '@/components/ui/food-image';
 import { SectionError } from '@/components/ui/feedback-states';
 import { draftCopy } from '@/config/draft-copy';
 import { useAsync } from '@/hooks/use-async';
-import { mockHome } from '@/mocks/home/mock-home';
 import { resolveImageUrl } from '@/services/image';
 import { colors, font, radius, spacing, text } from '@/theme';
 
+import { listHomeMenusByIds, listHomeStoresByIds } from './home-data';
 import { useRecentViewedStore, type RecentViewedItem } from './recent-viewed-store';
 import { SectionHeader } from './section-header';
 
@@ -32,8 +32,8 @@ export function RecentSection() {
   const state = useAsync(`recent:${key}`, async () => {
     if (items.length === 0) return { tiles: [] as Tile[], gone: [] as RecentViewedItem[] };
     const [stores, menus] = await Promise.all([
-      storeIds.length ? mockHome.listStoresByIds(storeIds) : Promise.resolve([]),
-      menuIds.length ? mockHome.listMenusByIds(menuIds) : Promise.resolve([]),
+      storeIds.length ? listHomeStoresByIds(storeIds) : Promise.resolve([]),
+      menuIds.length ? listHomeMenusByIds(menuIds) : Promise.resolve([]),
     ]);
     const tiles: Tile[] = [];
     const gone: RecentViewedItem[] = [];
