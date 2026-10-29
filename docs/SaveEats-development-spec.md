@@ -1,8 +1,13 @@
 # SaveEats 통합 개발 명세서
 
-버전: **v0.2 통합 설계 초안** / 작성일: 2026-09-30 (Asia/Seoul) / v0.2: 기획서 v1.2의 리뷰 정렬 확정 반영
+버전: **v0.3 통합 설계 초안** / 갱신일: 2026-10-29 (Asia/Seoul) / v0.3: 계좌 서버 미저장·기기 보안 저장 및 인증 정책 반영
 
 **수정 이력**
+
+- **2026-10-29 수정:** SSOT v1.3/PRD v1.2 반영. ARCH-006·DB-003·DB-006·SEC·ORD·TRF·API의 서버 계좌 전제를 제거하고 로컬 AccountVault 경계로 교체. 공개 닉네임 MUST, 실명 미수집, 탈퇴/재설정 준비 중. 기존 장/ID 유지.
+  - 계좌정보는 은행·번호·예금주·마스킹·암호문 모두 서버 미저장. 주문에 무작위 `destinationRef`만 전달하는 기술안으로 계좌정보와 주문 원장을 분리한다.
+  - OPEN-DB-001은 저장 위치 미정에서 실기기 보안 검증 필요로 변경. OPEN-DB-004는 닉네임 도입 확정/상세 규칙 미정으로 변경. OPEN-DB-002/005의 보관·탈퇴 세부 정책은 미결정 유지.
+  - 저장소의 Expo `~58.0.20`을 기준으로 공식 SDK 58 SecureStore 문서 확인. 패키지 설치·migration·실기기 검증은 이번 문서 수정에 포함하지 않는다.
 
 - **2026-10-01 수정:** 팀 합의로 확정한 정책과 카탈로그 계약(catalog@0.1) 합의를 반영했다. 본문에는 `(2026-10-01 결정)`으로 표시한다.
   - 이메일 인증 없이 가입·로그인: AUTH-001, SEC-009, API-002, OPEN-ARCH-001 / OPEN-DB-003
@@ -11,7 +16,7 @@
   - 가게 목록 이름순, 카탈로그 조회 응답 형식: API-001, API-002
   - 개발 단계 가상 데이터: OPS-003, OPEN-DB-009
 
-상위 기준은 **SaveEats 최종 서비스 기획서 v1.2(20260930)**이다. PRD v1.1과 개발 명세 Step 1~9를 근거로 통합했다. 기존 FR/AC와 ARCH/DB/AUTH/SEC/CART/ORD/TRF/REV/IMG/HIST/REC/OPS/EVT/API/TASK ID는 유지한다. 이 문서는 구현·배포·실기기 검증 완료를 의미하지 않는다. 제품 규칙과 기술 제안이 충돌하면 상위 기획서를 우선하고 정책 변경은 별도 반영한다.
+상위 기준은 **SaveEats 최종 서비스 기획서 v1.3(20261029)**이다. PRD v1.2와 개발 명세 Step 1~9를 근거로 통합했다. 기존 FR/AC와 ARCH/DB/AUTH/SEC/CART/ORD/TRF/REV/IMG/HIST/REC/OPS/EVT/API/TASK ID는 유지한다. 이 문서는 구현·배포·실기기 검증 완료를 의미하지 않는다. 제품 규칙과 기술 제안이 충돌하면 상위 기획서를 우선하고 정책 변경은 별도 반영한다.
 
 ## 문서 사용과 범위
 
@@ -48,7 +53,7 @@
 
 ### 2. ARCH-001 전체 구조
 
-**기술 설계안:** React Native + TypeScript 앱, Supabase Auth/PostgreSQL/Storage, 로컬 저장소, 외부 앱 실행 어댑터로 구성한다. 별도 Express 서버는 초기 구조에 추가하지 않는다. Expo 사용 여부와 각 라이브러리 버전은 현재 저장소 및 Toss 실기기 요구사항 확인 후 고정한다.
+**기술 설계안:** React Native + TypeScript 앱, Supabase Auth/PostgreSQL/Storage, 로컬 저장소, 외부 앱 실행 어댑터로 구성한다. 별도 Express 서버는 초기 구조에 추가하지 않는다. 현재 저장소는 Expo ~58.0.20이다(2026-10-29 확인). expo-secure-store는 아직 dependency에 없으며 구현 시 SDK 호환 설치와 native build 설정을 검증한다.
 
 | 구성 | 책임 | 주요 경계 |
 |---|---|---|
@@ -60,17 +65,17 @@
 | 로컬 저장소 | Guest Cart, 탐색 기록, 완료확인 재시도 작업 | 서버 주문 상태의 대체 원장으로 사용하지 않음 |
 | Feature Config | 원격 Toss Kill Switch | 앱 환경변수만으로 원격 차단을 대체하지 않음 |
 | TransferLauncher | 검증된 Toss 실행/직접 이어가기 선택 | 송금 성공을 판정하지 않음 |
-| Edge Functions | 비밀키 작업, 계정 탈퇴 등 서버 전용 처리 | 필요 작업에 한정; 단순 조회마다 경유하지 않음 |
+| Edge Functions | 비밀키 작업·이미지 정리 등 서버 전용 처리; 실제 계정 탈퇴는 후속 범위 | 필요 작업에 한정; 단순 조회마다 경유하지 않음 |
 
 Supabase 공식 문서는 Auth와 RLS의 조합, Data API 권한 제한, React Native 클라이언트 연동을 제공한다. 위 서비스 분할은 이를 바탕으로 한 SaveEats 설계안이다.
 
 ### 3. ARCH-002 읽기와 쓰기 경계
 
-일반 조회는 권한이 제한된 Data API 또는 RPC를 사용한다. 활성 Store/Menu/Category와 공개 리뷰의 안전한 필드는 Guest 조회 가능하도록 설계한다. 사용자 계좌·Cart·Order·내역은 본인만 조회한다. 공개 리뷰 응답에 이메일, 실명 원본, 전체 계좌번호를 포함하지 않는다.
+일반 조회는 권한이 제한된 Data API 또는 RPC를 사용한다. 활성 Store/Menu/Category와 공개 리뷰의 안전한 필드는 Guest 조회 가능하도록 설계한다. 계좌는 서버 조회 대상이 아니며 기기 AccountVault에서만 조회한다. Cart·Order·내역은 서버에서 본인만 조회한다. 공개 리뷰 응답에 이메일, 실명 원본, 전체 계좌번호를 포함하지 않는다.
 
 찜처럼 단일 행의 변경은 RLS와 제약을 적용한 직접 쓰기가 가능하다. 아래 핵심 작업은 서버/DB 명령으로 제한한다.
 
-- 주문 생성: 현재 가격·품절·옵션·수량·Single-Store·계좌 소유권 검증, Snapshot, 상태 이력 생성.
+- 주문 생성: 현재 가격·품절·옵션·수량·Single-Store 검증, 비민감 목적지 참조 형식/주문 귀속 확인, Snapshot, 상태 이력 생성.
 - 주문 완료 확인/취소: 기존 상태 검사와 상태 이력 생성을 하나의 트랜잭션으로 처리.
 - 리뷰 작성/재작성: 완료된 본인 주문, 서버 시각 기준 작성 기한, 활성 리뷰 unique 검증.
 - 리뷰 수정/삭제 및 도움돼요: 소유권·금지 필드·자기 리뷰 제한·unique 보장.
@@ -85,7 +90,7 @@ RPC의 호출자 인증과 실행 권한을 명시한다. SECURITY DEFINER가 �
 2. 동일 생성 요청을 식별하는 idempotency key를 로컬에 보존한다.
 3. 서버가 인증 사용자·현재 데이터·사용자 확인 가격을 다시 검사한다.
 4. 가격이 달라졌거나 품절이면 주문 생성을 거절하고 사용자의 재확인으로 돌린다.
-5. Order, Item/Option/계좌 Snapshot, 초기 상태 이력을 같은 트랜잭션으로 저장한다.
+5. Order, Item/Option Snapshot과 비민감 목적지 참조, 초기 상태 이력을 같은 트랜잭션으로 저장한다.
 6. 서버 응답의 Order ID와 금액을 기준으로 이어가기 화면을 표시한다.
 7. 사용자 동작과 최신 기능 설정에 따라 외부 앱을 실행하거나 직접 이어가기를 표시한다.
 
@@ -124,7 +129,8 @@ TransferLauncher는 `launch`, `isAvailable`, 검증된 파라미터 지원 범�
 | Store/Menu/Option | 서버 Seed DB | 조회 캐시, 주문 시 서버 재검증 |
 | Guest Cart | 로컬 | 재실행/로그인 취소 시 유지 |
 | 로그인 사용자 Cart | 서버 저장 추천 | 로컬 미동기화 변경과 서버 revision 분리 |
-| Order/Snapshot/StatusUpdate | 서버 | 조회 캐시와 복구 작업만 저장 |
+| Order/상품 Snapshot/StatusUpdate | 서버 | 조회 캐시와 복구 작업만 저장 |
+| DestinationAccount/계좌 Snapshot | 기기 AccountVault(SecureStore) | 서버·일반 저장소·로그 전송 금지, 인증 사용자별 격리 |
 | Review/Helpful | 서버 | 조회 캐시, 서버 제약 검증 |
 | 최근 검색/최근 본 항목 | 로컬 추천 | 최근 본 항목 최대 10개 |
 | Auth Session | SDK + 적합한 영속 저장 adapter | 토큰 보안/수명/실기기 검증 |
@@ -134,7 +140,7 @@ Guest Cart는 비민감 로컬 저장소(예: AsyncStorage)로 구현하는 설�
 
 Cart 로그인 승격은 기획서의 최신 로컬 Cart 우선 규칙을 따른다. CART-005~010에서 빈 Cart/삭제/서버 revision/다른 계정 로그인 사례를 정의한다. 클라이언트 시각만으로 서로 다른 기기의 최신 여부를 확정하지 않는다. 복잡한 품목 병합은 추가하지 않는다.
 
-전체 계좌번호의 저장 위치·암호화·키 관리는 **기술 검증 필요**다. 마스킹 Snapshot만으로 직접 이어가기의 계좌번호 복사를 구현할 수 없으므로 별도 보안 설계가 필요하다. 계좌 변경/삭제 후 기존 PENDING 주문의 목적지를 어떻게 계속 제공할지는 기획서가 명시적으로 정의하지 않은 경계이며 제10장의 제품 결정 표에서 정책 확인이 필요하다. 현재 계좌번호를 과거 주문에 자동 대입하지 않는다.
+**확정:** 계좌정보는 서버 미저장·기기 보안 저장. 은행·전체 번호·예금주·마스킹·암호문을 서버에 보내지 않는다. Order API에는 무작위 destinationRef만 전달하는 기술안을 사용한다. 계좌 소유권/유효성/송금은 서버가 검증할 수 없으며 로컬 저장 성공도 검증 근거가 아니다. 과거 주문 계좌 표시는 로컬 Snapshot으로 합성한다. AccountVault 기술 계약은 DB-003을 따른다. 과거 PENDING 원문 보관 수명·삭제/로그아웃 후 제공은 OPEN-DB-002로 유지하며 현재 계좌 자동 대입은 금지한다.
 
 ### 8. ARCH-007 리뷰와 unread
 
@@ -168,8 +174,8 @@ DB 시각은 UTC, 표시/월 경계는 Asia/Seoul이다. completedAt은 서버 �
 
 | ID | 항목 | 상태 | 처리 시점 |
 |---|---|---|---|
-| OPEN-ARCH-001 | 이메일 인증 필수 여부·미인증 제한·재설정 UX | 이메일 인증은 **결정됨 (2026-10-01 결정)** — 요구하지 않음. 재설정 UX만 제품 정책 결정 필요 | Auth 계약 작성 시 |
-| OPEN-ARCH-002 | 전체 계좌번호 저장/암호화/탈퇴 처리 | 기술 검증 필요 | 계좌 Schema/RLS 전 |
+| OPEN-ARCH-001 | 이메일 인증 필수 여부·미인증 제한·재설정 UX | 이메일 인증 불요 확정(2026-10-01), 재설정 MVP 준비 중 확정(2026-10-29); 실제 복구 후속 범위 | Auth 계약 작성 시 |
+| OPEN-ARCH-002 | 서버 미저장·기기 보안 저장/삭제 | 저장 위치 확정, 실기기 검증 필요 | AccountVault 구현/검증 전 |
 | OPEN-ARCH-003 | PENDING 주문 중 계좌 교체/삭제 처리 | 제품 정책 결정 필요 | 주문/계좌 계약 작성 시 |
 | OPEN-ARCH-004 | Toss OS/버전/은행/계좌/금액 지원 | 실기기 PoC | Toss 기능 활성화 전 |
 | OPEN-ARCH-005 | 세션 저장·복귀·강제종료 복구 | 기술 검증 필요 | 공통 기반 구현 시 |
@@ -222,7 +228,7 @@ DB 시각은 UTC, 표시/월 경계는 Asia/Seoul이다. completedAt은 서버 �
 
 | 영역 | MUST 설계 테이블 | 역할 |
 |---|---|---|
-| 계정 | profiles, destination_accounts | 계정 표시정보와 현재 목적지 |
+| 계정 | profiles | 계정/공개 닉네임. destination_accounts는 서버 테이블에서 제외하고 DB-003의 로컬 모델로 유지 |
 | 카탈로그 | categories, stores, menus, menu_option_groups, menu_options | Seed → 정식 데이터 전환 경계 |
 | 콘텐츠 | banners, popular_search_terms | 홈 배너·Seed 인기 검색어 |
 | 찜 | store_favorites | Store only |
@@ -243,28 +249,42 @@ Guest Cart, 최근 검색어, 최근 본 항목(최대 10개), 온보딩 완료 
 | 컬럼 | 타입/제약 | 설명 |
 |---|---|---|
 | id | uuid PK → auth.users.id, RESTRICT | 본인 계정 |
-| name | text? | 실명 마스킹 표시의 원본, 공개 응답 금지 |
+| nickname | text | 공개 닉네임. 가입 수집, 기존 계정 전환 동안 NULL 허용하는 migration 기술안 |
 | created_at / updated_at | timestamptz | 서버 관리 |
 
-비밀번호·이메일 인증 상태는 Auth에서 관리하며 복제하지 않는다. 이름 수집 시점/필수 여부/이름 미등록자의 표시명은 **제품 정책 결정 필요**다. nullable 설계로 가입을 임의 차단하지 않는다. 공개 리뷰는 서버가 만든 마스킹 표시명만 반환하고 profiles의 전체 행을 공개하지 않는다. 공개 닉네임은 LATER다.
+실명 `name`은 신규 수집/저장/공개하지 않는다. 비밀번호·이메일 인증 상태는 Auth가 관리한다. 닉네임은 권한/계좌 검증 수단이 아니다. 공개 리뷰는 nickname만 허용 projection으로 반환하고 profiles 전체를 공개하지 않는다. trim·빈 값 거절·서버 입력 검증은 기술안, 길이/허용 문자/unique 여부/변경/금칙어 규칙은 OPEN-DB-004에서 결정한다. 기존 name→nickname 자동 복제는 하지 않는다. 기존 자료가 있다면 전환 계획과 영향 확인 후 별도 migration한다.
 
-#### destination_accounts
+#### destination_accounts — 서버 테이블 폐기, 기기 논리 모델 유지
 
-| 컬럼 | 타입/제약 | 설명 |
-|---|---|---|
-| id | uuid PK | 목적지 식별자 |
-| user_id | uuid → profiles.id, UNIQUE | 사용자당 현재 계좌 1개 |
-| bank_code | text | 내부 표준 은행 식별값; Toss 코드와 adapter에서 매핑 |
-| bank_name | text | 등록 당시 표시명 |
-| masked_account_number | text | UI 표시용; 원문을 대신하지 않음 |
-| revision | bigint > 0, 기본 1 | 변경 경합 검증 |
-| created_at / updated_at | timestamptz | 서버 관리 |
+**확정:** 은행/계좌번호/예금주/마스킹/암호문을 SaveEats DB·Auth metadata·Storage·서버 백업·API body에 두지 않는다. private 스키마 암호화 후보도 폐기한다. 기존 배포 DB에 실제 자료가 있는지는 별도 점검하며 이 문서 수정만으로 삭제됐다고 간주하지 않는다. migration은 백업/로그 잔존과 API 호환 영향을 점검하고 별도 검증한다.
 
-삭제는 현재 등록정보를 없애 미등록 상태로 만든다. 계좌 변경 시 revision을 증가시킨다. 주문은 당시 마스킹 Snapshot을 별도로 유지한다.
+**AccountVault 기술 설계안:** `src/infrastructure/local` 아래 SecureStore adapter, 도메인 인터페이스는 `getCurrent/register/replace/delete/resolveOrderDestination`을 유지하되 모두 기기 로컬 작업이다. 서버 RPC를 만들지 않는다.
 
-**전체 계좌번호 보관은 미확정:** 일반 노출 테이블/JSONB/로컬 Cart에 평문 필드를 추가하지 않는다. 후보는 Data API 비노출 private 스키마의 암호화 payload(계좌 id, ciphertext, key_version)이나 실제 저장 필요성·암호화·키관리·접근·삭제를 검증한 뒤 확정한다. private 스키마나 RLS만으로 암호화를 대체했다고 표현하지 않는다. 원문을 읽는 경로는 본인 인증 후 필요한 동작에 한정한다.
+| 로컬 필드 | 역할/범위 |
+|---|---|
+| schemaVersion, ownerUid | 형식 버전, 인증 사용자 격리; 로그인 전·다른 uid 읽기 차단 |
+| destinationRef | 계좌 값/해시에서 파생하지 않은 무작위 UUID; 변경 시 새 버전 참조 |
+| bankCode, bankName, accountNumber | 보안 저장 payload. 필요한 동작 동안만 메모리에서 사용 |
+| maskedAccountNumber | 보안 payload에서만 생성/저장, 서버와 일반 캐시에 복제 금지 |
+| order binding | 생성 요청 key/Order ID와 당시 destinationRef 및 마스킹 Snapshot의 로컬 연결 |
 
-기존 PENDING 주문 중 계좌 변경/삭제 시 원래 목적지의 원문을 어떻게 제공할지는 OPEN-ARCH-003이다. 현재 계좌 원문을 과거 Snapshot에 자동 결합하지 않는다. 이 결정 전에는 해당 이어가기 계약과 민감정보 migration을 완료로 처리하지 않는다.
+예금주를 새 필수 입력으로 추가하지 않는다. 과거 PENDING 원문을 버전별로 보관할지/언제 삭제할지는 OPEN-DB-002 결정 필요다. `destinationRef`는 금융정보가 없는 연결값이지 소유권 증명이나 계좌 검증 토큰이 아니다.
+
+**생성 경계 기술안:** (1) 로그인 uid 확인, (2) 로컬 보안 저장과 읽기 확인, (3) 최종 고지 및 동일 목적지 버전 확인, (4) key→destinationRef/마스킹 Snapshot 연결을 보안 저장한 뒤 서버 create, (5) 서버 성공 시 동일 참조를 Order ID에 연결. 로컬 연결 저장 실패면 외부 실행을 막고 같은 key로 서버 Order 존재 여부를 확인한다. 서버와 로컬 저장은 원자적이지 않으며 새 Order/새 key나 재송금으로 복구하지 않는다. CREATE_UNKNOWN에도 같은 보안 연결/key를 유지한다.
+
+로컬 저장 실패 때 서버/AsyncStorage로 fallback 금지. delete는 동일 service/options로 명시 삭제하고 결과를 확인한다. 삭제 실패는 미완료로 표시한다. 로그인/로그아웃/계정전환 시 메모리·UI 캐시는 정리하고 지연 응답의 uid를 다시 확인한다. 보안 저장 원문의 로그아웃 시 지속 보관 여부는 OPEN-DB-002로 결정하며 다른 계정에서 읽히는 것은 항상 금지다.
+
+다른 기기 또는 로컬 자료 유실: `이 기기에 주문 당시 계좌정보가 없어요.` 표시. 현재 계좌로 자동 치환/부분 번호만으로 같은 계좌 판정/재송금 유도 금지. 기존 Order 조회·완료확인 저장은 계좌 원문 없이 허용한다. 새 기기 계좌 재등록이 과거 주문 목적지 복원을 의미하지 않는다.
+
+#### SecureStore 지원 확인과 구현 검증
+
+공식 확인(2026-10-29): SDK 58 SecureStore는 iOS Keychain, Android Keystore로 보호한 암호화 SharedPreferences를 사용한다. Keystore는 키 저장소이며 계좌 문자열 자체의 저장소가 아니다. Android 하드웨어 보호는 기기/알고리즘에 따라 달라 항상 보장하지 않는다.
+
+**기술 추천:** iOS `WHEN_UNLOCKED_THIS_DEVICE_ONLY` 검토(새 기기로 이전 방지; 모든 백업 제외와 동일하지 않음). 기기 암호 필수를 택하면 `WHEN_PASSCODE_SET_THIS_DEVICE_ONLY`의 미설정/해제 UX를 먼저 결정한다. `keychainAccessible`은 iOS 전용이다. 생체인증 `requireAuthentication`은 별도 접근 정책이며 기본 저장과 동일시하지 않는다. 도입 여부/대체 UX는 미결정.
+
+검증 필요: 작은 payload의 비동기 set/get/delete 오류, Android Auto Backup·기기 전송 제외, iOS 재설치 잔존과 명시 삭제, 잠금/생체변경/인증 취소/무효화·uid 격리. Expo Go만으로 Face ID 보호 검증을 완료하지 않는다. 생체 설정 변경으로 읽기 불가할 수 있으며 인증 취소를 자료 손상으로 처리하지 않는다. 앱 삭제는 양 플랫폼 공통 삭제 보장이 아니다. 기기 탈취/앱 실행 중 메모리 노출을 완전히 차단한다고 표현하지 않는다.
+
+**근거:** [Expo SDK 58 SecureStore](https://docs.expo.dev/versions/v58.0.0/sdk/securestore/), [Apple 접근 수준](https://developer.apple.com/documentation/security/restricting-keychain-item-accessibility), [Apple ThisDeviceOnly](https://developer.apple.com/documentation/security/ksecattraccessiblewhenunlockedthisdeviceonly), [Android Keystore](https://developer.android.com/privacy-and-security/keystore). 일반 지원 확인이며 SaveEats 실기기 PASS는 아니다.
 
 ### DB-004 카탈로그와 Seed 콘텐츠
 
@@ -328,10 +348,8 @@ Cart 교체/승격과 receipt를 같은 트랜잭션으로 저장한다. result_
 | store_name_snapshot | text | 당시 가게명 |
 | store_image_snapshot | text? | 당시 이미지 참조; 불변 asset/version 권장 |
 | category_code_snapshot / category_name_snapshot | text | 당시 대표 분류 |
-| account_id_reference | uuid? | 당시 목적지 id의 식별 참조; FK 아님 |
-| account_revision_snapshot | bigint > 0 | 당시 목적지 revision |
-| bank_code_snapshot / bank_name_snapshot | text | 당시 은행 |
-| masked_account_snapshot | text | 당시 표시값; 전체 번호 금지 |
+| destination_ref | uuid | 계좌에서 파생하지 않은 무작위 참조; 사용자 Order에 귀속, 금융 검증 의미 없음 |
+
 | source_cart_id | uuid NOT NULL, 식별 참조/FK 아님 | 생성에 사용한 Cart 추적, Cart 삭제와 Snapshot 분리 |
 | source_cart_revision | bigint NOT NULL > 0 | 생성에 사용한 revision |
 | disclosure_version | text NOT NULL | 승인한 고지 버전 |
@@ -343,7 +361,7 @@ Cart 교체/승격과 receipt를 같은 트랜잭션으로 저장한다. result_
 
 UNIQUE(user_id,idempotency_key), UNIQUE(id,store_id). CHECK는 상태와 시각을 연결한다: PENDING이면 두 시각 NULL, USER_CONFIRMED이면 completed_at NOT NULL/cancelled_at NULL, CANCELLED이면 cancelled_at NOT NULL/completed_at NULL. 완료/취소 시각 >= created_at.
 
-account_id_reference는 현재 계좌 삭제에 영향을 받지 않는 식별 참조다. 실제 생성 순간의 소유권과 revision은 RPC에서 확인한다. 과거 계좌 원문 보존을 뜻하지 않는다. 이름/가격/분류 Snapshot은 생성 이후 수정 금지. 상태 필드는 지정 명령만 변경한다. 과거 이미지 asset 삭제 시 placeholder를 제공하되 이름·가격 Snapshot은 그대로 유지한다.
+destination_ref는 서버 계좌 FK가 아니다. 서버는 UUID 형식과 요청 멱등성/본인 주문 귀속만 확인한다. 계좌 등록 상태·번호·소유권·revision을 서버가 확인한다고 표현하지 않는다. 은행/마스킹 Snapshot은 서버 columns/JSONB에서 제외하고 기기 보안 저장으로 분리한다. 이름/가격/분류 Snapshot은 생성 이후 수정 금지. 상태 필드는 지정 명령만 변경한다. 과거 이미지 asset 삭제 시 placeholder를 제공하되 이름·가격 Snapshot은 그대로 유지한다.
 
 #### order_items
 
@@ -479,7 +497,7 @@ id uuid PK, object_path text NOT NULL UNIQUE, reason text NOT NULL, state text N
 ### DB-009 공개 조회와 집계
 
 - 공개 catalog 응답은 활성 항목만, 공개 리뷰는 deleted_at IS NULL만 반환한다.
-- 공개 리뷰 응답은 마스킹 표시명/땡김도/날짜/메뉴 Snapshot/본문/허용 이미지/주문금액/Helpful count로 제한한다. 계좌·이메일·원본 이름·내부 요청 hash는 반환하지 않는다.
+- 공개 리뷰 응답은 닉네임/땡김도/날짜/메뉴 Snapshot/본문/허용 이미지/주문금액/Helpful count로 제한한다. 계좌·이메일·원본 이름·내부 요청 hash는 반환하지 않는다.
 - 공개 Review를 위해 전체 orders를 Guest에게 SELECT 허용하지 않는다. 권한을 제한한 조회 RPC 또는 안전한 projection으로 필요한 Snapshot 필드만 반환한다. VIEW를 만들었다는 이유만으로 RLS 우회를 방지했다고 가정하지 않는다.
 - ReviewSummary는 활성 리뷰만 COUNT/AVG. 0개면 average=NULL, count=0. Seed 가짜 리뷰수/평균을 보충하지 않는다. **확정 정책 (2026-10-01 결정):** 리뷰 기능(T09) 전에는 {count: 0, averageCravingRating: null}을 반환하고 T09에서 실제 집계로 교체한다. 요약 조회 실패를 count=0으로 표현하지 않는다.
 - 기본 최신순은 (created_at DESC,id DESC). 도움순은 count DESC와 생성 시각/id를 보조키로 한다. rating 정렬은 craving_rating과 동일 보조키를 사용한다. UI 정렬 명칭은 최신순/리뷰 도움순/땡김도 높은 순/땡김도 낮은 순(기획서 v1.2 확정).
@@ -520,7 +538,8 @@ name 부분검색은 소규모 Seed에서는 단순 쿼리로 시작할 수 있�
 | 규칙 | 보장 위치 |
 |---|---|
 | 1~10 수량, 1~5 땡김도, 본문 길이, 상태/시각 일치 | NOT NULL + CHECK |
-| 현재 목적지 1개, Store 찜 중복, Helpful 중복 | UNIQUE/PK |
+| Store 찜 중복, Helpful 중복 | UNIQUE/PK |
+| 현재 기기 목적지 1개 | 사용자별 AccountVault 직렬 writer/읽기 검증 |
 | 활성 리뷰 1개 | partial UNIQUE |
 | 동일 생성 요청 중복 | user_id + idempotency_key UNIQUE + RPC |
 | One Order=One Store | Order 복합 FK + 생성 RPC |
@@ -536,11 +555,11 @@ Supabase Data API 노출 테이블에는 RLS를 적용한다. 직접 SELECT 권�
 
 | ID | 항목 | 상태 | 막는 작업 |
 |---|---|---|---|
-| OPEN-DB-001 / OPEN-ARCH-002 | 전체 계좌번호 저장·암호화·키관리·삭제 | 기술 검증 필요 | 민감정보 migration/계좌 원문 API |
+| OPEN-DB-001 / OPEN-ARCH-002 | 기기 보안 저장·키/삭제 | 서버 미저장 확정, 실기기 검증 필요 | AccountVault/네트워크 누출 검증 |
 | OPEN-DB-002 / OPEN-ARCH-003 | 계좌 변경/삭제 후 PENDING 목적지 제공 | 제품 정책 결정 필요 | 해당 이어가기 계약 |
-| OPEN-DB-003 / OPEN-ARCH-001 | 이메일 인증 제한·재설정 UX | 이메일 인증은 **결정됨 (2026-10-01 결정)** — 요구하지 않음. 재설정 UX만 제품 정책 결정 필요 | 재설정 화면 |
-| OPEN-DB-004 | 이름 수집·미등록자 공개 표시 | 제품 정책 결정 필요 | 가입/공개 작성자 표시 |
-| OPEN-DB-005 | 탈퇴 시 주문·공개 리뷰 보존/익명화 | 제품 정책 결정 필요 | 탈퇴 기능/물리삭제 |
+| OPEN-DB-003 / OPEN-ARCH-001 | 이메일 인증 제한·재설정 UX | 이메일 인증 불요 확정(2026-10-01), 재설정 MVP 준비 중 확정(2026-10-29); 실제 복구 후속 범위 | 재설정 화면 |
+| OPEN-DB-004 | 실명 미수집·닉네임 공개 | 도입 확정, 세부 규칙/기존 계정 전환 미정 | nickname 검증/전환 |
+| OPEN-DB-005 | 탈퇴 시 주문·공개 리뷰 보존/익명화 | MVP 준비 중 확정, 실제 처리 범위/기간 미정 | 실제 탈퇴 기능/물리삭제(후속) |
 | OPEN-DB-006 / OPEN-ARCH-006 | Cart 승격·빈 상태·revision 충돌 | 설계안 작성 완료, 구현 검증 전 | CART-005~010 |
 | OPEN-DB-007 | 이미지 준비 업로드/삭제/캐시 접근 | 상세 설계안 작성 완료, 구현 검증 전 | IMG-001~005 |
 | OPEN-DB-008 | 여러 메뉴 리뷰 연결 방식 | 기술 설계안 | 구현 전 PRD 정합성 재확인 |
@@ -575,7 +594,7 @@ Supabase Data API 노출 테이블에는 RLS를 적용한다. 직접 SELECT 권�
 
 ## 3. Auth · RLS · 권한
 
-**기술 설계안이며 구현·보안 검증 완료 문서가 아니다.** 이 장은 인증 수명주기, 테이블별 권한, RPC 실행 경계, 공개 응답, Storage 경계를 구체화한다. 전체 migration과 SQL signature는 구현 산출물이며, 세부 payload는 각 도메인 및 API 계약을 적용한다. 이름 수집, 탈퇴 정책, 계좌 민감정보 보관, 비밀번호 재설정 UX는 제품/기술 미결정으로 유지한다. 이메일 인증은 요구하지 않기로 했다(2026-10-01 결정, AUTH-001).
+**기술 설계안이며 구현·보안 검증 완료 문서가 아니다.** 이 장은 인증 수명주기, 테이블별 권한, RPC 실행 경계, 공개 응답, Storage 경계를 구체화한다. 전체 migration과 SQL signature는 구현 산출물이며, 세부 payload는 각 도메인 및 API 계약을 적용한다. 실명 미수집·닉네임 도입, 계좌 서버 미저장·기기 보안 저장, 탈퇴/재설정 준비 중은 확정이다. 닉네임 상세·탈퇴 데이터 처리·PENDING 원문 수명은 미결정으로 유지한다. 이메일 인증은 요구하지 않기로 했다(2026-10-01 결정, AUTH-001).
 
 ### AUTH-001 인증 모델
 
@@ -588,7 +607,7 @@ Supabase Data API 노출 테이블에는 RLS를 적용한다. 직접 SELECT 권�
 
 Supabase Anonymous Sign-In은 사용하지 않는다. Guest Cart를 위해 Auth 계정을 생성하지 않는다. publishable key(기존 프로젝트의 anon key 포함)는 앱 연결용이고 사용자 인증이나 관리 권한의 대체물이 아니다. secret/service_role key는 앱·소스·로그에 포함하지 않는다.
 
-`authenticated`라는 DB 역할은 이메일 인증 완료 자체를 의미하지 않는다. **확정 정책 (2026-10-01 결정):** 가입·로그인에 이메일 인증(확인 메일)을 요구하지 않는다. Auth 설정은 이메일 확인을 끈 상태(`supabase/config.toml`의 `[auth.email] enable_confirmations = false`, 원격 프로젝트도 같은 값)로 두고, 업무 명령은 이메일 확인 여부로 사용자를 구분하지 않는다. 로그인한 사용자는 모두 같은 본인 소유권 규칙을 적용받는다. 비밀번호 재설정 UX는 OPEN-ARCH-001/OPEN-DB-003의 남은 미결정이다.
+`authenticated`라는 DB 역할은 이메일 인증 완료 자체를 의미하지 않는다. **확정 정책 (2026-10-01 결정):** 가입·로그인에 이메일 인증(확인 메일)을 요구하지 않는다. Auth 설정은 이메일 확인을 끈 상태(`supabase/config.toml`의 `[auth.email] enable_confirmations = false`, 원격 프로젝트도 같은 값)로 두고, 업무 명령은 이메일 확인 여부로 사용자를 구분하지 않는다. 로그인한 사용자는 모두 같은 본인 소유권 규칙을 적용받는다. 비밀번호 재설정은 MVP `준비 중` 안내만 제공하며 resetPasswordForEmail/비밀번호 변경을 호출하지 않는다. 후속 구현 전 callback allowlist·만료/오류·재인증을 검증한다.
 
 ### AUTH-002 앱 인증 상태
 
@@ -620,7 +639,15 @@ pendingIntent에 전체 계좌번호·비밀번호·외부 임의 URL을 저장�
 - query/cache key에 user_id를 포함하고 로그아웃/전환 시 개인 캐시와 계좌 원문·사용자 Cart 화면을 제거한다. 이전 계정 Cart를 새 Guest Cart나 다른 계정 Cart로 자동 복제하지 않는다.
 - Guest Cart와 로그인 Cart는 별도 소유 영역이다. 로그인 취소 중 보존 정책을 로그아웃 시 타인 데이터 노출 허용으로 확대하지 않는다.
 - 미동기화 완료확인 큐는 사용자별로 격리한다. 다른 계정으로 로그인하면 처리하지 않고, 원래 계정으로 재인증할 때만 복구한다. 큐에는 계좌 원문을 넣지 않는다.
-- 로그아웃은 토큰 정리이며 주문 취소·기록 삭제·계좌 삭제가 아니다. 로컬 토큰 삭제와 이미 발급한 access token의 서버 유효기간은 구분한다. 즉시 전체 토큰 무효화가 구현됐다고 가정하지 않는다.
+- 로그아웃은 주문 취소·서버 기록 삭제가 아니다. 기기 계좌 원문의 지속 보관/삭제는 OPEN-DB-002에서 별도 결정하고 메모리·개인 캐시 접근 차단은 항상 수행한다. 로컬 토큰 삭제와 이미 발급한 access token의 서버 유효기간은 구분한다. 즉시 전체 토큰 무효화가 구현됐다고 가정하지 않는다.
+
+### AUTH-005 회원가입·닉네임·준비 중 기능
+
+**확정:** 이메일·비밀번호·닉네임 가입, 실명 미수집. 가입 요청에 계좌정보를 포함하지 않는다. 공개 영역은 nickname, 닉네임 미설정 기존 계정의 설정 유도/대체 카피 `SaveEats 이용자`는 기술 추천이며 최종 정책 확인이 필요하다. nickname의 길이·중복 허용·변경·금칙어는 OPEN-DB-004로 유지한다.
+
+가입/Auth 성공과 profile 저장 실패는 분리한다. profile 실패를 가입 실패로 오인해 같은 이메일로 가입을 반복하지 않고 동일 uid에서 profile 설정만 복구한다. nickname을 user_metadata에 전달하더라도 서버 검증을 거친 profiles 공개 필드만 신뢰하고 권한 판단에는 사용하지 않는다.
+
+탈퇴/재설정 버튼은 각각 `회원 탈퇴 기능은 준비 중이에요.` / `비밀번호 재설정 기능은 준비 중이에요.` 안내만 제공한다. 삭제·복구 메일·비밀번호 변경 API/관리자 키 경로는 구현하지 않는다. 실제 탈퇴 데이터 workflow는 SSOT 60.1 추천과 OPEN-DB-005의 최종 결정을 기다린다. 준비 중 UI 테스트는 삭제/변경 요청 0건을 확인한다.
 
 ### SEC-001 권한 계층
 
@@ -640,7 +667,7 @@ S=직접 SELECT, I/U/D=직접 INSERT/UPDATE/DELETE. ‘명령’은 지정 RPC/�
 | 테이블 | Guest S | 로그인 S | 로그인 I/U/D | 조건 및 대체 경로 |
 |---|---|---|---|---|
 | profiles | 금지 | 본인 | 전부 금지 | 생성은 서버 provisioning; 변경은 정책 확정 후 명령 |
-| destination_accounts | 금지 | 본인 마스킹 필드 | 전부 금지 | 등록/교체/삭제는 계좌 명령 |
+| destination_accounts(기기 로컬) | 서버 테이블 없음 | 서버 조회 없음 | 서버 쓰기 없음 | AccountVault uid 격리 |
 | categories | 활성 | 활성 | 전부 금지 | 운영 Seed만 쓰기 |
 | stores | 활성+활성 분류 | 동일 | 전부 금지 | 공개 필드 projection |
 | menus | 활성+활성 Store | 동일 | 전부 금지 | 품절은 표시하며 삭제하지 않음 |
@@ -661,7 +688,7 @@ S=직접 SELECT, I/U/D=직접 INSERT/UPDATE/DELETE. ‘명령’은 지정 RPC/�
 | private.cart_command_receipts / private.review_command_receipts | 금지 | 직접 접근 금지 | 전부 금지 | 본인 명령 내부의 재시도 결과만 반환 |
 | private.review_uploads | 금지 | 직접 접근 금지 | 전부 금지 | 준비/검증/참조 확정 명령, 본인·대상 검증 |
 | private.storage_cleanup_jobs | 금지 | 직접 접근 금지 | 전부 금지 | 서버 worker 전용 |
-| 계좌 private payload(미확정) | 금지 | 직접 접근 금지 | 전부 금지 | 검증 완료한 서버 전용 경로 |
+| 계좌 private payload | 서버 저장 금지 | API 없음 | I/U/D 금지 | 기존 후보 폐기 |
 
 타인 orders/profiles를 공개 리뷰 SELECT에 맞춰 열지 않는다. 삭제 리뷰를 본인 목록에 다시 노출하거나 복원 UI를 추가하지 않는다. 비활성 Store 찜은 favorite 조회 projection에서 숨기되 본인이 원하면 남아 있는 찜 행을 삭제할 수 있다.
 
@@ -721,9 +748,9 @@ GRANT EXECUTE ON FUNCTION public.confirm_order(uuid, uuid)
 | 명령 초안 | 주체 | 서버 필수 검증 | 직접 우회 금지 항목 |
 |---|---|---|---|
 | ensure_my_profile | 로그인 | uid 기반 생성, 중복 안전 | 타인 id/권한 metadata 복제 |
-| register/replace/delete_account | 로그인 | 본인, revision, 입력 검증 | 계좌 소유자·민감 payload 직접 변경 |
+| AccountVault register/replace/delete (기기 로컬) | 로그인 | 서버 검증 대상 아님; 앱 uid 격리·입력·보안 IO 검증 | 계좌 payload 서버 RPC 전송 금지 |
 | replace/promote_cart | 로그인 | 본인, revision, Single Store/옵션/수량 | 자식 개별 변경으로 일관성 우회 |
-| create_order | 로그인 | uid, 멱등키, 계좌, 가격/품절/옵션, 고지 계약 | 임의 금액/상태/Snapshot |
+| create_order | 로그인 | uid, 멱등키, 비민감 destinationRef 형식, 가격/품절/옵션, 고지 계약 | 임의 금액/상태/Snapshot |
 | confirm_order | 로그인 | 본인 Order, 유효 전이, operation_id | VERIFIED/완료시각 직접 설정 |
 | cancel_order | 로그인 | 본인 PENDING, 경합 검사 | 완료 주문 취소/물리삭제 |
 | mark_status_updates_viewed | 로그인 | event ID마다 본인 Order 연결 | 타인/나중 이벤트 일괄 read |
@@ -739,13 +766,13 @@ set_helpful은 desired_boolean을 받는다. 읽음 명령은 클라이언트가
 
 ### SEC-006 공개 리뷰 조회
 
-공개 함수는 명시적 DTO를 반환한다. 허용: review_id, 마스킹 표시명, rating, 작성/수정 시각, 메뉴 Snapshot 표시값, 본문, 주문금액, Helpful count, 허용 이미지 참조. 로그인 사용자에게만 본인 Helpful 선택 여부와 본인 작성 여부를 계산한다.
+공개 함수는 명시적 DTO를 반환한다. 허용: review_id, 공개 닉네임, rating, 작성/수정 시각, 메뉴 Snapshot 표시값, 본문, 주문금액, Helpful count, 허용 이미지 참조. 로그인 사용자에게만 본인 Helpful 선택 여부와 본인 작성 여부를 계산한다.
 
-금지: 전체 계좌번호/마스킹 계좌, 은행 Snapshot, 이메일, profiles.name 원본, user_id/order_id 전체 내부 행, fingerprint, 토큰. 개인정보가 포함될 수 있는 order JSON 전체를 반환하지 않는다. 사용자 공개 프로필 모아보기는 LATER라서 공개 user_id 기반 목록 API를 추가하지 않는다.
+금지: 전체 계좌번호/마스킹 계좌, 은행 Snapshot, 이메일, 실명 원본, user_id/order_id 전체 내부 행, fingerprint, 토큰. 개인정보가 포함될 수 있는 order JSON 전체를 반환하지 않는다. 사용자 공개 프로필 모아보기는 LATER라서 공개 user_id 기반 목록 API를 추가하지 않는다.
 
 Guest가 함수에 arbitrary user_id를 전달해 ‘내 선택 여부’를 조회하지 못하게 한다. DB의 auth.uid()만 사용한다. Store/menu scope는 제2장 review_menus 연결과 활성 리뷰만 사용하며, 조회 대상 비활성 카탈로그의 처리 계약을 명시한다. 페이지 크기 최대값·정렬 enum·cursor를 검증한다. 공개 함수에서 삭제 리뷰는 작성자 여부와 무관하게 제외한다.
 
-이름 미등록자의 표시명은 OPEN-DB-004 결정 전 임의 확정하지 않는다. 기본 이름을 실명인 것처럼 합성하지 않는다.
+닉네임 누락 계정 전환/대체 표시는 AUTH-005의 추천과 OPEN-DB-004를 따른다. 기본 이름·이메일을 실명/닉네임처럼 합성하지 않는다.
 
 ### SEC-007 리뷰 이미지와 Storage
 
@@ -768,7 +795,7 @@ Guest가 함수에 arbitrary user_id를 전달해 ‘내 선택 여부’를 조
 | AUTH_REQUIRED / SESSION_EXPIRED | 인증 불가 | 본인 재인증, Cart/완료확인 큐 유지 |
 | RESOURCE_NOT_FOUND | 없거나 본인 접근 불가 | 타인 객체 존재를 구별해 노출하지 않음 |
 | INVALID_INPUT | 범위/허용 필드/관계 오류 | 해당 입력 수정 |
-| CART_REVISION_CONFLICT / ACCOUNT_REVISION_CONFLICT | 확인 후 대상 변경 | 최신 상태 확인, 조용히 덮어쓰기 금지 |
+| CART_REVISION_CONFLICT(서버) / ACCOUNT_REVISION_CONFLICT(로컬) | 확인 후 대상 변경 | 각 저장소의 최신 상태 확인, 조용히 덮어쓰기 금지 |
 | IDEMPOTENCY_CONFLICT | 같은 생성키에 다른 내용 | 새 주문으로 자동 재시도 금지 |
 | INVALID_ORDER_TRANSITION | 이미 다른 상태 확정 | 서버 상태 조회 후 UI 일치 |
 | STORE_CLOSED | Cart 검증·주문 생성 시 Store 영업 종료 (2026-10-01 결정) | “지금은 영업이 종료됐어요”; Cart 유지, 기존 PENDING 이어가기·완료 확인은 허용 |
@@ -784,16 +811,19 @@ DB 오류 raw 문자열과 계좌/토큰을 사용자에게 그대로 표시하�
 
 | 참조 | 항목 | 이번 처리 |
 |---|---|---|
-| OPEN-ARCH-001 / OPEN-DB-003 | 이메일 인증 필수/미인증 범위/재설정 UX | 이메일 인증은 **결정됨 (2026-10-01 결정)** — 요구하지 않음(AUTH-001). 재설정 UX는 정책 결정 필요 |
-| OPEN-DB-004 | 이름 수집과 이름 없는 작성자 표시 | Auth provisioning과 수집 UX 분리; 공개 카피 미확정 |
-| OPEN-ARCH-002 / OPEN-DB-001 | 계좌 원문 보관/키관리/삭제 | private 경계만 정의; 원문 API 검증 전 미완료 |
+| OPEN-ARCH-001 / OPEN-DB-003 | 이메일 인증 필수/미인증 범위/재설정 UX | 이메일 인증 불요(AUTH-001), 재설정 MVP 준비 중 확정(AUTH-005) |
+| OPEN-DB-004 | 실명 미수집·닉네임 공개 | 도입 확정, 세부 검증/전환 정책 미정(AUTH-005) |
+| OPEN-ARCH-002 / OPEN-DB-001 | 계좌 기기 보안 저장/삭제 | 서버 미저장 확정; AccountVault 실기기 검증 전 미완료 |
 | OPEN-ARCH-003 / OPEN-DB-002 | PENDING 중 계좌 교체/삭제 | 본인 권한만으로 해결되지 않는 제품 정책 |
-| OPEN-DB-005 | 탈퇴/주문·리뷰 보존/익명화 | Auth 관리자 deleteUser를 앱에 직접 노출하지 않음 |
+| OPEN-DB-005 | 탈퇴/주문·리뷰 보존/익명화 | MVP 준비 중 확정, 실제 데이터 처리 범위/기간은 미결정. SSOT 60.1 추천; 관리자 deleteUser 앱 노출 금지 |
 | OPEN-DB-007 | 업로드/파일 정리/읽기 URL 수명 | Storage 상세 설계·실제 테스트 필요 |
 
-이메일 인증은 요구하지 않는다(2026-10-01 결정). 따라서 인증 링크 경로는 MVP에 없다. 재설정 링크는 허용 앱 callback URL과 만료/잘못된 링크 경로를 검증하고 다음 Auth 계약에서 UX를 확정한다.
+이메일 인증은 요구하지 않는다(2026-10-01 결정). MVP는 재설정도 준비 중이므로 메일 링크 handler를 완료 범위로 추가하지 않는다. 실제 재설정 도입 시 callback·만료·오류·계정 복구 경로를 검증한다.
 
 ### SEC-010 구현 검증 행렬
+
+이번 변경의 추가 완료 조건: 가입 nickname 저장 실패 복구, 공개 DTO 닉네임/이메일 비노출, 준비 중 버튼의 삭제·재설정 API 호출 0건, AccountVault uid 격리·저장/읽기/삭제 오류·백업/재설치, 로컬 연결 저장 실패와 서버 create 응답 유실 경합, 원문/마스킹/암호문/계좌 해시의 API·DB·로그 미유입. 아직 실행하지 않은 검증 계획이다.
+
 
 최소 fixture: Guest, 사용자 A/B, A의 PENDING/완료/취소 Order, 활성/삭제 Review, 품절/비활성 catalog, 임시/확정 이미지. Auth JWT 경로와 실제 Data API/RPC/Storage API 모두 검사한다. SQL 관리자로 성공한 테스트를 모바일 권한 테스트로 대체하지 않는다.
 
@@ -1112,18 +1142,20 @@ stateDiagram-v2
 ### ORD-004 최종 확인과 생성 요청
 
 1. 로그인, Cart sync/validation, 계좌 등록 상태를 확인한다.
-2. 승인한 menu/option/quantity/price/catalog revision과 account id/revision을 최종 화면에 고정한다.
+2. 승인한 menu/option/quantity/price/catalog revision과 로컬 destinationRef/계좌 버전을 최종 화면에 고정한다.
 3. 고지: “음식은 주문되지 않아요. 주문금액 27,000원이 등록한 계좌로 이동합니다.” CTA: “27,000원 내 계좌로 주문하기”.
 4. 클릭 시 생성 idempotencyKey와 immutable request를 로컬에 먼저 저장한다. ownerUid/sessionGeneration을 포함한다.
 5. 서버 create_order 호출. 로컬 저장 실패라면 전송하지 않고 저장 재시도 안내.
 6. 서버 응답의 Order ID/금액/상태를 확인하고 로컬에 연결한다.
 7. PENDING일 때만 이어가기 제공. 응답이 이미 완료/취소면 해당 상태 화면으로 이동한다.
 
-계좌 등록/로그인 후 최종 고지 없이 자동 create_order를 호출하지 않는다. 최종 화면이 보이는 중 Cart·계좌가 바뀌면 재조회·재확인한다. 계좌/가격 확인 데이터는 서버 검증 대상이다.
+계좌 등록/로그인 후 최종 고지 없이 자동 create_order를 호출하지 않는다. 최종 화면이 보이는 중 Cart·계좌가 바뀌면 재조회·재확인한다. 가격은 서버 검증 대상이며 계좌 등록/변경은 기기 AccountVault에서 검증한다. 서버는 실제 계좌를 검증하지 않는다.
 
 #### create_order 입력 초안
 
-idempotencyKey UUID, requestVersion=1, cartId UUID, expectedCartRevision, storeId, accountId, expectedAccountRevision, items[{menuId, optionIds, quantity, approvedUnitPrice, approvedCatalogRevision}], approvedTotalAmount, disclosureVersion, disclosureAcknowledged=true.
+**계약 변경 기술안:** v2에서 기존 accountId/expectedAccountRevision 및 계좌 Snapshot payload를 제거하고 destinationRef로 교체한다. 실제 배포 계약/기존 앱이 있다면 지원 버전 전환·구요청 차단·잔존 DB/로그 정리 계획을 별도 작성한다. 문서만 바꾸고 기존 v1 계좌 요청을 계속 수용하지 않는다. 이번 작업은 실행 가능한 migration/API 변경이 아니다.
+
+idempotencyKey UUID, requestVersion=2, cartId UUID, expectedCartRevision, storeId, destinationRef, items[{menuId, optionIds, quantity, approvedUnitPrice, approvedCatalogRevision}], approvedTotalAmount, disclosureVersion, disclosureAcknowledged=true.
 
 uid, status, completedAt, Snapshot 이름, 시스템 검증 플래그는 입력받지 않는다. 고지 버전/ack는 표시·사용자 확인 기록이지 법적 동의 충족이나 사용자가 실제로 읽었음을 증명하지 않는다.
 
@@ -1133,20 +1165,20 @@ uid, status, completedAt, Snapshot 이름, 시스템 검증 플래그는 입력�
 
 1. 인증된 uid 확인, 입력 정규화/fingerprint 계산.
 2. 본인 profiles 행을 FOR UPDATE 잠가 동일 사용자 생성 요청을 직렬화한다. UNIQUE(user_id,idempotency_key)는 최종 제약으로 유지한다.
-3. 동일 key Order를 먼저 조회. 같은 fingerprint면 현재 Order 상태와 기존 Snapshot 반환. 다르면 IDEMPOTENCY_CONFLICT. **재시도 성공 주문에는 현재 Cart/계좌/카탈로그 유효성 검사를 다시 적용하지 않는다.**
+3. 동일 key Order를 먼저 조회. 같은 fingerprint면 현재 Order 상태와 기존 Snapshot 반환. 다르면 IDEMPOTENCY_CONFLICT. **재시도 성공 주문에는 현재 Cart/카탈로그 유효성 검사를 다시 적용하지 않는다. 계좌 서버 검증은 없다.**
 4. 신규 요청이면 Cart 행 잠금, 소유권/revision/요청 item 동일성 검사. 추가 입력 item으로 Cart 검증을 우회하지 못한다.
-5. 목적지 행 소유권/revision 확인 및 잠금. 현재 표시값을 읽는다. 변경/삭제 명령과 공통 잠금 순서를 맞춘다.
+5. destinationRef의 UUID 형식과 요청 fingerprint를 확인한다. 목적지 DB 행/은행/마스킹을 조회하거나 잠그지 않는다. 계좌 값은 API 입력 금지다. 앱의 보안 로컬 연결 검증은 별도이며 서버의 금융 검증이 아니다.
 6. 대상 Store/Menu와 옵션의 구조/가격/활성/품절을 잠금 상태에서 재검증한다. 그룹 선택수, 수량 1~10, Single Store, 모든 승인가격/총액을 비교한다.
 7. orders + order_items + order_item_options + revision 1 초기 상태 이력을 삽입한다. 실패하면 전체 rollback.
 8. commit 후 응답. Analytics는 실패해도 이 트랜잭션을 rollback시키지 않는다.
 
 카탈로그 일관성 기술안: Store/Menu 등 기존 부모를 FOR SHARE로 잠그고 읽는다. 옵션 추가/삭제/가격 변경을 포함한 운영 작업은 해당 부모 FOR UPDATE와 catalog_revision 증가를 같은 트랜잭션에서 수행한다. 기존 옵션 행만 잠그면 신규 삽입을 막지 못하므로 모든 catalog writer가 부모 잠금 규약을 따라야 한다. Seed/운영 수동 쓰기도 예외로 두지 않는다.
 
-잠금 순서는 사용자 profiles → Cart → 목적지 → Store → 정렬된 Menu → 그룹/옵션으로 고정한다. 부모 분류 활성 변경도 동일 규약/재검증에 포함한다. 다른 기능이 함께 잠그는 행은 같은 순서를 사용한다. 적용 migration에서 교차 기능 deadlock을 검증한다. serializable을 채택하면 serialization 실패를 동일 요청으로 제한 재시도하며 수준 자체를 중복 방지 대체물로 삼지 않는다.
+잠금 순서는 사용자 profiles → Cart → Store → 정렬된 Menu → 그룹/옵션으로 고정한다. 부모 분류 활성 변경도 동일 규약/재검증에 포함한다. 다른 기능이 함께 잠그는 행은 같은 순서를 사용한다. 적용 migration에서 교차 기능 deadlock을 검증한다. serializable을 채택하면 serialization 실패를 동일 요청으로 제한 재시도하며 수준 자체를 중복 방지 대체물로 삼지 않는다.
 
 ### ORD-006 요청 키와 응답 유실
 
-서버 fingerprint는 정규화된 의미 필드로 계산한다: 요청 버전, Cart/revision, Store, 계좌 id/revision, 정렬된 item/option 조합, 수량, 승인가격/총액, 고지 버전/확인값. 전체 계좌번호·토큰·클라이언트 클릭시각·Toss launcher 선택은 제외한다.
+서버 fingerprint는 정규화된 의미 필드로 계산한다: 요청 버전, Cart/revision, Store, 비민감 destinationRef, 정렬된 item/option 조합, 수량, 승인가격/총액, 고지 버전/확인값. 전체 계좌번호·토큰·클라이언트 클릭시각·Toss launcher 선택은 제외한다.
 
 | 상황 | 처리 |
 |---|---|
@@ -1170,12 +1202,13 @@ uid, status, completedAt, Snapshot 이름, 시스템 검증 플래그는 입력�
 | 메뉴 Item | 생성 시 Menu | id, name, image ref, base price, quantity |
 | 옵션 | 생성 시 Group/Option | 원본 id, 그룹명/옵션명, 추가 단가 |
 | 금액 | 서버 계산 | option total, unit price, line total, order total, KRW |
-| 목적지 표시 | 생성 시 본인 계좌 | 당시 id/revision, bank code/name, masked number |
+| 목적지 연결(서버) | 요청의 무작위 destinationRef | Order와 연결값만; 계좌정보/해시 없음 |
+| 목적지 표시(기기) | AccountVault의 당시 목적지 | destinationRef/마스킹 Snapshot을 보안 저장, 서버 응답과 기기에서 결합 |
 | 생성 맥락 | 검증된 요청 | snapshot version, 생성 Cart id/revision, 고지 버전 |
 
 unitPrice=basePrice+sum(optionPrice), lineTotal=unitPrice×quantity, total=sum(lineTotal). 실제 존재하지 않는 배달비/최소주문금액을 추가하지 않는다. 생성 후 이름/가격/목적지 Snapshot을 업데이트하지 않는다. 현재 Menu는 ‘같은 메뉴 보기’ 유효성에만 사용한다.
 
-전체 계좌번호를 Order JSON/로그/로컬 생성 요청에 넣지 않는다. 마스킹 Snapshot으로 직접 이어가기의 복사를 구현할 수 없으므로 원문 제공 계약은 OPEN-DB-001/002 결정이 필요하다. 현재 계좌번호를 과거 PENDING에 자동 대입하지 않는다.
+계좌 원문/은행/마스킹/암호문/계좌 해시는 Order JSON·API·로그·일반 로컬 요청/복구 큐에 넣지 않는다. 보안 저장한 key/Order→destinationRef 연결로만 목적지를 찾는다. 마스킹만으로 원문 일치를 증명할 수 없다. OPEN-DB-002 원문 수명 결정 전 해당 경계는 미완료이며 현재 계좌 자동 대입은 금지한다.
 
 #### 생성 추적 컬럼
 
@@ -1225,7 +1258,7 @@ cancel_order(orderId, operationId)는 같은 행 잠금/소유권/operation 종�
 | AUTH_REQUIRED / SESSION_EXPIRED | 같은 사용자 재인증, 고정 key/queue 유지 |
 | RESOURCE_NOT_FOUND | 없거나 접근 불가; 타인 존재 구별 노출 금지 |
 | CART_REVISION_CONFLICT | Cart 최신 확인/고지 재확인 |
-| ACCOUNT_REVISION_CONFLICT / ACCOUNT_REQUIRED | 계좌 확인/등록 후 고지 재확인 |
+| ACCOUNT_REVISION_CONFLICT / ACCOUNT_REQUIRED (로컬 오류) | AccountVault 버전/등록 확인 후 고지 재확인; 서버 계좌 조회 없음 |
 | PRICE_CHANGED / ITEM_UNAVAILABLE / INVALID_OPTIONS | item별 문제, 새 승인 전 외부 실행 차단 |
 | IDEMPOTENCY_CONFLICT / OPERATION_CONFLICT | 키 재사용 문제, 새 주문 자동 retry 금지 |
 | INVALID_ORDER_TRANSITION | 서버 상태 확인, 자동 되돌리기 없음 |
@@ -1264,7 +1297,8 @@ OPEN-CART-003은 현재 미확정. **추천: PENDING 생성 성공 시 해당 �
 | 동일 key 다른 payload | 충돌, 기존 Snapshot 불변 |
 | commit 성공 직후 응답 유실 | 동일 key로 기존 Order 복구 |
 | create 응답 유실 뒤 계좌 삭제/가격 변경/Cart 변경 | 기존 성공 Order replay; 현재 데이터로 재작성 없음 |
-| 신규 create와 가격/옵션/계좌 변경 동시 실행 | 승인된 단일 일관 상태 또는 reject; 혼합 Snapshot 없음 |
+| 신규 create와 가격/옵션 변경 동시 실행 | 서버 승인된 일관 상태 또는 reject; 혼합 상품 Snapshot 없음 |
+| 로컬 계좌 변경/보안 연결 저장 실패와 create 경합 | DB-003의 고정 destinationRef/보안 연결 유지, 외부 실행 차단·동일 key 복구; 서버와 로컬 원자성 가정 금지 |
 | Order insert 후 Item/이력 저장 실패 | 전체 rollback, 외부 실행 없음 |
 | 0/11 수량·다른 Store·변조 금액·필수 옵션 누락 | 생성 거절 |
 | 외부 앱 실행/복귀/timeout | 상태 PENDING, 송금 검증 오표시 없음 |
@@ -1285,7 +1319,7 @@ OPEN-CART-003은 현재 미확정. **추천: PENDING 생성 성공 시 해당 �
 | 참조 | 항목 | 상태 |
 |---|---|---|
 | OPEN-CART-003 | Cart clear 시점 | 제품 정책 결정 필요; ORD-013 추천안 |
-| OPEN-ARCH-002/003, OPEN-DB-001/002 | 전체 계좌번호와 PENDING 목적지 제공 | 정책/보안 검증 필요 |
+| OPEN-ARCH-002/003, OPEN-DB-001/002 | 기기 보안 저장과 PENDING 목적지 제공 | 저장 위치 확정, 원문 수명 정책/실기기 검증 필요 |
 | OPEN-ARCH-004 | Toss 지원/복귀 | PoC, 미검증 파라미터 비활성 |
 | OPEN-ARCH-007 | 큐 내구성/응답 유실/경합 | 이번 설계안 작성, 구현 검증 전 |
 | OPEN-ORD-001 | 고지 버전/텍스트 관리 및 Catalog 잠금 규약 | 기술 구현 계약 필요 |
@@ -1326,7 +1360,7 @@ OPEN-CART-003은 현재 미확정. **추천: PENDING 생성 성공 시 해당 �
 | ClipboardAdapter | 사용자 요청 값 한 종류 복사 | 자동 복사/clipboard 읽기 |
 | ReturnCoordinator | lifecycle/route 복귀·현재 Order 확인 | callback의 success 문자열로 완료 판정 |
 
-DestinationResolver는 민감정보 정책 검증 전 계약만 정의한다. 마스킹 Snapshot만으로 계좌 복사를 구현할 수 없다. 계좌 원문을 장바구니·일반 로그·Analytics·복구 큐에 저장하지 않는다.
+DestinationResolver는 DB-003 AccountVault의 인증 사용자·Order별 로컬 보안 연결에서만 원문을 읽는다. 서버 원문 API는 만들지 않는다. 원문 수명 정책(OPEN-DB-002)과 실기기 검증은 남아 있으며 마스킹 Snapshot만으로 계좌 복사를 구현할 수 없다. 계좌 원문을 장바구니·일반 로그·Analytics·복구 큐에 저장하지 않는다.
 
 ### TRF-003 Adapter 계약 초안
 
@@ -1497,7 +1531,7 @@ Mock은 DISPATCHED/UNAVAILABLE/UNKNOWN/ERROR/config OFF를 모두 제공한다. 
 | 참조 | 항목 | 상태 |
 |---|---|---|
 | OPEN-ARCH-004 | Toss 기본 실행·송금 사전입력·callback | PoC 필요, 현재 전부 미검증 |
-| OPEN-DB-001 | 전체 계좌번호 저장/암호화/원문 제공 | 기술·보안 검증 필요 |
+| OPEN-DB-001 | 기기 보안 저장/원문 제공 | 서버 미저장 확정, AccountVault 실기기 검증 필요 |
 | OPEN-DB-002 | 계좌 변경/삭제 후 과거 PENDING 목적지 | 제품 정책 결정 필요 |
 | OPEN-TRF-001 | 앱 버전 식별 불가 환경의 활성화 범위 | 기술/운영 검증 필요 |
 | OPEN-TRF-002 | clipboard adapter와 민감정보 옵션 | 사용 스택 확정 후 검증 |
@@ -1512,7 +1546,7 @@ Toss 공식 인증/결제 문서는 이 외부 앱 송금 흐름의 지원 근�
 
 ## 7. 리뷰 · Helpful · 이미지 Storage
 
-**기술 설계 초안이며 실제 RPC·Storage·권한·동시성 테스트 완료 문서가 아니다.** 제품 정책을 유지하면서 작성/수정/soft delete/재작성/Helpful/이미지의 요청·트랜잭션·복구 계약을 구체화한다. 신고 SHOULD, 다중 이미지 UI/공개 닉네임/AI 답글 LATER는 필수 구현으로 승격하지 않는다.
+**기술 설계 초안이며 실제 RPC·Storage·권한·동시성 테스트 완료 문서가 아니다.** 제품 정책을 유지하면서 작성/수정/soft delete/재작성/Helpful/이미지의 요청·트랜잭션·복구 계약을 구체화한다. 신고 SHOULD, 다중 이미지 UI/타 사용자 리뷰 모아보기/AI 답글 LATER는 필수 구현으로 승격하지 않는다.
 
 ### REV-001 확정 정책
 
@@ -1522,7 +1556,7 @@ Toss 공식 인증/결제 문서는 이 외부 앱 송금 흐름의 지원 근�
 - 땡김도 정수 1~5, 본문 5~500자, 사진 선택 최대 1장. DB는 Review 1:N Image 구조.
 - 수정 허용: 땡김도/본문/사진. Order/Store/Menu/금액/작성자 변경 금지. 수정은 Helpful 유지.
 - 재작성 Helpful은 0부터. 이전 Helpful을 새 ID로 복사하지 않음.
-- 공개 리뷰, MVP 공개/비공개 선택 없음. 실명 마스킹, 원본 이름/계좌 공개 금지.
+- 공개 리뷰, MVP 공개/비공개 선택 없음. 공개 닉네임 사용, 실명 미수집·이메일/계좌 공개 금지.
 - Helpful 로그인 필요, 자기 리뷰 금지, user+review UNIQUE, 취소 가능.
 - Store/Menu 진입 Scope만 다르며 제목은 SaveEats 리뷰. 내 리뷰는 createdAt DESC, 수정으로 재정렬하지 않음.
 
@@ -1668,7 +1702,7 @@ active만 COUNT/AVG, count=0이면 average=null. 삭제를 제외한 Helpful cou
 
 기술안: page size 20, 최대 50. cursor는 scope/sort/마지막 정렬값을 검증한다. Helpful/rating 값은 수정 가능해 page 간 순서가 변할 수 있다. client ID dedupe와 mutation 후 첫 page reset으로 대응하며 조회 전체의 고정 Snapshot 보장은 하지 않는다. 보조키만으로 값 변경 중 누락까지 방지한다고 주장하지 않는다.
 
-공개 DTO: reviewId, maskedAuthorName, rating, createdAt, editedAt?, 메뉴/가게 표시 Snapshot, 본문, 주문금액, images, helpfulCount. 로그인일 때만 myHelpful/isMine. 이메일·원본 이름·은행·계좌·내부 Order/user ID 원장을 노출하지 않는다. 이름 수집/이름 없는 작성자 표시 OPEN-DB-004는 미결정 유지.
+공개 DTO: reviewId, authorNickname, rating, createdAt, editedAt?, 메뉴/가게 표시 Snapshot, 본문, 주문금액, images, helpfulCount. 로그인일 때만 myHelpful/isMine. 이메일·원본 이름·은행·계좌·내부 Order/user ID 원장을 노출하지 않는다. 공개 닉네임은 MUST이며 OPEN-DB-004는 세부 검증 규칙/기존 계정 전환만 미결정이다.
 
 ### REV-009 API 계약 요약
 
@@ -1721,7 +1755,7 @@ Receipt 재생은 적용 당시 결과와 현재 상태를 구분한다. 같은 
 | 참조 | 항목 | 상태 |
 |---|---|---|
 | OPEN-DB-007 | 이미지 예약/검증/정리/일시 접근 | 이번 상세 기술안 작성, 구현 검증 전 |
-| OPEN-DB-004/005 | 이름/미등록 표시/탈퇴·보존 | 제품 정책 결정 필요 |
+| OPEN-DB-004/005 | 닉네임 상세·기존 계정/탈퇴·보존 | 닉네임 도입과 탈퇴 준비 중은 확정, 상세 정책 결정 필요 |
 | OPEN-DB-008 | 여러 메뉴 리뷰 연결 | 기존 기술안 유지, UI/PRD 검수 필요 |
 | OPEN-REV-001 | 서버 decode/re-encode runtime와 메모리/작업 상한 | 기술 검증 필요 |
 | OPEN-REV-002 | 예약·URL 만료/정리 grace/receipt 보존 | 초기 기술안, 실제 API 수명/비용 검증 |
@@ -1852,7 +1886,7 @@ MVP는 Supabase Realtime/Push를 필수로 추가하지 않는다. 신규 event 
 1. Auth 초기화, uid/sessionGeneration 확정. Guest에는 본인 큐 실행 없음.
 2. 사용자별 저장 로드. 실패 영역은 격리하고 다른 영역을 막지 않는다.
 3. 완료확인 큐의 서버 상태 조회/복구 우선. unresolved create의 동일 key 조회. 외부 앱 자동 실행 없음.
-4. 계좌/Order 최신 상태 확인, Cart 미확정 명령/승격 복구.
+4. AccountVault 현재 uid/목적지 버전과 서버 Order 상태 확인, Cart 미확정 명령/승격 복구.
 5. Review/이미지 진행 작업 reconcile. 공개조회/검색은 가능한 범위에서 별도 사용.
 6. read worker 낮은 우선순위로 batch retry. Analytics 장애가 앞 작업을 막지 않음.
 
@@ -1911,7 +1945,7 @@ NETWORK 오류에서 retryable=true여도 명령 종류에 따라 같은 key만 
 | DB-007 | 초기 PENDING 이벤트 빨간 점 의미 | UX 검수 필요, 초기 기술안 유지 |
 | OPEN-HIST-001 | polling 주기/batch 상한/timer 구현 | 기술안, 실기기/성능 검증 필요 |
 | OPEN-HIST-002 | 로컬 read 큐 내구성/summary reconcile | 설계 후 검증 필요 |
-| 기존 OPEN-* | 계좌/이메일/이름/탈퇴/Cart clear | 이전 미결정 유지, 이번 임의 확정 없음 |
+| 기존 OPEN-* | 계좌 원문 수명/닉네임 상세/탈퇴/Cart clear | 제10장 최신 결정 표 적용; 계좌 저장 위치·닉네임 도입·준비 중은 확정 |
 
 
 ### 공식 기술 근거
@@ -2026,11 +2060,11 @@ local db reset은 로컬/테스트 프로젝트 식별 확인 후 사용. stagin
 | 영역 | 논리 계약 | auth | 규칙/상세 |
 |---|---|---|---|
 | 초기 | local onboarding state, getPublicConfig | Guest | 온보딩 최초1회/Skip, OPS-002 |
-| Auth | signUp/signIn/signOut/resetPassword(UX 미확정), ensureMyProfile | Auth SDK/본인 | 제3장, 이메일 인증 없음(2026-10-01 결정), 이름 정책 미결정 |
+| Auth | signUp/signIn/signOut, ensureMyProfile | Auth SDK/본인 | 이메일 인증 없음, 실명 미수집·닉네임; resetPassword/탈퇴는 MVP 준비 중, 변경 요청 없음 |
 | catalog | getHome/listCategories/listStores/getStore/getMenu | Guest | 활성/품절 표시; 안전 DTO. listStores는 이름 → id 오름차순 cursor(2026-10-01 결정), 메뉴 목록 항목에 isPopular 없음(홈 인기 메뉴는 getHome 계약에서 정함) |
 | search | searchStores/getPopularTerms/localRecentSearches | Guest | Store/Menu/Category 검색→StoreCard only |
 | favorite | listMyFavorites/setFavorite | 본인 | 직접 I/D+RLS 또는 목표값 wrapper, Store only |
-| account | getMyAccount/register/replace/delete, resolveOrderDestination | 본인 | 원문/과거 PENDING 경계 미결정 |
+| account | AccountVault.getCurrent/register/replace/delete/resolveOrderDestination | 기기 본인 uid | 서버 API 아님; 보안 저장. 과거 PENDING 원문 수명은 미결정 |
 | Cart | ensure/getMyCart/promoteGuestCart/replaceMyCart/validateMyCart | 본인;Guest local | CART-005~010 |
 | Order | createOrder/getOrderByRequestKey/getMyOrder/confirmOrder/cancelOrder | 본인 | ORD-004~012 |
 | Transfer | getAvailability/getCapabilities/launch/copy/return | 본인 Order | TRF-003~009; 금융 성공 반환 안 함 |
@@ -2041,7 +2075,7 @@ local db reset은 로컬/테스트 프로젝트 식별 확인 후 사용. stagin
 
 검색 최소 기술안: trim한 1자 이상, 300ms debounce, name/category/menu 부분 매칭, 같은 Store dedupe, 매칭 메뉴명/가격 포함. 초성/오타 보정은 미검증·추가 범위이며 자동 MUST 추가하지 않는다. 결과 순서는 안정된 이름+id 등을 구현 계약에 고정한다. 최근 검색/최근 본(max10)은 로컬, 개인 계정 원문과 분리한다.
 
-홈 DTO는 계좌 표시(로그인일 때), category/banner/인기 Menu/recommended Store/최근 본 refs로 구성한다. 모든 section 실패가 전체 홈을 막지 않음. Seed 인기 값은 실제 사용자 수로 포장하지 않는다. 배너 target은 허용 내부 route/ID만.
+홈 서버 DTO에는 계좌 표시를 포함하지 않는다. 앱에서 로그인 uid의 AccountVault 표시를 결합하며 서버 DTO는 category/banner/인기 Menu/recommended Store/최근 본 refs로 구성한다. 모든 section 실패가 전체 홈을 막지 않음. Seed 인기 값은 실제 사용자 수로 포장하지 않는다. 배너 target은 허용 내부 route/ID만.
 
 My 간단 요약은 getMySummary에서 기간(KST)을 검증하고 완료 주문 count/amount를 반환하는 기술안. 누적/상세 지표 추가는 범위 검수 없이 금융 지표로 확장하지 않는다. 알림 설정은 실제 알림 SHOULD 포함 여부와 연결, 동작하지 않는 Push 설정을 기능 완료로 표현하지 않는다.
 
@@ -2054,7 +2088,7 @@ My 간단 요약은 getMySummary에서 기간(KST)을 검증하고 완료 주문
 | Cart | cartId/storeId/items/serverRevision/validation; Guest는 local envelope |
 | Order | orderId/status/statusRevision/createdAt/completedAt/cancelledAt/Snapshot |
 | HistoryRow | Order 표시 subset/unreadEventIds/reviewEligibility/currentMenuRefs |
-| Review | reviewId/revision/maskedAuthor/rating/body/createdAt/editedAt/menus/orderAmount/images/helpful |
+| Review | reviewId/revision/authorNickname/rating/body/createdAt/editedAt/menus/orderAmount/images/helpful |
 | FeatureConfig | 허용 flag/revision/server fetch 시각 |
 
 선택적 이미지 실패/없음, 평균없음(null), 로그인 전 favorite 접근 구분을 Mock과 실서버가 같은 방식으로 표현한다. 공개 DTO에 계좌·원본 사용자 정보가 스며들지 않게 schema whitelist로 검사한다.
@@ -2076,9 +2110,9 @@ My 간단 요약은 getMySummary에서 기간(KST)을 검증하고 완료 주문
 | T00 | 저장소·RN/Expo 여부·버전·환경·contract base | 지우+혜지 | 기존 repo 확인 | type/lint/build 기반, secret 분리 |
 | T01 | 화면 map·디자인 토큰·공통 Loading/Empty/Error | 서정+지우 | SSOT/Design v1 | 주요 화면 상태·카피 합의 |
 | T02 | catalog migration/RLS/Seed manifest + 조회 Mock | 혜지+지우 | T00, Seed 출처 범위 | Guest 탐색/검색 정합 |
-| T03 | Auth/session/profile·개인 route 복귀 | 지우+혜지 | T00, 인증/이름 정책 | 세션/계정전환/Guest Cart 보존 |
+| T03 | Auth/session/profile·개인 route 복귀 | 지우+혜지 | T00, 닉네임 상세 규칙 | 세션/계정전환/Guest Cart 보존 |
 | T04 | Guest 로컬 Cart·서버 Cart/receipt/승격 | 지우+혜지 | T02, T03 계약 | revision/빈Cart/삭제/응답유실 테스트 |
-| T05 | 계좌 목적지/민감정보 경계 | 혜지+지우, 서정 정책 | 계좌 원문·PENDING 교체 결정 | 본인 접근/삭제/복사 계약 검증 |
+| T05 | 계좌 목적지/민감정보 경계 | 혜지+지우, 서정 정책 | 기기 보안 저장 확정·PENDING 원문 수명 결정 | AccountVault/네트워크 미전송/삭제/복사 검증 |
 | T06 | Order Snapshot/create/confirm/cancel/복구 큐 | 혜지+지우 | T04,T05, Cart clear 결정 | 중복/rollback/상태/재시도 테스트 |
 | T07 | 직접 이어가기/Toss Adapter/config/PoC | 지우+혜지 | T06 계약; 실제 원문 검증 | 직접 flow 필수, PREFILL는 PoC evidence |
 | T08 | History/unread/읽음 queue | 지우+혜지 | T06 | 50%·1초·신규event·paging·silent retry |
@@ -2139,12 +2173,12 @@ Analytics schema/Mock/작업 분해는 SaveEats 설계안이다. 실제 라이�
 | 상태 저장 실패의 재송금 유도 | 서버 조회 후 같은 주문 상태 명령만 재시도, 외부 앱 자동 재실행 금지 | 정책·설계 일치 |
 | Cart 삭제와 과거 주문 | Snapshot 불변; Cart clear 시점은 미결정, 추천만 유지 | 정책 결정 필요 |
 | 시간 기준 | 서버 UTC, KST 표시/월 경계, 리뷰 720h 경계 포함, 잠금 이후 시각 판정 | 정책·설계 일치 |
-| 공개 리뷰와 개인정보 | 안전 projection·마스킹, Order/profile 원장 공개 금지, private image 접근 | 설계안, 권한 검증 전 |
+| 공개 리뷰와 개인정보 | 안전 projection·닉네임, Order/profile 원장 공개 금지, private image 접근 | 설계안, 권한 검증 전 |
 | 읽음 원장과 UI | 정확한 event ID, 50%/1초, 로컬 overlay와 서버 summary 교집합 | 설계안, 실기기 검증 전 |
-| 범위·카피 | SHOULD/LATER 유지, 별점 정렬 카피 유지, 변경 제안 미승인 | 정책·설계 일치 |
+| 범위·카피 | 닉네임 MUST 반영, 타 사용자 리뷰 모아보기 LATER, 땡김도 정렬 유지, 탈퇴/재설정 준비 중 | 정책·설계 일치 |
 | 미래 단계 안내 | 작성 예정 표현을 현재 장 참조로 교체, 개발 순서는 T00~T11에 통합 | 문서 반영 완료 |
 
-이 검수는 문서의 규칙과 참조를 정리한 결과다. 코드/RPC/RLS/Storage/Toss 실기기 테스트를 통과했다는 뜻이 아니다. 공식 링크는 기존 설계의 기술 근거이며 통합 과정에서 최신 지원 범위를 새로 검증하지 않았다.
+이 검수는 문서의 규칙과 참조를 정리한 결과다. 코드/RPC/RLS/Storage/Toss 실기기 테스트를 통과했다는 뜻이 아니다. 2026-10-29에 Expo SDK58 SecureStore와 Apple/Android 공식 지원 범위를 확인했으며, SaveEats의 실제 저장·삭제·PoC 검증은 미실행이다.
 
 ### 10.2 제품 결정이 필요한 항목
 
@@ -2152,10 +2186,10 @@ Analytics schema/Mock/작업 분해는 SaveEats 설계안이다. 실제 라이�
 
 | 기존 ID | 결정 내용 | 검토 방향 / 현재 제약 | 결정 전 영향을 받는 구현 |
 |---|---|---|---|
-| OPEN-ARCH-001 / OPEN-DB-003 | 이메일 인증 필수·미인증 범위·재설정 UX | 이메일 인증은 **결정됨 (2026-10-01 결정)** — 요구하지 않음, 미인증 사용자 구분 없음. 재설정 UX는 결정 필요 | reset 화면 |
+| OPEN-ARCH-001 / OPEN-DB-003 | 이메일 인증 필수·미인증 범위·재설정 UX | 이메일 인증 불요·미인증 구분 없음, 재설정 MVP 준비 중 확정. 실제 복구 후속 범위 | reset 화면 |
 | OPEN-ARCH-003 / OPEN-DB-002 | 계좌 변경/삭제 후 과거 PENDING 목적지 | 주문 당시 원문을 안전하게 제공할지, 교체/삭제를 제한할지 보관 설계와 함께 결정; 현재 계좌 자동 대입 금지 | 목적지 resolver·계좌 교체·수동 이어가기 |
-| OPEN-DB-004 | 이름 수집·미등록 공개 작성자 이름 | 수집 여부와 마스킹/대체 표시를 함께 결정; 실명처럼 기본 이름 합성 금지 | 가입·공개 리뷰 작성자 표시 |
-| OPEN-DB-005 | 탈퇴·주문/리뷰 보존·익명화 | 보존 대상/기간·공개 여부·계좌 삭제와 Auth 삭제 순서 결정; 주문 CASCADE 금지 | 탈퇴·삭제 workflow |
+| OPEN-DB-004 | 닉네임 상세 규칙/기존 계정 전환 | 실명 미수집·닉네임 도입 확정. 길이/중복/변경/금칙어/누락 표시만 미정 | nickname 검증·전환 |
+| OPEN-DB-005 | 탈퇴·주문/리뷰 보존·익명화 | MVP 준비 중 확정. 실제 보존 대상/기간·공개 여부·기기 자료/Auth 삭제 순서 미정, SSOT 60.1 추천; 주문 CASCADE 금지 | 실제 탈퇴·삭제 workflow(후속) |
 | OPEN-CART-001 | 같은 옵션 조합의 합산/변경 충돌 UX | **결정됨 (2026-10-01 결정)** — 10 초과 동작 거절, 기존 Cart 유지, 안내 카피 CART-004 | Cart 편집 UX |
 | OPEN-CART-002 | 일반 로그인 이후 기기 간 Cart 충돌 | 로컬 적용/서버 불러오기 제안을 검수; 무조건 merge 금지 | conflict 화면 |
 | OPEN-CART-003 | Cart 비우는 시점 | 추천은 PENDING 성공 시 source revision 조건부 clear; 생성 미확정/실패·후속 편집 보존 | 주문 생성의 Cart 변경 |
@@ -2167,7 +2201,7 @@ Analytics schema/Mock/작업 분해는 SaveEats 설계안이다. 실제 라이�
 
 | 기존 ID | 최신 상태 | 필요한 증거 / 완료를 막는 경계 |
 |---|---|---|
-| OPEN-ARCH-002 / OPEN-DB-001 | 계좌 원문 설계·보안 검증 필요 | 저장 위치/암호화/키 접근·로테이션/삭제/원문 API 권한·로그 점검; masked 값만으로 복사 구현 불가 |
+| OPEN-ARCH-002 / OPEN-DB-001 | 계좌 서버 미저장·기기 보안 저장 확정 | SDK58 AccountVault/백업/삭제/계정 격리/유실/네트워크·로그 누출 검증 필요; 서버 원문 API 금지 |
 | OPEN-ARCH-004 | Toss 기본 실행·사전입력·callback 미검증 | TRF-010 실기기 결과·공식 계약·검증 조합 matrix; 기본 flag OFF |
 | OPEN-ARCH-005 | 세션 adapter·복귀 검증 필요 | RN/Expo·SDK 버전, 안전 저장 용량/수명·계정 전환·강제종료 테스트 |
 | OPEN-ARCH-006 / OPEN-DB-006 | Cart 상세 설계안 작성 완료 | CART-005~010 구현, 빈 Cart/소비 세대/revision/동시 기기/응답 유실 검증 |
@@ -2188,7 +2222,7 @@ Analytics schema/Mock/작업 분해는 SaveEats 설계안이다. 실제 라이�
 
 ### 10.4 구현 착수와 완료 게이트
 
-T00~T02의 저장소 기반·공유 계약·카탈로그/Mock·마이그레이션 설계는 시작할 수 있다. Auth의 이메일 인증은 요구하지 않기로 결정됐고(2026-10-01 결정) 비밀번호 재설정 UX만 남았다. 계좌·수동 이어가기는 원문/과거 PENDING 정책과 보안 설계, Cart clear는 제품 결정이 해당 작업의 선행조건이다. 해당 경계의 미결정을 임의 기본값으로 구현하지 않는다. Toss 활성화는 PoC 증거 이후다.
+T00~T02 및 로그인·찜 구현은 진행할 수 있다. 이메일 인증 불요, 실명 미수집·회원가입/공개 닉네임, 계좌 서버 미저장·기기 보안 저장, 탈퇴/재설정 준비 중은 확정이다. nickname 상세 규칙/기존 계정 전환, 과거 PENDING 원문 수명·삭제 범위, 실제 탈퇴 데이터 처리 및 Cart clear는 별도 결정 필요다. 계좌/수동 이어가기 완료는 AccountVault·네트워크 누출·실기기 검증과 해당 미결정 해소가 선행한다. Toss 활성화는 기존 PoC 증거 이후다.
 
 | 게이트 | 최소 증거 | 현재 |
 |---|---|---|
