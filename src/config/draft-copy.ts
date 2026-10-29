@@ -5,6 +5,8 @@
  * 문구가 확정되면 서정의 확인을 받아 값을 고친다.
  * 기준 문서에 원문이 있는 확정 문구는 여기에 두지 않고 confirmed-copy.ts에 근거와 함께 둔다.
  */
+import { LIMITS } from './limits';
+
 export const draftCopy = {
   /** 로그인·회원가입 (⑤). 어떤 행동 때문에 로그인하는지에 따라 이유 문구가 달라진다 */
   login: {
@@ -18,10 +20,10 @@ export const draftCopy = {
     emailPlaceholder: 'example@email.com',
     passwordLabel: '비밀번호',
     passwordPlaceholder: '비밀번호',
-    passwordHelpSignup: '8자 이상 입력해주세요',
+    passwordHelpSignup: `${LIMITS.passwordMinLength}자 이상 입력해주세요`,
     emailError: '이메일 형식을 확인해주세요',
     passwordError: '비밀번호를 입력해주세요',
-    passwordTooShort: '8자 이상 입력해주세요',
+    passwordTooShort: `${LIMITS.passwordMinLength}자 이상 입력해주세요`,
     failedTitle: '이메일 또는 비밀번호를 확인해주세요',
     failedDesc: '장바구니는 그대로 있어요.',
     networkFailedTitle: '로그인하지 못했어요. 인터넷 연결을 확인하고 다시 시도해주세요.',
