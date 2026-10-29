@@ -11,8 +11,8 @@ export const LIMITS = {
   serverRequestTimeoutMs: 10000,
   /** 계좌번호 최소 자릿수 (프로토타입 값). 은행별 형식 검증은 서버가 한다 */
   accountNumberMinLength: 10,
-  /** 비밀번호 최소 글자 수 (회원가입 도움말 "8자 이상") */
-  passwordMinLength: 8,
+  /** 비밀번호 최소 글자 수. Supabase Auth 설정(Minimum password length)과 같아야 한다: 6자 (혜지 확인 2026-10-29). 서버 설정을 바꾸면 여기와 문구가 함께 바뀐다 */
+  passwordMinLength: 6,
   /** 토스 실행 직전 원격 설정 조회 제한 시간. 넘으면 직접 흐름 (TRF-005) */
   tossConfigTimeoutMs: 3000,
   /** 외부 앱에서 돌아온 뒤 주문 상태 조회를 기다리는 최대 시간. 넘으면 조회 실패 화면 (TRF-008) */
