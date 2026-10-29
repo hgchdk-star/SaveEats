@@ -41,6 +41,8 @@ export function IconButton({ icon, label, onPress, variant = 'plain', badge, dis
   );
 }
 
+const OVERLAY_SIZE = 40;
+
 const styles = StyleSheet.create({
   touch: {
     width: size.touch,
@@ -51,13 +53,15 @@ const styles = StyleSheet.create({
   circle: {
     width: size.touch,
     height: size.touch,
-    borderRadius: radius.full,
+    borderRadius: size.touch / 2,
     alignItems: 'center',
     justifyContent: 'center',
   },
+  // 반지름을 크기의 절반으로 정확히 준다. 9999처럼 큰 값은 안드로이드 그림자가 원이 아닌 모양으로 그려질 수 있다
   overlay: {
-    width: 40,
-    height: 40,
+    width: OVERLAY_SIZE,
+    height: OVERLAY_SIZE,
+    borderRadius: OVERLAY_SIZE / 2,
     backgroundColor: colors.surface,
     boxShadow: shadow.float,
   },
