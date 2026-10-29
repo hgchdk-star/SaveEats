@@ -5,6 +5,8 @@
  * 문구가 확정되면 서정의 확인을 받아 값을 고친다.
  * 기준 문서에 원문이 있는 확정 문구는 여기에 두지 않고 confirmed-copy.ts에 근거와 함께 둔다.
  */
+import { LIMITS } from './limits';
+
 export const draftCopy = {
   /** 로그인·회원가입 (⑤). 어떤 행동 때문에 로그인하는지에 따라 이유 문구가 달라진다 */
   login: {
@@ -18,10 +20,10 @@ export const draftCopy = {
     emailPlaceholder: 'example@email.com',
     passwordLabel: '비밀번호',
     passwordPlaceholder: '비밀번호',
-    passwordHelpSignup: '8자 이상 입력해주세요',
+    passwordHelpSignup: `${LIMITS.passwordMinLength}자 이상 입력해주세요`,
     emailError: '이메일 형식을 확인해주세요',
     passwordError: '비밀번호를 입력해주세요',
-    passwordTooShort: '8자 이상 입력해주세요',
+    passwordTooShort: `${LIMITS.passwordMinLength}자 이상 입력해주세요`,
     failedTitle: '이메일 또는 비밀번호를 확인해주세요',
     failedDesc: '장바구니는 그대로 있어요.',
     networkFailedTitle: '로그인하지 못했어요. 인터넷 연결을 확인하고 다시 시도해주세요.',
@@ -424,7 +426,7 @@ export const draftCopy = {
   store: {
     loadErrorTitle: '가게 정보를 불러오지 못했어요',
     noMenus: '아직 등록된 메뉴가 없어요',
-    /** 계약 isOpen 값의 표시 문구. "준비 중"은 디자인 시안, 10/1 결정 문서는 "영업 종료"라고 부른다 */
+    /** 계약 isOpen 값의 표시 문구. 화면에서는 "준비 중"으로 통일한다 (서정 확인 2026-10-29). 10/1 결정 문서의 "영업 종료"는 같은 상태를 부르는 이름이다 */
     statusOpen: '영업 중',
     statusClosed: '준비 중',
   },
@@ -437,8 +439,8 @@ export const draftCopy = {
     noteSoldOut: '품절된 메뉴라 지금은 담을 수 없어요',
     noteLoading: '옵션 정보를 불러온 뒤 담을 수 있어요',
     noteMissingRequired: (groupName: string) => `필수 옵션을 골라주세요 · ${groupName}`,
-    /** 영업 종료 가게 담기 차단 안내 (10/1 결정 문구). UNDECIDED.preparingStoreOrderable이 false일 때만 쓴다 */
-    noteStoreClosed: '지금은 영업이 종료됐어요',
+    /** 준비 중(영업 종료) 가게 담기 차단 안내. 배지와 같은 "준비 중"으로 통일 (서정 확인 2026-10-29). UNDECIDED.preparingStoreOrderable이 false일 때만 쓴다 */
+    noteStoreClosed: '지금은 준비 중이에요',
     /** 디자인 시안 문구. 10/1 결정 문서의 문구는 "한 메뉴는 최대 10개까지 담을 수 있어요." */
     toastOverLimit: '같은 메뉴는 최대 10개까지 담을 수 있어요',
     toastAdded: '장바구니에 담았어요',
@@ -464,7 +466,7 @@ export const draftCopy = {
     inactiveDesc: '판매하지 않는 메뉴를 삭제한 뒤 주문할 수 있어요.',
     optionsInvalidTitle: '옵션을 다시 골라야 하는 메뉴가 있어요',
     optionsInvalidDesc: '해당 메뉴를 삭제한 뒤 주문할 수 있어요.',
-    storeClosedTitle: '지금은 영업이 종료됐어요',
+    storeClosedTitle: '지금은 준비 중이에요',
     storeClosedDesc: '영업 중일 때 주문할 수 있어요.',
     storageErrorTitle: '장바구니를 불러오지 못했어요',
     storageErrorDesc: '저장된 장바구니를 읽을 수 없어요. 비우고 다시 담아주세요.',

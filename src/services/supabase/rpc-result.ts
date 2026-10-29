@@ -1,4 +1,4 @@
-import type { CategoryDto, MenuCardDto, MenuDetailDto, MenuSummaryDto, SearchStoreCardDto, StoreCardDto, StoreDetailDto } from '@/contracts/catalog';
+import type { CategoryDto, FavoriteStoreCardDto, MenuCardDto, MenuDetailDto, MenuSummaryDto, SearchStoreCardDto, StoreCardDto, StoreDetailDto } from '@/contracts/catalog';
 import type { Page } from '@/contracts/common';
 import { RepositoryError, type CatalogFailureCode } from '@/services/catalog/catalog-repository';
 
@@ -117,6 +117,26 @@ export function parseStoreCardPage(data: unknown): Page<StoreCardDto> {
   need(isObj(data) && Array.isArray(data.items) && isBool(data.hasMore) && isStrOrNull(data.nextCursor));
   const d = data as Obj;
   return { items: (d.items as unknown[]).map(checkStoreCard), nextCursor: d.nextCursor as string | null, hasMore: d.hasMore as boolean };
+}
+
+/**
+ * list_my_favorites 항목: 가게 카드 + isFavorite=true + favoritedAt.
+ * favoritedAt은 Postgres timestamptz 문자열이다(예: 2026-10-29T10:00:00.123456+00:00, 마이크로초와 +00:00).
+ * 여기서는 문자열인지만 본다. 값을 Date로 바꿔 쓰는 코드를 만들면 이 표기(소수 6자리, +00:00)를 처리하는지 확인한다.
+ * 정렬은 서버가 한다(최근 찜 순). 앱이 문자열을 비교해 다시 정렬하지 않는다.
+ */
+function checkFavoriteStoreCard(v: unknown): FavoriteStoreCardDto {
+  const card = checkStoreCard(v);
+  const f = v as Obj;
+  need(f.isFavorite === true && isStr(f.favoritedAt) && f.favoritedAt.length > 0);
+  return { ...card, isFavorite: true, favoritedAt: f.favoritedAt as string };
+}
+
+/** list_my_favorites 응답: { items, nextCursor, hasMore } */
+export function parseFavoriteStoreCardPage(data: unknown): Page<FavoriteStoreCardDto> {
+  need(isObj(data) && Array.isArray(data.items) && isBool(data.hasMore) && isStrOrNull(data.nextCursor));
+  const d = data as Obj;
+  return { items: (d.items as unknown[]).map(checkFavoriteStoreCard), nextCursor: d.nextCursor as string | null, hasMore: d.hasMore as boolean };
 }
 
 function checkMenuSummary(v: unknown): MenuSummaryDto {

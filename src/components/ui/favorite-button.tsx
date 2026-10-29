@@ -1,6 +1,6 @@
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { colors, radius, shadow, size } from '@/theme';
+import { colors, shadow, size } from '@/theme';
 
 import { Icon } from './icon';
 
@@ -33,6 +33,8 @@ export function FavoriteButton({ active, onToggle, variant = 'plain' }: Favorite
   );
 }
 
+const OVERLAY_SIZE = 36;
+
 const styles = StyleSheet.create({
   touch: {
     width: size.touch,
@@ -43,13 +45,14 @@ const styles = StyleSheet.create({
   circle: {
     width: size.touch,
     height: size.touch,
-    borderRadius: radius.full,
+    borderRadius: size.touch / 2,
     alignItems: 'center',
     justifyContent: 'center',
   },
   overlay: {
-    width: 36,
-    height: 36,
+    width: OVERLAY_SIZE,
+    height: OVERLAY_SIZE,
+    borderRadius: OVERLAY_SIZE / 2,
     backgroundColor: colors.surface,
     boxShadow: shadow.float,
   },
