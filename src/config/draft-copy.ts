@@ -124,10 +124,6 @@ export const draftCopy = {
     version: '앱 버전',
     withdraw: '회원 탈퇴',
     toastLoggedOut: '로그아웃했어요',
-    withdrawTitle: '회원 탈퇴할까요?',
-    withdrawDescs: ['탈퇴하면 이 계정으로 다시 로그인할 수 없어요.', '진행 중인 주문이 있다면 먼저 내역에서 확인해주세요.'],
-    withdrawConfirm: '탈퇴하기',
-    withdrawCancel: '취소',
   },
   notifications: {
     title: '알림 설정',

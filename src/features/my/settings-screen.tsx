@@ -1,9 +1,7 @@
 import Constants from 'expo-constants';
 import { router } from 'expo-router';
-import { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
-import { ConfirmSheet } from '@/components/ui/bottom-sheet';
 import { TextButton } from '@/components/ui/button';
 import { ListGroup, type ListRowSpec } from '@/components/ui/list-group';
 import { Screen } from '@/components/ui/screen';
@@ -26,13 +24,12 @@ const APP_VERSION = Constants.expoConfig?.version ?? '';
  * 이용약관 · 개인정보 처리방침 · 앱 버전 / 회원 탈퇴.
  * Guest는 로그인 · 회원가입, 이용 방법, 약관, 앱 버전만 본다.
  *
- * 로그아웃은 확인 없이 바로 한다(미결정 묶음4 #3). 회원 탈퇴는 확인 시트까지만 만들고,
- * "탈퇴하기"를 눌러도 실제 탈퇴는 하지 않고 "준비 중" 화면으로만 보낸다 (탈퇴 후 처리 OPEN-DB-004 · 005 미결정).
+ * 로그아웃은 확인 없이 바로 한다(미결정 묶음4 #3). 회원 탈퇴는 MVP에서 "준비 중" 안내 화면으로만 보낸다.
+ * 확인 시트도, 삭제 요청도 없다 (기획서 v1.3 60장, 탈퇴 후 처리 OPEN-DB-005 미결정).
  */
 export function SettingsScreen() {
   const { isMember, userId } = useSession();
   const profile = useAsync(`settings:profile:${userId}`, () => (isMember ? myService.getProfile() : Promise.resolve(null)));
-  const [withdrawOpen, setWithdrawOpen] = useState(false);
 
   const account: ListRowSpec[] = isMember
     ? [
@@ -63,29 +60,12 @@ export function SettingsScreen() {
         <ListGroup title={copy.groupInfo} rows={info} />
         {isMember ? (
           <View style={styles.foot}>
-            <TextButton size="sm" onPress={() => setWithdrawOpen(true)}>
+            <TextButton size="sm" onPress={() => router.push('/withdraw')}>
               {copy.withdraw}
             </TextButton>
           </View>
         ) : null}
       </ScrollView>
-
-      <ConfirmSheet
-        visible={withdrawOpen}
-        onClose={() => setWithdrawOpen(false)}
-        title={copy.withdrawTitle}
-        descriptions={[...copy.withdrawDescs]}
-        secondary={{ label: copy.withdrawCancel, onPress: () => setWithdrawOpen(false) }}
-        danger
-        primary={{
-          label: copy.withdrawConfirm,
-          onPress: () => {
-            // 실제 탈퇴 처리는 하지 않는다. 시트를 닫고 "준비 중" 화면으로만 보낸다
-            setWithdrawOpen(false);
-            router.push('/withdraw');
-          },
-        }}
-      />
     </Screen>
   );
 }
