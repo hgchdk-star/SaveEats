@@ -7,6 +7,9 @@ export const confirmedCopy = {
   disclosureTitle: '음식은 주문되지 않아요.',
   disclosureBody: (amountLabel: string) => `주문금액 ${amountLabel}이 등록한 계좌로 이동합니다.`,
 
+  /** 기획서 v1.3 10.3.1 계좌정보 저장 안내 (2026-10-29). 계좌 등록·관리 화면에 보여준다 */
+  accountStorageNotice: '계좌정보는 이 기기에 안전하게 저장되며 SaveEats 서버에는 저장되지 않아요. 다른 기기에서는 다시 등록해 주세요.',
+
   /** 기획서 10.1 계좌 필요 시트 */
   needAccountTitle: '돈을 배달받을 계좌가 필요해요',
   needAccountDesc: '주문금액이 도착할 계좌를 등록해주세요.',
