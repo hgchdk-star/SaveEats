@@ -54,6 +54,29 @@ export function listPopularMenusFromServer(limit?: number): Promise<MenuCardDto[
   return call(LIST_POPULAR_MENUS, { p_limit: limit ?? null }, parseMenuCardList);
 }
 
+/** 최근 본 항목 RPC. 계약 catalog@0.2의 이름이라 아직 CATALOG_RPC(catalog@0.1)에 없다 */
+const LIST_STORES_BY_IDS = 'list_stores_by_ids';
+const LIST_MENU_CARDS_BY_IDS = 'list_menu_cards_by_ids';
+
+/**
+ * 최근 본 가게 (계약 4.3절). 요청한 id 순서를 유지하고 최대 10개이며, 넘으면 서버가 INVALID_INPUT을 낸다.
+ * 없는 id와 비활성(가게·카테고리)은 응답에서 빠진다(오류 아님). 영업 종료 가게는 isOpen=false로 포함된다.
+ * 빈 배열은 서버를 부르지 않고 바로 [].
+ */
+export function listStoresByIdsFromServer(storeIds: string[]): Promise<StoreCardDto[]> {
+  if (storeIds.length === 0) return Promise.resolve([]);
+  return call(LIST_STORES_BY_IDS, { p_store_ids: storeIds }, parseStoreCardList);
+}
+
+/**
+ * 최근 본 메뉴 (계약 4.3절). 규칙은 가게와 같다. 없는 id와 비활성(메뉴·가게·카테고리)은 빠지고,
+ * 품절은 isSoldOut=true, 영업 종료 가게의 메뉴는 store.isOpen=false로 포함된다.
+ */
+export function listMenuCardsByIdsFromServer(menuIds: string[]): Promise<MenuCardDto[]> {
+  if (menuIds.length === 0) return Promise.resolve([]);
+  return call(LIST_MENU_CARDS_BY_IDS, { p_menu_ids: menuIds }, parseMenuCardList);
+}
+
 /** 가게 검색 RPC. 계약 catalog@0.2의 이름이라 아직 CATALOG_RPC(catalog@0.1)에 없다 */
 const SEARCH_STORES = 'search_stores';
 

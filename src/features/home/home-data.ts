@@ -1,12 +1,16 @@
 import type { MenuCardDto, StoreCardDto } from '@/contracts/catalog';
 import { dataSource } from '@/config/data-source';
 import { mockHome } from '@/mocks/home/mock-home';
-import { listPopularMenusFromServer, listRecommendedStoresFromServer } from '@/services/supabase/supabase-catalog-repository';
+import {
+  listMenuCardsByIdsFromServer,
+  listPopularMenusFromServer,
+  listRecommendedStoresFromServer,
+  listStoresByIdsFromServer,
+} from '@/services/supabase/supabase-catalog-repository';
 
 /**
- * 서버 데이터를 쓰는 중인지. 서버에는 아직 홈 배너·최근 본 항목 조회 함수가 없다(catalog@0.2의
- * list_banners · list_stores_by_ids · list_menu_cards_by_ids). 이 섹션들은 Mock id를 쓰기 때문에
- * 서버 id와 섞이면 없는 가게로 연결되거나 최근 본 항목이 지워진다. 그래서 서버 모드에서는 숨긴다.
+ * 서버 데이터를 쓰는 중인지. 서버에는 아직 홈 배너 조회 함수가 없다(catalog@0.2의 list_banners).
+ * 배너는 Mock id를 쓰기 때문에 서버 id와 섞이면 없는 가게로 연결된다. 그래서 서버 모드에서는 숨긴다.
  */
 export const homeUsesServer = dataSource === 'supabase';
 
@@ -26,4 +30,22 @@ export function listHomeRecommendedStores(): Promise<StoreCardDto[]> {
  */
 export function listHomePopularMenus(): Promise<MenuCardDto[]> {
   return homeUsesServer ? listPopularMenusFromServer() : mockHome.listPopularMenus();
+}
+
+/**
+ * 홈 "최근 본" 가게. 요청한 순서를 유지하고, 없는 id·비활성 가게는 빠진다(앱이 로컬 기록에서 지운다).
+ * - mock: Mock 데이터
+ * - supabase: 서버 `list_stores_by_ids` (최대 10개). 영업 종료 가게도 isOpen=false로 포함된다
+ */
+export function listHomeStoresByIds(storeIds: string[]): Promise<StoreCardDto[]> {
+  return homeUsesServer ? listStoresByIdsFromServer(storeIds) : mockHome.listStoresByIds(storeIds);
+}
+
+/**
+ * 홈 "최근 본" 메뉴. 규칙은 가게와 같다.
+ * - mock: Mock 데이터
+ * - supabase: 서버 `list_menu_cards_by_ids` (최대 10개). 품절 메뉴·영업 종료 가게의 메뉴도 포함된다
+ */
+export function listHomeMenusByIds(menuIds: string[]): Promise<MenuCardDto[]> {
+  return homeUsesServer ? listMenuCardsByIdsFromServer(menuIds) : mockHome.listMenusByIds(menuIds);
 }
