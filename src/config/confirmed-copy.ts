@@ -7,6 +7,10 @@ export const confirmedCopy = {
   disclosureTitle: '음식은 주문되지 않아요.',
   disclosureBody: (amountLabel: string) => `주문금액 ${amountLabel}이 등록한 계좌로 이동합니다.`,
 
+  /** 기획서 v1.3 60장 · 54장: 회원 탈퇴·비밀번호 재설정은 MVP에서 준비 중 안내만 제공한다 (2026-10-29). 삭제·재설정 요청은 보내지 않는다 */
+  withdrawNotReady: '회원 탈퇴 기능은 준비 중이에요.',
+  passwordResetNotReady: '비밀번호 재설정 기능은 준비 중이에요.',
+
   /** 기획서 10.1 계좌 필요 시트 */
   needAccountTitle: '돈을 배달받을 계좌가 필요해요',
   needAccountDesc: '주문금액이 도착할 계좌를 등록해주세요.',
