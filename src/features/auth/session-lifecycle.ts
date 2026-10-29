@@ -7,7 +7,7 @@ import { useOrderFlowStore } from '@/features/order/order-flow-store';
 import { recoverOnStart } from '@/features/order/recovery';
 import { useReviewStore } from '@/features/review/review-store';
 import { showToast } from '@/features/toast/toast-store';
-import { authService } from '@/services';
+import { authService, loadDeviceAccountIntoSession } from '@/services';
 
 import { useLoginIntentStore } from './login-intent-store';
 
@@ -48,4 +48,6 @@ export async function logout(): Promise<void> {
  */
 export function afterLogin(): void {
   void recoverOnStart();
+  // 이 기기에 저장된 이 사용자의 계좌를 세션에 올린다 (계좌는 서버에 없다)
+  void loadDeviceAccountIntoSession();
 }

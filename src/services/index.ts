@@ -1,6 +1,7 @@
 import { dataSource } from '@/config/data-source';
 import { mockSearch } from '@/mocks/home/mock-search';
-import { createMockAccountService } from '@/mocks/account/mock-account';
+import { createAccountVault, type AccountVault } from '@/infrastructure/local/account-vault';
+import { deviceSecureStore } from '@/infrastructure/local/secure-store';
 import { createMockAuthService } from '@/mocks/auth/mock-auth';
 import { createMockCatalogRepository } from '@/mocks/catalog/mock-catalog-repository';
 import { createMockHistoryService } from '@/mocks/history/mock-history';
@@ -12,6 +13,7 @@ import { createMockOrderService } from '@/mocks/order/mock-order';
 import { createMockTransferService } from '@/mocks/order/mock-transfer';
 import type { AccountService, AuthService, OrderService, TransferService } from '@/mocks/order/types';
 
+import { createVaultAccountService, loadAccountFromVault } from './account/vault-account-service';
 import type { CatalogRepository } from './catalog/catalog-repository';
 import { createSupabaseCatalogRepository, searchStoresFromServer } from './supabase/supabase-catalog-repository';
 
@@ -23,7 +25,11 @@ import { createSupabaseCatalogRepository, searchStoresFromServer } from './supab
 const mockCatalog = createMockCatalogRepository();
 export const catalogRepository: CatalogRepository = dataSource === 'supabase' ? createSupabaseCatalogRepository(mockCatalog) : mockCatalog;
 export const authService: AuthService = createMockAuthService();
-export const accountService: AccountService = createMockAccountService();
+// 계좌는 서버에 저장하지 않는다. 데이터 소스와 상관없이 항상 이 기기의 보안 저장소(AccountVault)를 쓴다.
+export const accountVault: AccountVault = createAccountVault(deviceSecureStore);
+export const accountService: AccountService = createVaultAccountService(accountVault);
+/** 로그인 직후 이 기기에 저장된 계좌를 세션에 올린다 */
+export const loadDeviceAccountIntoSession = (): Promise<void> => loadAccountFromVault(accountVault);
 export const orderService: OrderService = createMockOrderService();
 export const transferService: TransferService = createMockTransferService();
 export const historyService: HistoryService = createMockHistoryService();

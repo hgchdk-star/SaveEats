@@ -311,6 +311,8 @@ export const draftCopy = {
     deleteDesc: '삭제하면 다시 등록하기 전까지 주문할 수 없어요.',
     deleteConfirm: '삭제하기',
     toastDeleted: '계좌를 삭제했어요',
+    /** 삭제하지 못했을 때. 지워진 것처럼 보이지 않게 실패를 알린다 */
+    deleteFailed: '계좌를 삭제하지 못했어요. 다시 시도해주세요.',
     toastChanged: '계좌를 변경했어요',
     formTitleRegister: '계좌 등록',
     formTitleChange: '계좌 변경',

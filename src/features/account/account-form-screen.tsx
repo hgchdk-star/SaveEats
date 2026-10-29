@@ -8,6 +8,7 @@ import { Notice } from '@/components/ui/notice';
 import { Screen } from '@/components/ui/screen';
 import { TextInput } from '@/components/ui/text-input';
 import { TopNavigation } from '@/components/ui/top-navigation';
+import { confirmedCopy } from '@/config/confirmed-copy';
 import { draftCopy } from '@/config/draft-copy';
 import { LIMITS } from '@/config/limits';
 import { showToast } from '@/features/toast/toast-store';
@@ -107,6 +108,7 @@ export function AccountFormScreen({ mode, from }: AccountFormParams) {
         </View>
 
         <Text style={styles.help}>{copy.maskGuide}</Text>
+        <Text style={styles.help}>{confirmedCopy.accountStorageNotice}</Text>
       </ScrollView>
     </Screen>
   );
