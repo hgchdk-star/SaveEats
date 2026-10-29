@@ -414,6 +414,8 @@ export const draftCopy = {
     recentTitle: '최근 본 가게·메뉴',
     recentKindStore: '가게',
     recentKindMenu: '메뉴',
+    /** 최근 본 메뉴가 품절일 때 스크린리더용. 화면에는 사진 위 "품절"이 나온다. 영업 종료는 store.statusClosed를 쓴다 */
+    recentSoldOut: '품절',
     recommendedTitle: '추천 가게',
     /** 기획서 11.1 홈 섹션 이름(확정 제목). Seed 인기 값으로 만들고 숫자·순위·주문 수는 보여주지 않는다 (FR-HOME-005). 제목은 여기 한 곳만 고친다 */
     popularTitle: '지금 많이 찾는 메뉴',

@@ -2,6 +2,7 @@ import { useRouter } from 'expo-router';
 import { useEffect } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { Badge } from '@/components/ui/badge';
 import { FoodImage } from '@/components/ui/food-image';
 import { SectionError } from '@/components/ui/feedback-states';
 import { draftCopy } from '@/config/draft-copy';
@@ -13,12 +14,14 @@ import { listHomeMenusByIds, listHomeStoresByIds } from './home-data';
 import { useRecentViewedStore, type RecentViewedItem } from './recent-viewed-store';
 import { SectionHeader } from './section-header';
 
-type Tile = { key: string; item: RecentViewedItem; kind: string; name: string; imageRef: string | null };
+type Tile = { key: string; item: RecentViewedItem; kind: string; name: string; imageRef: string | null; soldOut: boolean; closed: boolean };
 
 /**
  * 최근 본 가게·메뉴 (FR-HOME-008~011). 기록이 없으면 섹션 전체를 숨긴다.
  * 서버가 더 이상 내려주지 않는(비활성·삭제된) 항목은 목록에서 지운다.
  * 조회에 실패했을 때는 지우지 않는다. 실패는 "없음"이 아니다.
+ * 품절 메뉴와 영업 종료 가게는 지우지 않고 상태를 보여준다(사진 위 "품절", "준비 중" 배지).
+ * 담기·주문 제한은 메뉴 상세·가게 상세가 기존 정책대로 한다.
  */
 export function RecentSection() {
   const router = useRouter();
@@ -40,11 +43,11 @@ export function RecentSection() {
     for (const item of items) {
       if (item.type === 'STORE') {
         const s = stores.find((x) => x.id === item.id);
-        if (s) tiles.push({ key: `S${item.id}`, item, kind: draftCopy.home.recentKindStore, name: s.name, imageRef: s.imageRef });
+        if (s) tiles.push({ key: `S${item.id}`, item, kind: draftCopy.home.recentKindStore, name: s.name, imageRef: s.imageRef, soldOut: false, closed: !s.isOpen });
         else gone.push(item);
       } else {
         const m = menus.find((x) => x.id === item.id);
-        if (m) tiles.push({ key: `M${item.id}`, item, kind: draftCopy.home.recentKindMenu, name: m.name, imageRef: m.imageRef });
+        if (m) tiles.push({ key: `M${item.id}`, item, kind: draftCopy.home.recentKindMenu, name: m.name, imageRef: m.imageRef, soldOut: m.isSoldOut, closed: !m.store.isOpen });
         else gone.push(item);
       }
     }
@@ -69,12 +72,22 @@ export function RecentSection() {
       {state.status === 'ok' && state.data.tiles.length > 0 ? (
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
           {state.data.tiles.map((tile) => (
-            <Pressable key={tile.key} accessibilityRole="button" accessibilityLabel={`${tile.kind} ${tile.name}`} onPress={() => open(tile.item)} style={styles.tile}>
-              <FoodImage uri={resolveImageUrl(tile.imageRef)} ratio="1:1" width={96} rounded={radius.sm} />
+            <Pressable
+              key={tile.key}
+              accessibilityRole="button"
+              accessibilityLabel={[tile.kind, tile.name, tile.soldOut ? draftCopy.home.recentSoldOut : null, tile.closed ? draftCopy.store.statusClosed : null].filter(Boolean).join(' ')}
+              onPress={() => open(tile.item)}
+              style={styles.tile}>
+              <FoodImage uri={resolveImageUrl(tile.imageRef)} ratio="1:1" width={96} rounded={radius.sm} soldOut={tile.soldOut} />
               <Text style={styles.kind}>{tile.kind}</Text>
               <Text numberOfLines={2} style={styles.name}>
                 {tile.name}
               </Text>
+              {tile.closed ? (
+                <View style={styles.badge}>
+                  <Badge>{draftCopy.store.statusClosed}</Badge>
+                </View>
+              ) : null}
             </Pressable>
           ))}
         </ScrollView>
@@ -95,6 +108,10 @@ const styles = StyleSheet.create({
   tile: {
     width: 96,
     gap: 2,
+  },
+  badge: {
+    alignItems: 'flex-start',
+    marginTop: spacing[1],
   },
   kind: {
     ...font('600'),
