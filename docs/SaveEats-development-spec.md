@@ -2073,7 +2073,7 @@ local db reset은 로컬/테스트 프로젝트 식별 확인 후 사용. stagin
 | image | prepare/validate/finalize(ref via review)/getAccess | 본인 upload/Guest active read | IMG-002~005 |
 | My | getMySummary/profile/account/myReviews/settings | 본인 | 완료/KST 간단 기록, 확장 SHOULD |
 
-검색 최소 기술안: trim한 1자 이상, 300ms debounce, name/category/menu 부분 매칭, 같은 Store dedupe, 매칭 메뉴명/가격 포함. 초성/오타 보정은 미검증·추가 범위이며 자동 MUST 추가하지 않는다. 결과 순서는 안정된 이름+id 등을 구현 계약에 고정한다. 최근 검색/최근 본(max10)은 로컬, 개인 계정 원문과 분리한다.
+검색 최소 기술안: trim한 1자 이상, 엔터·최근/인기 검색어 선택 시에만 실행(입력 중 자동 검색·debounce 없음, 실행하면 결과 페이지를 새로 연다, FR-SRCH-012), name/category/menu 부분 매칭, 같은 Store dedupe, 매칭 메뉴명/가격 포함. 초성/오타 보정은 미검증·추가 범위이며 자동 MUST 추가하지 않는다. 결과 순서는 안정된 이름+id 등을 구현 계약에 고정한다. 최근 검색/최근 본(max10)은 로컬, 개인 계정 원문과 분리한다.
 
 홈 서버 DTO에는 계좌 표시를 포함하지 않는다. 앱에서 로그인 uid의 AccountVault 표시를 결합하며 서버 DTO는 category/banner/인기 Menu/recommended Store/최근 본 refs로 구성한다. 모든 section 실패가 전체 홈을 막지 않음. Seed 인기 값은 실제 사용자 수로 포장하지 않는다. 배너 target은 허용 내부 route/ID만.
 
