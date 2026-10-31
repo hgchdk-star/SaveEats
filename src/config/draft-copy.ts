@@ -430,8 +430,12 @@ export const draftCopy = {
     statusClosed: '준비 중',
     /** PRD FR-STORE-020 초안. 최종 채택은 OPEN-SRC-002 · 003. 이 문구가 보인다고 공개가 허용된 것은 아니다 */
     sourceChecking: '이 가게의 출처 정보를 확인하고 있어요.',
-    /** 출처 링크를 열지 못했을 때. 실패 문구는 OPEN-SRC-003 확정 전 초안이다 */
-    sourceOpenFailed: '출처 페이지를 열지 못했어요. 잠시 후 다시 시도해주세요.',
+    /**
+     * 출처 링크를 열지 못했을 때. 서정이 검토 중인 문구(2026-10-31)라 OPEN-SRC-003 확정 전에는 이 값만 바꿔 교체한다.
+     * 출처 없음 문구는 위 sourceChecking이다. 서정의 검토 방향은 "이 가게의 출처 정보가 아직 등록되지 않았어요."이고,
+     * PRD가 그렇게 바뀌면 sourceChecking 값만 교체한다.
+     */
+    sourceOpenFailed: '출처 페이지를 열지 못했어요. 다시 시도해 주세요.',
     sourceSheetClose: '닫기',
   },
 
