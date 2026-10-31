@@ -98,6 +98,8 @@ export type MockScenario = {
   launch: 'normal' | 'firstRun' | 'readFails';
   /** 최근 검색어: seeded는 기기에 저장된 것이 없을 때 예시 10개를 보여준다 */
   recentSearches: 'none' | 'seeded';
+  /** 가게 상세의 콘텐츠 출처 (SRC-004): none은 출처 없음/미확인 → 버튼 숨김, one · many · long은 출처 1개 · 3개 · 14개(긴 이름 포함) */
+  storeSources: 'none' | 'one' | 'many' | 'long';
   /** 응답 지연(ms). 로딩 상태를 보기 위한 값 */
   delayMs: number;
 };
@@ -135,6 +137,7 @@ const BASE: MockScenario = {
   notif: 'ok',
   launch: 'normal',
   recentSearches: 'none',
+  storeSources: 'none',
   delayMs: 400,
 };
 
@@ -214,6 +217,11 @@ const SCENARIOS = {
   notifSaveFails: { ...BASE, auth: 'member', notif: 'saveFailOnce' },
   firstRun: { ...BASE, launch: 'firstRun' },
   launchReadFails: { ...BASE, launch: 'readFails' },
+
+  // ---- 콘텐츠 출처 (가게 상세 › 출처 확인하기) ----
+  sourcesOne: { ...BASE, storeSources: 'one' },
+  sourcesMany: { ...BASE, storeSources: 'many' },
+  sourcesLong: { ...BASE, storeSources: 'long' },
 } satisfies Record<string, MockScenario>;
 
 export type MockScenarioName = keyof typeof SCENARIOS;

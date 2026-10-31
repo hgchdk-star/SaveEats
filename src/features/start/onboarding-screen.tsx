@@ -15,8 +15,14 @@ import { markOnboardingSeen } from './onboarding-storage';
 const copy = draftCopy.start;
 const ARTS = ['browse', 'deliver', 'start'] as const;
 
-/** 제목은 기획서 44 · FR-ONB-003 그대로(확정), 설명은 초안 문구 */
-const PAGES: OnboardingPage[] = confirmedCopy.onboardingTitles.map((title, i) => ({ key: `p${i}`, title, desc: copy.onboardingDescs[i], art: ARTS[i] }));
+/** 제목은 기획서 44 · FR-ONB-003 그대로(확정), 설명은 초안 문구. 2페이지 설명 아래에는 비제휴 보조 문구를 둔다 (FR-ONB-009) */
+const PAGES: OnboardingPage[] = confirmedCopy.onboardingTitles.map((title, i) => ({
+  key: `p${i}`,
+  title,
+  desc: copy.onboardingDescs[i],
+  art: ARTS[i],
+  note: i === 1 ? confirmedCopy.onboardingNonAffiliation : undefined,
+}));
 
 /**
  * 온보딩 3페이지(처음 실행)와 SaveEats 이용 방법(설정에서 다시 보기)이 같은 화면이다 (미결정 묶음4 #8).
