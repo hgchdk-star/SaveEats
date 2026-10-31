@@ -1,4 +1,4 @@
-import { TOSS_CAPABILITY } from '@/config/toss-capability';
+import { isPrefillVerified, TOSS_CAPABILITY } from '@/config/toss-capability';
 import type { MockOrder, TransferService } from '@/mocks/order/types';
 import { ServiceError } from '@/services/service-error';
 
@@ -25,8 +25,10 @@ export function createTossLauncher({ resolveDestinationAccountNumber, getOrder }
       if (plain.kind !== 'DISPATCHED') throw new ServiceError('LAUNCH_FAILED');
       return;
     }
-    // 서버 주문의 금액·당시 은행을 쓰고, 계좌 원문은 목적지 일치 검증을 통과한 것만 쓴다. 원문은 이 함수 안에서만 머문다
+    // 서버 주문의 금액·당시 은행을 쓰고, 계좌 원문은 목적지 확인을 통과한 것만 쓴다. 원문은 이 함수 안에서만 머문다
     const order = await getOrder(orderId);
+    // 검증되지 않은 은행·플랫폼은 여기서도 막는다 (화면은 이미 직접 이어가기로 보낸다)
+    if (!isPrefillVerified(order.snapshot.destination.bankName)) throw new ServiceError('LAUNCH_FAILED');
     const accountNumber = await resolveDestinationAccountNumber(orderId);
     const result = await launchToss({
       mode: 'PREFILL',
@@ -38,10 +40,11 @@ export function createTossLauncher({ resolveDestinationAccountNumber, getOrder }
 
 export function createRealTransferService(deps: Deps): TransferService {
   return {
-    async getTransferConfig() {
-      // 원격 ON + 사전입력이 검증된 범위일 때만 토스 이어가기를 켠다. 어느 쪽이든 아니면 직접 이어가기다
+    async getTransferConfig(input) {
+      // 원격 ON + 이 플랫폼·은행이 검증된 조합일 때만 토스 이어가기를 켠다. 어느 쪽이든 아니면 직접 이어가기다
       const remote = await fetchRemoteTossFlag().catch(() => false);
-      return { tossDeepLinkEnabled: remote && TOSS_CAPABILITY.prefillValidated };
+      const verified = TOSS_CAPABILITY.prefillValidated && !!input && isPrefillVerified(input.bankName);
+      return { tossDeepLinkEnabled: remote && verified };
     },
     openToss: createTossLauncher(deps),
     resolveDestinationAccountNumber: deps.resolveDestinationAccountNumber,

@@ -370,7 +370,9 @@ export const draftCopy = {
     copyAccount: '계좌번호 복사',
     copyAmount: '금액 복사',
     openToss: '토스 열기',
-    rawUnavailable: '계좌 정보를 확인하지 못했어요',
+    rawUnavailable: '이 주문의 계좌를 확인하지 못했어요. 돈이 배달될 곳을 확인해주세요.',
+    /** '토스 열기'를 쓸 수 없을 때 버튼 아래 안내. 토스만 여는 방법이 검증되기 전까지 보인다 */
+    openTossUnavailable: '토스 열기는 아직 확인 중이라 사용할 수 없어요. 위 정보를 복사해 사용 중인 금융앱에서 이어가주세요.',
     rawRetry: '다시 확인',
     copyFailed: '복사하지 못했어요. 다시 시도해주세요.',
     kvStore: '가게',

@@ -63,8 +63,9 @@ export const UNDECIDED = {
   /** 묶음2 #7 · PENDING 주문은 자동으로 만료되지 않고, 만료 표시도 하지 않는다 */
   pendingAutoExpiry: null,
   /**
-   * 묶음2 #8 · 토스에 은행·계좌·금액을 미리 채워 연다. Expo Go 실기기 확인(2026-10) 뒤 켰다.
-   * 실제로 열리는지는 이 값이 아니라 TOSS_CAPABILITY(SaveEats 빌드 재검증)와 원격 tossDeepLinkEnabled가 정한다.
+   * 묶음2 #8 · 검증된 범위에서는 토스에 은행·계좌·금액을 미리 채워 연다는 정책. 어떤 환경에서나 열린다는 뜻이 아니다.
+   * Expo Go 성공 기록은 SaveEats 빌드에서 사용해도 된다는 근거가 아니다.
+   * 실제로 열리려면 서버 PENDING 주문, 실행 직전 원격 tossDeepLinkEnabled ON, 검증된 플랫폼·은행 조합(TOSS_CAPABILITY), 목적지 확인이 모두 필요하다.
    */
   tossPrefill: true,
 

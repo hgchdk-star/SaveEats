@@ -118,8 +118,11 @@ export interface OrderService {
 /* ---------- 송금 이어가기 (TRF-005~008) ---------- */
 
 export interface TransferService {
-  /** 실행 직전에 원격 설정을 조회한다. 앱 시작 때의 값을 재사용하지 않는다 (TRF-005) */
-  getTransferConfig(): Promise<{ tossDeepLinkEnabled: boolean }>;
+  /**
+   * 실행 직전에 원격 설정을 조회한다. 앱 시작 때의 값을 재사용하지 않는다 (TRF-005).
+   * input의 은행이 이 플랫폼에서 사전입력이 검증된 조합이 아니면 tossDeepLinkEnabled는 false다.
+   */
+  getTransferConfig(input?: { bankName: string }): Promise<{ tossDeepLinkEnabled: boolean }>;
   /** 사용자가 버튼을 눌렀을 때만 호출한다. 실행만 하며 송금 성공을 뜻하지 않는다 (TRF-006) */
   openToss(input: { orderId: string; prefill: boolean }): Promise<void>;
   /** 인증 후 계좌 원문을 확인한다. 실패하면 마스킹 번호로 대신하지 않는다 (TRF-007) */
