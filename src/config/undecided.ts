@@ -50,13 +50,13 @@ export const UNDECIDED = {
   /** 묶음2 #4 · 진행 중(PENDING) 주문이 있어도 계좌 변경·삭제를 막지 않고 안내만 한다. 현재 계좌를 과거 주문에 대신 쓰지 않는다 (OPEN-DB-002) */
   pendingOrderAccountChange: 'allowWithNotice',
   /**
-   * 계좌 원문을 기기 보안 저장소(AccountVault)에 둔다는 것은 확정이지만, 아래는 정해지지 않았다 (개발 명세 DB-003, OPEN-DB-001·002).
-   * 지금 값은 임시이며 정책이 정해지면 바꾼다.
-   * - 로그아웃: 메모리·화면의 계좌만 비우고, 보안 저장소의 계좌는 지우지 않는다. 사용자(uid)별 키라 다른 계정으로는 읽히지 않는다.
-   *   (다시 같은 계정으로 로그인하면 불러온다.) 로그아웃 때 지울지는 OPEN-DB-002에서 정한다
-   * - 저장 옵션: iOS 접근 수준(keychainAccessible)과 기기 암호·생체인증 필수 여부는 정하지 않아 라이브러리 기본값을 쓴다
+   * 계좌 원문 보관·삭제 기준 (서정 확정 2026-11, 개발 명세 DB-003). MVP에서는 현재 등록 계좌의 원문만 기기 보안 저장소(AccountVault)에 둔다.
+   * - 계좌를 바꾸면 이전 원문을 지우고 새 참조를 부여한다. 과거 계좌 원문을 따로 쌓아 두지 않는다.
+   * - 계좌 삭제·로그아웃 시 해당 사용자의 계좌 원문을 지운다. 그 뒤 과거 PENDING 주문의 계좌 복사·사전입력은 막히고
+   *   "이 기기에 주문 당시 계좌정보가 없어요."를 안내한다. 기존 주문 조회·완료 확인·상태 저장 복구는 그대로다.
+   * - 저장 옵션(미결정): iOS 접근 수준(keychainAccessible)과 기기 암호·생체인증 필수 여부는 정하지 않아 라이브러리 기본값을 쓴다
    */
-  accountOnLogout: 'keepOnDevice',
+  accountOnLogout: 'deleteFromDevice',
   accountStorageOptions: 'libraryDefault',
   /** 묶음2 #6 · 주문 취소는 완료 확인 질문 화면의 보조 텍스트 버튼에서 시작한다 */
   orderCancelEntry: 'confirmQuestionTextButton',
