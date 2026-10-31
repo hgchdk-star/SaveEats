@@ -99,7 +99,7 @@ export type MockScenario = {
   /** 최근 검색어: seeded는 기기에 저장된 것이 없을 때 예시 10개를 보여준다 */
   recentSearches: 'none' | 'seeded';
   /** 가게 상세의 콘텐츠 출처 (SRC-004): none은 출처 없음/미확인 → 버튼 숨김, one · many · long은 출처 1개 · 3개 · 14개(긴 이름 포함) */
-  storeSources: 'none' | 'one' | 'many' | 'long';
+  storeSources: 'none' | 'one' | 'many' | 'long' | 'failOnce';
   /** 응답 지연(ms). 로딩 상태를 보기 위한 값 */
   delayMs: number;
 };
@@ -222,6 +222,7 @@ const SCENARIOS = {
   sourcesOne: { ...BASE, storeSources: 'one' },
   sourcesMany: { ...BASE, storeSources: 'many' },
   sourcesLong: { ...BASE, storeSources: 'long' },
+  sourcesFails: { ...BASE, storeSources: 'failOnce' },
 } satisfies Record<string, MockScenario>;
 
 export type MockScenarioName = keyof typeof SCENARIOS;

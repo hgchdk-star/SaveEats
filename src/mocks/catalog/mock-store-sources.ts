@@ -1,4 +1,5 @@
-import { mockDelay, mockScenario } from '@/mocks/scenario';
+import { failOnce, mockDelay, mockScenario } from '@/mocks/scenario';
+import { ServiceError } from '@/services/service-error';
 import { toSourceResult, type StoreSourceProvider } from '@/services/store-source/store-source-provider';
 
 /**
@@ -24,6 +25,10 @@ export function createMockStoreSourceProvider(): StoreSourceProvider {
           return toSourceResult(sample(1));
         case 'many':
           return toSourceResult(sample(3));
+        case 'failOnce':
+          // 조회 실패(출처 미확인과 다른 상태). 다시 시도하면 출처 없음(미확인)으로 답한다
+          if (failOnce('store-sources')) throw new ServiceError('SOURCES_UNAVAILABLE');
+          return { status: 'UNCONFIRMED' };
         case 'long':
           return toSourceResult(sample(14, true));
         default:

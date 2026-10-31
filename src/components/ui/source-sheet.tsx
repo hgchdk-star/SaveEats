@@ -14,6 +14,8 @@ type SourceSheetProps = {
   /** 현재 가게 이름 */
   storeName: string;
   items: readonly { name: string; url: string }[];
+  /** 링크를 열지 못했을 때 목록 위에 보여줄 안내. 목록은 그대로 둔다 */
+  errorMessage?: string;
   onClose: () => void;
   /** 선택한 항목 자신의 URL을 연다 */
   onOpenSource: (url: string) => void;
@@ -26,7 +28,7 @@ type SourceSheetProps = {
  * 긴 이름은 줄바꿈하고, 목록이 길면 시트 안에서 스크롤한다. 하단 안전 영역을 비운다.
  * 시트를 열고 닫아도 아래 화면의 탭·스크롤은 그대로다(Modal이라 화면을 다시 그리지 않는다).
  */
-export function SourceSheet({ visible, storeName, items, onClose, onOpenSource }: SourceSheetProps) {
+export function SourceSheet({ visible, storeName, items, errorMessage, onClose, onOpenSource }: SourceSheetProps) {
   const insets = useSafeAreaInsets();
   const { height } = useWindowDimensions();
   return (
@@ -45,6 +47,11 @@ export function SourceSheet({ visible, storeName, items, onClose, onOpenSource }
             <IconButton icon="close" label={draftCopy.store.sourceSheetClose} onPress={onClose} />
           </View>
           <Text style={styles.guide}>{copy.sheetGuide}</Text>
+          {errorMessage ? (
+            <Text accessibilityRole="alert" style={styles.error}>
+              {errorMessage}
+            </Text>
+          ) : null}
           <ScrollView style={styles.scroll} contentContainerStyle={styles.list}>
             {items.map((item, i) => (
               <Pressable
@@ -115,6 +122,12 @@ const styles = StyleSheet.create({
     color: colors.inkSecondary,
     paddingHorizontal: spacing[5],
     marginTop: spacing[1],
+  },
+  error: {
+    ...text.body2,
+    color: colors.danger,
+    paddingHorizontal: spacing[5],
+    marginTop: spacing[2],
   },
   scroll: {
     flexGrow: 0,

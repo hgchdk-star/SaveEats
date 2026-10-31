@@ -436,6 +436,9 @@ export const draftCopy = {
      * PRD가 그렇게 바뀌면 sourceChecking 값만 교체한다.
      */
     sourceOpenFailed: '출처 페이지를 열지 못했어요. 다시 시도해 주세요.',
+    /** 출처 조회 실패(출처 미확인과 구분). 서정 확정 문구 */
+    sourceLoadFailed: '출처 정보를 불러오지 못했어요. 다시 시도해 주세요.',
+    sourceRetry: '다시 시도',
     sourceSheetClose: '닫기',
   },
 

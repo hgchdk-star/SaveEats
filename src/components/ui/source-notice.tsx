@@ -4,34 +4,49 @@ import { confirmedCopy } from '@/config/confirmed-copy';
 import { draftCopy } from '@/config/draft-copy';
 import { colors, spacing, text } from '@/theme';
 
-import { SecondaryButton } from './button';
+import { SecondaryButton, TextButton } from './button';
 
 const copy = confirmedCopy.contentSource;
 
 type SourceNoticeProps = {
-  /** 출처 목록이 있을 때만 열기 버튼을 보여준다. 없거나 미확인이면 버튼 없이 확인 중 안내만 둔다 (FR-STORE-020) */
-  available: boolean;
+  /**
+   * available: 출처 목록이 있다 → 안내 + 열기 버튼.
+   * unconfirmed: 출처가 없거나 아직 확인되지 않았다 → 버튼 없이 확인 중 안내 (FR-STORE-020).
+   * error: 출처를 불러오지 못했다 → 조회 실패 안내 + 다시 시도. 출처 미확인과 구분한다.
+   */
+  state: 'available' | 'unconfirmed' | 'error';
   onOpen: () => void;
+  onRetry: () => void;
 };
 
 /**
  * 가게 상세의 모든 탭 마지막에 오는 콘텐츠 출처 안내 (FR-STORE-015 · 016).
- * 목록은 여기에 나열하지 않는다. 버튼은 내부 시트를 열므로 ↗를 붙이지 않는다.
- * 출처가 없을 때 이 안내가 보인다고 해서 콘텐츠 공개가 허용된 것은 아니다 (OPEN-SRC-002).
+ * 목록은 여기에 나열하지 않는다. 버튼은 내부 시트를 열므로 ↗를 붙이지 않는다. 비제휴 문구는 어느 상태에서나 둔다.
+ * 출처가 없을 때 이 안내가 보인다고 해서 콘텐츠 공개가 허용된 것은 아니고, 출처 표기가 사용 허락도 아니다 (OPEN-SRC-002).
  */
-export function SourceNotice({ available, onOpen }: SourceNoticeProps) {
+export function SourceNotice({ state, onOpen, onRetry }: SourceNoticeProps) {
+  const body = state === 'available' ? copy.body : state === 'error' ? draftCopy.store.sourceLoadFailed : draftCopy.store.sourceChecking;
   return (
     <View style={styles.root}>
       <Text accessibilityRole="header" style={styles.title}>
         {copy.title}
       </Text>
-      <Text style={styles.body}>{available ? copy.body : draftCopy.store.sourceChecking}</Text>
+      <Text accessibilityRole={state === 'error' ? 'alert' : undefined} style={styles.body}>
+        {body}
+      </Text>
       <Text style={styles.body}>{copy.nonAffiliation}</Text>
-      {available ? (
+      {state === 'available' ? (
         <View style={styles.action}>
           <SecondaryButton size="md" onPress={onOpen}>
             {copy.openButton}
           </SecondaryButton>
+        </View>
+      ) : null}
+      {state === 'error' ? (
+        <View style={styles.action}>
+          <TextButton size="sm" onPress={onRetry}>
+            {draftCopy.store.sourceRetry}
+          </TextButton>
         </View>
       ) : null}
     </View>
