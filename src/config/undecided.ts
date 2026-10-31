@@ -62,8 +62,11 @@ export const UNDECIDED = {
   orderCancelEntry: 'confirmQuestionTextButton',
   /** 묶음2 #7 · PENDING 주문은 자동으로 만료되지 않고, 만료 표시도 하지 않는다 */
   pendingAutoExpiry: null,
-  /** 묶음2 #8 · 토스에 은행·계좌·금액을 미리 채워 열지 않는다. 실기기 PoC 전까지 끈다 */
-  tossPrefill: false,
+  /**
+   * 묶음2 #8 · 토스에 은행·계좌·금액을 미리 채워 연다. Expo Go 실기기 확인(2026-10) 뒤 켰다.
+   * 실제로 열리는지는 이 값이 아니라 TOSS_CAPABILITY(SaveEats 빌드 재검증)와 원격 tossDeepLinkEnabled가 정한다.
+   */
+  tossPrefill: true,
 
   /* ---------- 내역·리뷰 (묶음 3의 [미결정 #1~#8]) ---------- */
 
