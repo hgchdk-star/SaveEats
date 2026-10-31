@@ -124,6 +124,8 @@ export const draftCopy = {
     version: '앱 버전',
     withdraw: '회원 탈퇴',
     toastLoggedOut: '로그아웃했어요',
+    /** 로그아웃은 됐지만 이 기기의 계좌정보를 지우지 못했을 때. 지웠다고 알리지 않는다 */
+    toastLoggedOutAccountKept: '로그아웃했어요. 다만 이 기기의 계좌정보를 지우지 못했어요. 다시 로그인해서 계좌를 삭제해주세요.',
     withdrawTitle: '회원 탈퇴할까요?',
     withdrawDescs: ['탈퇴하면 이 계정으로 다시 로그인할 수 없어요.', '진행 중인 주문이 있다면 먼저 내역에서 확인해주세요.'],
     withdrawConfirm: '탈퇴하기',
@@ -306,7 +308,8 @@ export const draftCopy = {
     manageHelp: '지금은 계좌를 1개만 등록할 수 있어요.',
     change: '계좌 변경',
     remove: '계좌 삭제',
-    pendingOrderNotice: '진행 중인 주문은 주문 당시 계좌로 이어가요',
+    /** 초안. 계좌를 바꾸거나 지우면 이전 계좌 원문도 지워져서 진행 중인 주문의 계좌번호 복사·사전입력이 막힌다 (서정 확정 기준 2026-11) */
+    pendingOrderNotice: '진행 중인 주문의 돈은 주문 당시 계좌로 가요. 계좌를 바꾸거나 지우면 이 기기에서 그 계좌번호를 복사할 수 없어요.',
     deleteTitle: '계좌를 삭제할까요?',
     deleteDesc: '삭제하면 다시 등록하기 전까지 주문할 수 없어요.',
     deleteConfirm: '삭제하기',
@@ -370,7 +373,10 @@ export const draftCopy = {
     copyAccount: '계좌번호 복사',
     copyAmount: '금액 복사',
     openToss: '토스 열기',
-    rawUnavailable: '계좌 정보를 확인하지 못했어요',
+    /** 주문 당시 계좌의 원문이 없거나 연결이 다를 때(서정 확정 문구). 새 계좌로 보내라고 안내하지 않는다 */
+    rawUnavailable: '이 기기에 주문 당시 계좌정보가 없어요.',
+    /** '토스 열기'를 쓸 수 없을 때 버튼 아래 안내(서정 확정 문구). 토스만 여는 방법이 검증되기 전까지 보인다 */
+    openTossUnavailable: '사용 중인 금융앱에서 직접 이어가 주세요.',
     rawRetry: '다시 확인',
     copyFailed: '복사하지 못했어요. 다시 시도해주세요.',
     kvStore: '가게',

@@ -1,6 +1,7 @@
 import { router } from 'expo-router';
 
 import { LIMITS, ORDER } from '@/config/limits';
+import { TOSS_CAPABILITY } from '@/config/toss-capability';
 import { UNDECIDED } from '@/config/undecided';
 import { draftCopy } from '@/config/draft-copy';
 import { confirmedCopy } from '@/config/confirmed-copy';
@@ -13,6 +14,7 @@ import type { CreateOrderRequest, MockDestinationAccount, MockOrder } from '@/mo
 import { orderService, transferService } from '@/services';
 import { copyToClipboard } from '@/services/clipboard';
 import { ServiceError, errorCode } from '@/services/service-error';
+import { saveOrderDestinationLink } from '@/services/transfer/order-destination-link';
 import { createLocalId } from '@/utils/id';
 
 import type { CartEnvelope } from '@/features/cart/cart-model';
@@ -106,7 +108,7 @@ export async function recheckCreate(): Promise<void> {
   flow().set({ work: 'CREATE_SAVING' });
   try {
     const found = await orderService.getOrderByRequestKey(attempt.request.idempotencyKey);
-    if (found) await onCreated(found, attempt.via, attempt.request.expectedCartRevision);
+    if (found) await onCreated(found, attempt.via, attempt.request);
     else await send(attempt);
   } catch {
     flow().set({ work: 'CREATE_UNKNOWN' });
@@ -118,7 +120,7 @@ const REJECTIONS: readonly string[] = ['PRICE_CHANGED', 'ITEM_UNAVAILABLE', 'ACC
 async function send(attempt: NonNullable<ReturnType<typeof flow>['attempt']>): Promise<void> {
   try {
     const order = await orderService.createOrder(attempt.request);
-    await onCreated(order, attempt.via, attempt.request.expectedCartRevision);
+    await onCreated(order, attempt.via, attempt.request);
   } catch (error) {
     const code = errorCode(error);
     if (code && REJECTIONS.includes(code)) {
@@ -133,8 +135,12 @@ async function send(attempt: NonNullable<ReturnType<typeof flow>['attempt']>): P
 }
 
 /** 주문(PENDING) 저장에 성공했다 → 장바구니 정리 → 원격 설정 조회 → 이어가기 화면 */
-async function onCreated(order: MockOrder, via: 'TOSS' | 'DIRECT', cartRevision: number): Promise<void> {
+async function onCreated(order: MockOrder, via: 'TOSS' | 'DIRECT', request: CreateOrderRequest): Promise<void> {
+  const cartRevision = request.expectedCartRevision;
   flow().set({ order, work: 'PENDING_READY', attempt: null, rejectedReason: null, confirmOperationId: null, cancelOperationId: null });
+  // 이 주문을 만들 때 쓴 목적지의 참조를 기기에 남긴다. 나중에 계좌번호 복사·사전입력이 바로 그 목적지인지 확인하는 데 쓴다.
+  // 남기지 못해도 주문은 이미 만들어졌다. 그 경우 복사·사전입력은 막히고 목적지 확인 안내가 나온다.
+  await saveOrderDestinationLink(order.orderId, { destinationRef: request.accountId, revision: request.expectedAccountRevision }).catch(() => undefined);
   void clearAttempt();
   // 미결정 묶음2 #5(= 묶음1 #10): 주문 생성에 성공했을 때 비운다. 생성에 쓴 버전만 비우고 그사이 더 담은 것은 둔다 (ORD-013)
   if (UNDECIDED.cartClearTiming === 'onPendingCreated') await useCartStore.getState().clearIfRevision(cartRevision);
@@ -149,7 +155,9 @@ export async function openTransfer(via: 'TOSS' | 'DIRECT', how: 'replace' | 'pus
   const timeout = new Promise<{ tossDeepLinkEnabled: boolean }>((resolve) =>
     setTimeout(() => resolve({ tossDeepLinkEnabled: false }), LIMITS.tossConfigTimeoutMs),
   );
-  const config = await Promise.race([transferService.getTransferConfig(), timeout]).catch(() => ({ tossDeepLinkEnabled: false }));
+  // 이 주문의 은행·이 플랫폼에서 사전입력이 검증된 조합이 아니면 처음부터 직접 이어가기로 간다
+  const bankName = flow().order?.snapshot.destination.bankName;
+  const config = await Promise.race([transferService.getTransferConfig(bankName ? { bankName } : undefined), timeout]).catch(() => ({ tossDeepLinkEnabled: false }));
   const direct = via === 'DIRECT' || !config.tossDeepLinkEnabled;
   flow().setTransfer({
     mode: direct ? 'DIRECT' : 'TOSS',
@@ -173,16 +181,21 @@ export async function openTossFromContinue(): Promise<void> {
   try {
     await transferService.openToss({ orderId: order.orderId, prefill: UNDECIDED.tossPrefill });
     flow().setTransfer({ tossBusy: false, awaitingReturn: true });
-  } catch {
-    flow().setTransfer({ tossBusy: false, tossFailed: true, mode: 'DIRECT' });
+  } catch (error) {
+    // 목적지를 확인하지 못한 경우: 토스 실패가 아니라 목적지 확인 안내를 보여준다. 계좌 복사도 같은 이유로 막힌다
+    const destinationProblem = errorCode(error) === 'DESTINATION_UNAVAILABLE';
+    flow().setTransfer({ tossBusy: false, tossFailed: !destinationProblem, rawAvailable: !destinationProblem, mode: 'DIRECT' });
     router.replace('/order/direct');
   }
 }
 
-/** 직접 이어가기의 '토스 열기'. 미리 채우지 않고 열기만 한다 */
+/**
+ * 직접 이어가기의 '토스 열기'. 미리 채우지 않고 열기만 한다.
+ * 토스만 여는 방법이 검증되기 전에는 화면에서 비활성이고, 여기서도 실행하지 않는다 (TOSS_CAPABILITY.openOnlyValidated).
+ */
 export async function openTossPlain(): Promise<void> {
   const { order } = flow();
-  if (!order) return;
+  if (!order || !TOSS_CAPABILITY.openOnlyValidated) return;
   try {
     await transferService.openToss({ orderId: order.orderId, prefill: false });
     flow().setTransfer({ awaitingReturn: true });
