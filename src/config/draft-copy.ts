@@ -103,8 +103,7 @@ export const draftCopy = {
     lifetimeRetry: '다시 시도',
     rowReviews: '내가 쓴 리뷰',
     rowNotifications: '알림 설정',
-    rowSettings: '설정',
-  },
+    rowSettings: '설정',  },
 
   /** 설정 · 알림 설정 (㉖). 항목 구성은 기획서 60 · FR-SET-001 */
   settings: {
@@ -429,6 +428,18 @@ export const draftCopy = {
     /** 계약 isOpen 값의 표시 문구. 화면에서는 "준비 중"으로 통일한다 (서정 확인 2026-10-29). 10/1 결정 문서의 "영업 종료"는 같은 상태를 부르는 이름이다 */
     statusOpen: '영업 중',
     statusClosed: '준비 중',
+    /** PRD FR-STORE-020 초안. 최종 채택은 OPEN-SRC-002 · 003. 이 문구가 보인다고 공개가 허용된 것은 아니다 */
+    sourceChecking: '이 가게의 출처 정보를 확인하고 있어요.',
+    /**
+     * 출처 링크를 열지 못했을 때. 서정이 검토 중인 문구(2026-10-31)라 OPEN-SRC-003 확정 전에는 이 값만 바꿔 교체한다.
+     * 출처 없음 문구는 위 sourceChecking이다. 서정의 검토 방향은 "이 가게의 출처 정보가 아직 등록되지 않았어요."이고,
+     * PRD가 그렇게 바뀌면 sourceChecking 값만 교체한다.
+     */
+    sourceOpenFailed: '출처 페이지를 열지 못했어요. 다시 시도해 주세요.',
+    /** 출처 조회 실패(출처 미확인과 구분). 서정 확정 문구 */
+    sourceLoadFailed: '출처 정보를 불러오지 못했어요. 다시 시도해 주세요.',
+    sourceRetry: '다시 시도',
+    sourceSheetClose: '닫기',
   },
 
   menu: {

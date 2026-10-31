@@ -3,6 +3,7 @@ import { mockSearch } from '@/mocks/home/mock-search';
 import { createMockAccountService } from '@/mocks/account/mock-account';
 import { createMockAuthService } from '@/mocks/auth/mock-auth';
 import { createMockCatalogRepository } from '@/mocks/catalog/mock-catalog-repository';
+import { createMockStoreSourceProvider } from '@/mocks/catalog/mock-store-sources';
 import { createMockHistoryService } from '@/mocks/history/mock-history';
 import { createMockReviewService } from '@/mocks/history/mock-review';
 import type { HistoryService, ReviewService } from '@/mocks/history/types';
@@ -13,6 +14,7 @@ import { createMockTransferService } from '@/mocks/order/mock-transfer';
 import type { AccountService, AuthService, OrderService, TransferService } from '@/mocks/order/types';
 
 import type { CatalogRepository } from './catalog/catalog-repository';
+import { createUnconfirmedStoreSourceProvider, type StoreSourceProvider } from './store-source/store-source-provider';
 import { createSupabaseCatalogRepository, searchStoresFromServer } from './supabase/supabase-catalog-repository';
 
 /**
@@ -22,6 +24,8 @@ import { createSupabaseCatalogRepository, searchStoresFromServer } from './supab
  */
 const mockCatalog = createMockCatalogRepository();
 export const catalogRepository: CatalogRepository = dataSource === 'supabase' ? createSupabaseCatalogRepository(mockCatalog) : mockCatalog;
+// 가게별 콘텐츠 출처. 공급 계약(OPEN-SRC-001)이 없어 서버 모드에서는 출처를 확인하지 못한 것으로 답하고, Mock 모드에서만 개발용 시나리오 목록이 나온다.
+export const storeSourceProvider: StoreSourceProvider = dataSource === 'supabase' ? createUnconfirmedStoreSourceProvider() : createMockStoreSourceProvider();
 export const authService: AuthService = createMockAuthService();
 export const accountService: AccountService = createMockAccountService();
 export const orderService: OrderService = createMockOrderService();

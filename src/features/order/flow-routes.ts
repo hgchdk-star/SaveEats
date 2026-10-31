@@ -87,6 +87,11 @@ export function goNotificationSettings(): void {
   router.push('/notifications');
 }
 
+/** 마이 › 서비스 및 콘텐츠 이용 안내 (Guest도 열 수 있다) */
+export function goContentGuide(): void {
+  router.push('/content-guide');
+}
+
 export function goHowTo(): void {
   router.push('/howto');
 }
