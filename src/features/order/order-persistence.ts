@@ -51,7 +51,9 @@ export async function loadAttempt(): Promise<CreateAttempt | null> {
     const raw = await AsyncStorage.getItem(ATTEMPT_KEY());
     if (!raw) return null;
     const parsed = JSON.parse(raw) as CreateAttempt;
-    return parsed?.request?.idempotencyKey && (parsed.via === 'TOSS' || parsed.via === 'DIRECT') ? parsed : null;
+    // 요청 v2(destinationRef)가 아닌 예전 형식은 서버가 받지 않으므로 없는 것으로 본다
+    const valid = parsed?.request?.idempotencyKey && typeof parsed.request.destinationRef === 'string' && (parsed.via === 'TOSS' || parsed.via === 'DIRECT');
+    return valid ? parsed : null;
   } catch {
     return null;
   }

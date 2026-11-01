@@ -59,8 +59,8 @@ export type CreateOrderRequest = {
   cartId: string;
   expectedCartRevision: number;
   storeId: Uuid;
-  accountId: string;
-  expectedAccountRevision: number;
+  /** 돈이 갈 계좌의 비민감 참조(AccountVault의 destinationRef). 계좌 값은 서버에 보내지 않는다. 요청 v2 (혜지 합의 2026-11) */
+  destinationRef: string;
   items: { menuId: Uuid; optionIds: Uuid[]; quantity: number; approvedUnitPrice: Won; approvedCatalogRevision: number }[];
   approvedTotalAmount: Won;
   disclosureVersion: string;
@@ -98,10 +98,19 @@ export type MockOrder = {
   snapshot: MockOrderSnapshot;
 };
 
-/** 서버가 명확히 거절한 경우와 결과를 모르는 경우를 구분한다 (ORD-006 · 011) */
+/**
+ * 서버가 명확히 거절한 경우와 결과를 모르는 경우를 구분한다 (ORD-006 · 011).
+ * 서버가 내는 거절: PRICE_CHANGED · ITEM_UNAVAILABLE · STORE_CLOSED · INVALID_OPTIONS · CART_REVISION_CONFLICT · IDEMPOTENCY_CONFLICT.
+ * 항목별 상세는 오지 않고 코드만 온다. 앱이 장바구니 검증으로 다시 조회한다.
+ * ACCOUNT_REQUIRED · ACCOUNT_REVISION_CONFLICT는 서버가 계좌를 몰라서 앱이 주문 전에 로컬에서 판단하는 코드다.
+ */
 export type OrderFailureCode =
   | 'PRICE_CHANGED'
   | 'ITEM_UNAVAILABLE'
+  | 'STORE_CLOSED'
+  | 'INVALID_OPTIONS'
+  | 'CART_REVISION_CONFLICT'
+  | 'IDEMPOTENCY_CONFLICT'
   | 'ACCOUNT_REQUIRED'
   | 'ACCOUNT_REVISION_CONFLICT'
   | 'NETWORK_UNAVAILABLE'

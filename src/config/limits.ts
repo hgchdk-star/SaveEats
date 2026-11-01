@@ -54,5 +54,6 @@ export const LIMITS = {
 /** 최종 주문 확인 고지 버전. 표시한 고지 문구의 버전을 요청에 함께 보낸다 (ORD-004) */
 export const ORDER = {
   disclosureVersion: '2026-09-30',
-  requestVersion: 1,
+  /** 주문 생성 요청 버전. 서버는 v2만 받는다 (혜지 합의 2026-11) */
+  requestVersion: 2,
 } as const;

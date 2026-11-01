@@ -14,13 +14,13 @@ import type { CreateOrderRequest, MockOrder, OrderService } from './types';
  * 같은 idempotencyKey면 같은 주문을 돌려준다 (ORD-006).
  */
 
-/** 요청을 서버가 다시 검증한다: 계좌 버전, 메뉴·옵션 판매 여부, 승인한 가격, 합계 */
+/**
+ * 요청을 서버가 다시 검증한다: 메뉴·옵션 판매 여부, 승인한 가격, 합계.
+ * 실제 서버는 계좌를 모르므로 계좌 확인은 하지 않는다(앱이 주문 전에 로컬에서 한다). Mock만 화면용 스냅샷에 현재 세션 계좌를 쓴다.
+ */
 function verify(request: CreateOrderRequest) {
   const account = useMockSession.getState().destinationAccount;
   if (!account) throw new ServiceError('ACCOUNT_REQUIRED');
-  if (account.id !== request.accountId || account.revision !== request.expectedAccountRevision) {
-    throw new ServiceError('ACCOUNT_REVISION_CONFLICT');
-  }
 
   for (const item of request.items) {
     const menu = mockCatalog.activeMenu(item.menuId);

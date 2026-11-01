@@ -26,7 +26,8 @@ export type OrderWork =
   /** 주문 취소 결과를 받지 못했다. 취소됐다고 단정하지 않는다 */
   | 'CANCEL_UNKNOWN';
 
-export type RejectedReason = 'PRICE_CHANGED' | 'ITEM_UNAVAILABLE' | 'ACCOUNT_REQUIRED' | 'ACCOUNT_REVISION_CONFLICT';
+/** 주문 생성이 만들어지지 않았다고 확정된 거절. 장바구니 문제(앞의 넷)와 계좌 문제(ACCOUNT_*, 앱이 로컬에서 판단)로 나뉜다 */
+export type RejectedReason = 'PRICE_CHANGED' | 'ITEM_UNAVAILABLE' | 'STORE_CLOSED' | 'INVALID_OPTIONS' | 'ACCOUNT_REQUIRED' | 'ACCOUNT_REVISION_CONFLICT';
 
 export type TransferState = {
   /** 이어가기 방식 */

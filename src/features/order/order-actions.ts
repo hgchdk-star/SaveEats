@@ -14,6 +14,7 @@ import type { CreateOrderRequest, MockDestinationAccount, MockOrder } from '@/mo
 import { orderService, transferService } from '@/services';
 import { copyToClipboard } from '@/services/clipboard';
 import { ServiceError, errorCode } from '@/services/service-error';
+import { getSession } from '@/services/session';
 import { saveOrderDestinationLink } from '@/services/transfer/order-destination-link';
 import { createLocalId } from '@/utils/id';
 
@@ -53,8 +54,7 @@ export function buildCreateOrderRequest(cart: CartEnvelope, account: MockDestina
     cartId: cart.localCartId,
     expectedCartRevision: cart.localRevision,
     storeId: cart.storeId ?? '',
-    accountId: account.id,
-    expectedAccountRevision: account.revision,
+    destinationRef: account.id,
     items: cart.items.map((item) => ({
       menuId: item.menuId,
       optionIds: item.optionIds,
@@ -87,6 +87,15 @@ export async function createOrder(via: 'TOSS' | 'DIRECT', cart: CartEnvelope, ac
   const state = flow();
   if (state.work === 'CREATE_SAVING') return; // 중복 입력 잠금
 
+  // 서버는 계좌를 모른다. 확인한 계좌가 그사이 바뀌었으면 보내기 전에 앱이 막는다 (새 요청일 때만. 이미 만든 요청은 그대로 다시 보낸다)
+  if (!state.attempt) {
+    const current = getSession().destinationAccount;
+    if (!current || current.id !== account.id) {
+      flow().set({ work: 'CREATE_REJECTED', rejectedReason: current ? 'ACCOUNT_REVISION_CONFLICT' : 'ACCOUNT_REQUIRED' });
+      return;
+    }
+  }
+
   // 저장은 됐지만 전송 전에 멈춘 시도(기기 저장 실패)는 같은 요청을 다시 쓴다. 한 번도 보내지 않았으니 같은 키여도 안전하다
   const attempt = state.attempt ? { ...state.attempt, via } : { request: buildCreateOrderRequest(cart, account), via };
   flow().set({ work: 'CREATE_SAVING', attempt, rejectedReason: null });
@@ -115,7 +124,12 @@ export async function recheckCreate(): Promise<void> {
   }
 }
 
-const REJECTIONS: readonly string[] = ['PRICE_CHANGED', 'ITEM_UNAVAILABLE', 'ACCOUNT_REQUIRED', 'ACCOUNT_REVISION_CONFLICT'];
+/**
+ * 서버의 명확한 거절 코드. 주문이 만들어지지 않았다.
+ * TODO(혜지 확인 전): CART_REVISION_CONFLICT(서버가 무엇을 비교하는지)와 IDEMPOTENCY_CONFLICT(같은 키 조회 시 기존 주문을 주는지)는
+ * 사용자 안내를 정하지 못해 여기에 넣지 않았다. 지금은 결과를 모르는 오류로 취급되어 '다시 확인'으로 간다.
+ */
+const REJECTIONS: readonly string[] = ['PRICE_CHANGED', 'ITEM_UNAVAILABLE', 'STORE_CLOSED', 'INVALID_OPTIONS'];
 
 async function send(attempt: NonNullable<ReturnType<typeof flow>['attempt']>): Promise<void> {
   try {
@@ -140,7 +154,7 @@ async function onCreated(order: MockOrder, via: 'TOSS' | 'DIRECT', request: Crea
   flow().set({ order, work: 'PENDING_READY', attempt: null, rejectedReason: null, confirmOperationId: null, cancelOperationId: null });
   // 이 주문을 만들 때 쓴 목적지의 참조를 기기에 남긴다. 나중에 계좌번호 복사·사전입력이 바로 그 목적지인지 확인하는 데 쓴다.
   // 남기지 못해도 주문은 이미 만들어졌다. 그 경우 복사·사전입력은 막히고 목적지 확인 안내가 나온다.
-  await saveOrderDestinationLink(order.orderId, { destinationRef: request.accountId, revision: request.expectedAccountRevision }).catch(() => undefined);
+  await saveOrderDestinationLink(order.orderId, { destinationRef: request.destinationRef }).catch(() => undefined);
   void clearAttempt();
   // 미결정 묶음2 #5(= 묶음1 #10): 주문 생성에 성공했을 때 비운다. 생성에 쓴 버전만 비우고 그사이 더 담은 것은 둔다 (ORD-013)
   if (UNDECIDED.cartClearTiming === 'onPendingCreated') await useCartStore.getState().clearIfRevision(cartRevision);
