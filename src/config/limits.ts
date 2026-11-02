@@ -13,6 +13,8 @@ export const LIMITS = {
   accountNumberMinLength: 10,
   /** 비밀번호 최소 글자 수. Supabase Auth 설정(Minimum password length)과 같아야 한다: 6자 (혜지 확인 2026-10-29). 서버 설정을 바꾸면 여기와 문구가 함께 바뀐다 */
   passwordMinLength: 6,
+  /** 앱을 켤 때 저장된 로그인 세션을 복원하는 데 기다리는 최대 시간. 넘으면 먼저 Guest로 열고, 복원이 끝나면 로그인 상태로 바뀐다 (AUTH-002) */
+  authRestoreTimeoutMs: 4000,
   /** 토스 실행 직전 원격 설정 조회 제한 시간. 넘으면 직접 흐름 (TRF-005) */
   tossConfigTimeoutMs: 3000,
   /** 외부 앱에서 돌아온 뒤 주문 상태 조회를 기다리는 최대 시간. 넘으면 조회 실패 화면 (TRF-008) */

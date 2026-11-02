@@ -7,6 +7,7 @@ import { useOrderFlowStore } from '@/features/order/order-flow-store';
 import { recoverOnStart } from '@/features/order/recovery';
 import { useReviewStore } from '@/features/review/review-store';
 import { showToast } from '@/features/toast/toast-store';
+import { LIMITS } from '@/config/limits';
 import { accountVault, authService, loadDeviceAccountIntoSession } from '@/services';
 import { getSession } from '@/services/session';
 
@@ -51,6 +52,36 @@ export async function logout(): Promise<void> {
   router.dismissAll();
   router.navigate('/');
   showToast(accountCleared ? { message: draftCopy.settings.toastLoggedOut } : { message: draftCopy.settings.toastLoggedOutAccountKept, tone: 'error' });
+}
+
+/**
+ * 앱을 켤 때 한 번: 저장된 로그인 세션을 복원하고, 사용자가 로그아웃하지 않았는데 세션을 잃으면 개인 데이터를 정리한다 (AUTH-002).
+ * 복원이 느리면(네트워크 갱신 등) LIMITS.authRestoreTimeoutMs까지만 기다리고 먼저 Guest로 연다. 늦게 복원되면 그때 로그인 상태가 되고
+ * 기기 기록 복구와 계좌 불러오기를 이어서 한다. 세션이 없는 Guest는 서버를 부르지 않는다.
+ */
+let authStarted = false;
+export async function startAuth(): Promise<void> {
+  if (authStarted) return;
+  authStarted = true;
+  authService.onForcedSignOut(() => {
+    clearPersonalData();
+    showToast({ message: draftCopy.login.sessionExpired });
+  });
+
+  let timedOut = false;
+  const restored = authService.restore();
+  await Promise.race([
+    restored,
+    new Promise<void>((resolve) =>
+      setTimeout(() => {
+        timedOut = true;
+        resolve();
+      }, LIMITS.authRestoreTimeoutMs),
+    ),
+  ]);
+  // 먼저 열었다가 늦게 복원된 경우: 로그인 직후와 같은 후속 처리를 한다
+  if (timedOut) void restored.then(() => (getSession().isMember ? afterLogin() : undefined));
+  else if (getSession().isMember) void loadDeviceAccountIntoSession();
 }
 
 /**

@@ -28,5 +28,9 @@ export function createMockAuthService(): AuthService {
       await mockDelay();
       useMockSession.setState({ isMember: false, userId: null, email: null, destinationAccount: null });
     },
+    async restore() {
+      // Mock 세션은 시나리오가 정하므로 복원할 것이 없다
+    },
+    onForcedSignOut: () => () => undefined,
   };
 }
