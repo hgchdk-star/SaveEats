@@ -56,8 +56,6 @@ export type MockOrderStatus = 'PENDING' | 'USER_CONFIRMED' | 'CANCELLED';
 export type CreateOrderRequest = {
   idempotencyKey: string;
   requestVersion: number;
-  cartId: string;
-  expectedCartRevision: number;
   storeId: Uuid;
   /** 돈이 갈 계좌의 비민감 참조(AccountVault의 destinationRef). 계좌 값은 서버에 보내지 않는다. 요청 v2 (혜지 합의 2026-11) */
   destinationRef: string;
@@ -100,8 +98,10 @@ export type MockOrder = {
 
 /**
  * 서버가 명확히 거절한 경우와 결과를 모르는 경우를 구분한다 (ORD-006 · 011).
- * 서버가 내는 거절: PRICE_CHANGED · ITEM_UNAVAILABLE · STORE_CLOSED · INVALID_OPTIONS · CART_REVISION_CONFLICT · IDEMPOTENCY_CONFLICT.
+ * 서버가 내는 거절: PRICE_CHANGED · ITEM_UNAVAILABLE · STORE_CLOSED · INVALID_OPTIONS (items · approvedUnitPrice · approvedTotalAmount를 카탈로그와 대조).
  * 항목별 상세는 오지 않고 코드만 온다. 앱이 장바구니 검증으로 다시 조회한다.
+ * IDEMPOTENCY_CONFLICT: 같은 키에 다른 내용이면 서버는 오류만 주고 새 주문을 만들지 않는다. 앱은 키로 조회해 기존 주문을 보여 준다.
+ * TODO(혜지 정리 후): 같은 메뉴·옵션 조합 합산 10 초과를 서버가 거절하는 코드명. 장바구니는 기기에만 있어 CART_REVISION_CONFLICT는 쓰지 않는다.
  * ACCOUNT_REQUIRED · ACCOUNT_REVISION_CONFLICT는 서버가 계좌를 몰라서 앱이 주문 전에 로컬에서 판단하는 코드다.
  */
 export type OrderFailureCode =
@@ -109,7 +109,6 @@ export type OrderFailureCode =
   | 'ITEM_UNAVAILABLE'
   | 'STORE_CLOSED'
   | 'INVALID_OPTIONS'
-  | 'CART_REVISION_CONFLICT'
   | 'IDEMPOTENCY_CONFLICT'
   | 'ACCOUNT_REQUIRED'
   | 'ACCOUNT_REVISION_CONFLICT'

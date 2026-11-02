@@ -97,6 +97,8 @@ export function createMockOrderService(): OrderService {
 
       // 서버에는 주문이 만들어졌지만 응답이 유실됐다. 같은 키로 조회하면 찾을 수 있다
       if (mockScenario.order === 'unknownCreated' && failOnce('order:created')) throw new ServiceError('REQUEST_TIMEOUT', true);
+      // 같은 키로 이미 만들어진 주문이 있는데 이번 요청의 내용이 다르다. 서버는 오류만 주고, 기존 주문은 키로 조회하면 찾을 수 있다
+      if (mockScenario.order === 'idempotencyConflictOnce' && failOnce('order:idempotency')) throw new ServiceError('IDEMPOTENCY_CONFLICT');
       return order;
     },
 

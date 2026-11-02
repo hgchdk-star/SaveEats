@@ -21,7 +21,11 @@ const CONFIRM_QUEUE_BASE = 'saveeats.order.confirmQueue.v2';
 const ATTEMPT_KEY = () => userScopedKey(ATTEMPT_BASE);
 const CONFIRM_QUEUE_KEY = () => userScopedKey(CONFIRM_QUEUE_BASE);
 
-export type CreateAttempt = { request: CreateOrderRequest; via: 'TOSS' | 'DIRECT' };
+/**
+ * cartRevision: 요청을 만들 때의 로컬 장바구니 revision. 서버로는 보내지 않고, 주문이 만들어졌을 때
+ * 현재 장바구니가 아직 그 revision일 때만 비우는 데 쓴다 (그사이 더 담은 것을 지우지 않기 위해).
+ */
+export type CreateAttempt = { request: CreateOrderRequest; via: 'TOSS' | 'DIRECT'; cartRevision: number };
 
 export type ConfirmQueueEntry = {
   version: 1;
@@ -52,7 +56,7 @@ export async function loadAttempt(): Promise<CreateAttempt | null> {
     if (!raw) return null;
     const parsed = JSON.parse(raw) as CreateAttempt;
     // 요청 v2(destinationRef)가 아닌 예전 형식은 서버가 받지 않으므로 없는 것으로 본다
-    const valid = parsed?.request?.idempotencyKey && typeof parsed.request.destinationRef === 'string' && (parsed.via === 'TOSS' || parsed.via === 'DIRECT');
+    const valid = parsed?.request?.idempotencyKey && typeof parsed.request.destinationRef === 'string' && typeof parsed.cartRevision === 'number' && (parsed.via === 'TOSS' || parsed.via === 'DIRECT');
     return valid ? parsed : null;
   } catch {
     return null;

@@ -51,8 +51,6 @@ export function buildCreateOrderRequest(cart: CartEnvelope, account: MockDestina
   return {
     idempotencyKey: createLocalId(),
     requestVersion: ORDER.requestVersion,
-    cartId: cart.localCartId,
-    expectedCartRevision: cart.localRevision,
     storeId: cart.storeId ?? '',
     destinationRef: account.id,
     items: cart.items.map((item) => ({
@@ -97,7 +95,7 @@ export async function createOrder(via: 'TOSS' | 'DIRECT', cart: CartEnvelope, ac
   }
 
   // 저장은 됐지만 전송 전에 멈춘 시도(기기 저장 실패)는 같은 요청을 다시 쓴다. 한 번도 보내지 않았으니 같은 키여도 안전하다
-  const attempt = state.attempt ? { ...state.attempt, via } : { request: buildCreateOrderRequest(cart, account), via };
+  const attempt = state.attempt ? { ...state.attempt, via } : { request: buildCreateOrderRequest(cart, account), via, cartRevision: cart.localRevision };
   flow().set({ work: 'CREATE_SAVING', attempt, rejectedReason: null });
 
   // 보내기 전에 키와 요청을 기기에 먼저 저장한다. 저장하지 못하면 보내지 않는다
@@ -117,7 +115,7 @@ export async function recheckCreate(): Promise<void> {
   flow().set({ work: 'CREATE_SAVING' });
   try {
     const found = await orderService.getOrderByRequestKey(attempt.request.idempotencyKey);
-    if (found) await onCreated(found, attempt.via, attempt.request);
+    if (found) await onCreated(found, attempt.via, attempt.request, attempt.cartRevision);
     else await send(attempt);
   } catch {
     flow().set({ work: 'CREATE_UNKNOWN' });
@@ -134,9 +132,24 @@ const REJECTIONS: readonly string[] = ['PRICE_CHANGED', 'ITEM_UNAVAILABLE', 'STO
 async function send(attempt: NonNullable<ReturnType<typeof flow>['attempt']>): Promise<void> {
   try {
     const order = await orderService.createOrder(attempt.request);
-    await onCreated(order, attempt.via, attempt.request);
+    await onCreated(order, attempt.via, attempt.request, attempt.cartRevision);
   } catch (error) {
     const code = errorCode(error);
+    if (code === 'IDEMPOTENCY_CONFLICT') {
+      // 같은 키에 다른 내용이 왔다. 서버는 새 주문을 만들지 않았으니 앱도 만들지 않고, 키로 조회해 기존 주문을 보여 준다.
+      // 기존 주문의 목적지 연결은 처음 만들 때 이미 남겼으므로 이번 요청의 목적지로 덮어쓰지 않는다.
+      try {
+        const existing = await orderService.getOrderByRequestKey(attempt.request.idempotencyKey);
+        if (existing) {
+          await onCreated(existing, attempt.via, attempt.request, attempt.cartRevision, { saveDestinationLink: false });
+          return;
+        }
+      } catch {
+        // 조회하지 못했다. 기존 주문이 있는지 모르는 상태로 두고 같은 키로 다시 확인하게 한다
+      }
+      flow().set({ work: 'CREATE_UNKNOWN' });
+      return;
+    }
     if (code && REJECTIONS.includes(code)) {
       // 서버의 명확한 거절: 만들어지지 않았다. 확인한 뒤에는 새 키로 다시 시도할 수 있다
       flow().set({ work: 'CREATE_REJECTED', rejectedReason: code as RejectedReason, attempt: null });
@@ -149,12 +162,17 @@ async function send(attempt: NonNullable<ReturnType<typeof flow>['attempt']>): P
 }
 
 /** 주문(PENDING) 저장에 성공했다 → 장바구니 정리 → 원격 설정 조회 → 이어가기 화면 */
-async function onCreated(order: MockOrder, via: 'TOSS' | 'DIRECT', request: CreateOrderRequest): Promise<void> {
-  const cartRevision = request.expectedCartRevision;
+async function onCreated(
+  order: MockOrder,
+  via: 'TOSS' | 'DIRECT',
+  request: CreateOrderRequest,
+  cartRevision: number,
+  options: { saveDestinationLink: boolean } = { saveDestinationLink: true },
+): Promise<void> {
   flow().set({ order, work: 'PENDING_READY', attempt: null, rejectedReason: null, confirmOperationId: null, cancelOperationId: null });
   // 이 주문을 만들 때 쓴 목적지의 참조를 기기에 남긴다. 나중에 계좌번호 복사·사전입력이 바로 그 목적지인지 확인하는 데 쓴다.
   // 남기지 못해도 주문은 이미 만들어졌다. 그 경우 복사·사전입력은 막히고 목적지 확인 안내가 나온다.
-  await saveOrderDestinationLink(order.orderId, { destinationRef: request.destinationRef }).catch(() => undefined);
+  if (options.saveDestinationLink) await saveOrderDestinationLink(order.orderId, { destinationRef: request.destinationRef }).catch(() => undefined);
   void clearAttempt();
   // 미결정 묶음2 #5(= 묶음1 #10): 주문 생성에 성공했을 때 비운다. 생성에 쓴 버전만 비우고 그사이 더 담은 것은 둔다 (ORD-013)
   if (UNDECIDED.cartClearTiming === 'onPendingCreated') await useCartStore.getState().clearIfRevision(cartRevision);
