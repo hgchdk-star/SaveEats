@@ -23,7 +23,7 @@ export interface MyService {
   /**
    * 본인 닉네임을 저장한다(가입 직후 설정 · 설정에서 변경). 규칙 검증은 앱과 서버가 같게 한다.
    * 실패 코드: NICKNAME_INVALID(규칙 위반) · NETWORK_UNAVAILABLE · 그 밖의 오류. 서버 오류 원문은 화면에 올리지 않는다.
-   * TODO(혜지·지우 합의 전): 서버 저장 명령의 이름과 오류 코드는 아직 없다. 합의되면 실제 호출로 바꾼다.
+   * supabase 모드에서는 set_my_nickname(p_nickname)을 부른다(services/profile/supabase-profile.ts). 규칙 위반은 NICKNAME_INVALID 하나다.
    */
   saveNickname(nickname: string): Promise<void>;
   getLifetimeRecord(): Promise<MockLifetimeRecord>;
