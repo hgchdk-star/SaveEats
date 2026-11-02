@@ -16,6 +16,7 @@ import { ctaNoteFor } from '@/features/cart/cart-block-copy';
 import { cartTotal, checkoutBlock, type CartItem } from '@/features/cart/cart-model';
 import { useCartStore } from '@/features/cart/cart-store';
 import { useAsync } from '@/hooks/use-async';
+import type { MockOrder } from '@/mocks/order/types';
 import { catalogRepository } from '@/services';
 import { resolveImageUrl } from '@/services/image';
 import { useSession } from '@/services/session';
@@ -90,12 +91,18 @@ export function OrderConfirmScreen() {
             flush
             tone="danger"
             title={copy.conflictTitle}
-            description={existing ? copy.conflictDesc(existing.snapshot.storeName, formatWon(existing.approvedTotalAmount)) : copy.conflictDescUnknown}
+            description={existing ? copy.conflictDesc(copy.conflictStatus[existing.status], existing.snapshot.storeName, menuSummary(existing), formatWon(existing.approvedTotalAmount)) : copy.conflictDescUnknown}
             action={{ label: copy.conflictView, onPress: () => (existing ? goOrderDetail(existing.orderId) : goHistory()) }}
           />
           <View style={styles.conflictAction}>
-            <TextButton size="sm" onPress={startNewOrderAfterConflict}>
-              {copy.conflictNewOrder}
+            {/* 새 주문은 장바구니에서 최종 금액·고지를 다시 확인한 뒤 사용자가 직접 주문할 때 새 키로 만든다. 자동으로 다시 보내지 않는다 */}
+            <TextButton
+              size="sm"
+              onPress={() => {
+                startNewOrderAfterConflict();
+                router.dismissTo('/cart');
+              }}>
+              {copy.conflictToCart}
             </TextButton>
           </View>
         </>
@@ -163,6 +170,13 @@ export function OrderConfirmScreen() {
       </ScrollView>
     </Screen>
   );
+}
+
+/** 기존 주문의 메뉴를 한 줄로: 첫 메뉴 이름 + 나머지 개수 */
+function menuSummary(order: MockOrder): string {
+  const [first, ...rest] = order.snapshot.items;
+  if (!first) return '';
+  return rest.length > 0 ? `${first.menuName} 외 ${rest.length}개` : first.menuName;
 }
 
 function toRow(item: CartItem) {
