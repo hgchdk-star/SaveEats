@@ -20,7 +20,7 @@ import type { MockOrder } from '@/mocks/order/types';
 import { catalogRepository } from '@/services';
 import { resolveImageUrl } from '@/services/image';
 import { useSession } from '@/services/session';
-import { colors, spacing, text } from '@/theme';
+import { colors, radius, spacing, text } from '@/theme';
 import { formatWon } from '@/utils/format';
 
 import { goHistory, goOrderDetail } from './flow-routes';
@@ -91,9 +91,18 @@ export function OrderConfirmScreen() {
             flush
             tone="danger"
             title={copy.conflictTitle}
-            description={existing ? copy.conflictDesc(copy.conflictStatus[existing.status], existing.snapshot.storeName, menuSummary(existing), formatWon(existing.approvedTotalAmount)) : copy.conflictDescUnknown}
-            action={{ label: copy.conflictView, onPress: () => (existing ? goOrderDetail(existing.orderId) : goHistory()) }}
+            description={existing ? copy.conflictDesc : copy.conflictLoadFailed}
+            action={{ label: existing ? copy.conflictView : copy.conflictViewHistory, onPress: () => (existing ? goOrderDetail(existing.orderId) : goHistory()) }}
           />
+          {/* 기존 주문의 실제 상태·가게·메뉴·금액은 본문과 따로 보여 준다. 사용자가 직접 확인한다 */}
+          {existing ? (
+            <View style={styles.conflictOrder}>
+              <Text style={styles.conflictStatus}>{copy.conflictStatus[existing.status]}</Text>
+              <Text style={styles.conflictLine}>{existing.snapshot.storeName}</Text>
+              {menuSummary(existing) ? <Text style={styles.conflictLine}>{menuSummary(existing)}</Text> : null}
+              <Text style={styles.conflictLine}>{formatWon(existing.approvedTotalAmount)}</Text>
+            </View>
+          ) : null}
           <View style={styles.conflictAction}>
             {/* 새 주문은 장바구니에서 최종 금액·고지를 다시 확인한 뒤 사용자가 직접 주문할 때 새 키로 만든다. 자동으로 다시 보내지 않는다 */}
             <TextButton
@@ -190,6 +199,22 @@ function toRow(item: CartItem) {
 }
 
 const styles = StyleSheet.create({
+  conflictOrder: {
+    gap: spacing[1],
+    padding: spacing[4],
+    borderWidth: 1,
+    borderColor: colors.line,
+    borderRadius: radius.lg,
+    backgroundColor: colors.surface,
+  },
+  conflictStatus: {
+    ...text.label,
+    color: colors.ink,
+  },
+  conflictLine: {
+    ...text.body2,
+    color: colors.inkSecondary,
+  },
   conflictAction: {
     alignItems: 'flex-start',
     marginTop: -spacing[3],

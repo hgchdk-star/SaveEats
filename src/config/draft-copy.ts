@@ -396,21 +396,21 @@ export const draftCopy = {
     rejectedDesc: '장바구니에서 확인한 뒤 다시 주문해주세요.',
     rejectedAction: '장바구니로',
     /**
-     * 같은 요청 키에 다른 내용이 와서 서버가 거절했을 때(IDEMPOTENCY_CONFLICT).
-     * 제목은 서정 확정(2026-11-02): 기존 주문이 완료·취소 상태일 수도 있어 "진행 중"이라고 쓰지 않는다.
-     * 기존 주문의 실제 상태·가게·메뉴·금액을 보여 주고 사용자가 직접 확인하게 한다. 본문·버튼 문구는 초안이다.
-     * 새 주문은 장바구니로 돌아가 최종 금액·고지를 다시 확인한 뒤 사용자가 명시적으로 주문할 때 새 키로 만든다.
+     * 같은 요청 키에 다른 내용이 와서 서버가 거절했을 때(IDEMPOTENCY_CONFLICT). 문구는 서정 확정(2026-11-02).
+     * 기존 주문이 완료·취소 상태일 수도 있어 "진행 중"이라고 쓰지 않는다. 기존 주문의 상태·가게·메뉴·금액은 본문과 따로 보여 준다.
+     * 새 주문은 장바구니로 돌아가 최종 금액·고지를 다시 확인한 뒤 사용자가 명시적으로 주문할 때 새 키로 만든다. 장바구니는 보존한다.
      */
     conflictTitle: '기존 주문을 확인해 주세요',
-    conflictStatus: { PENDING: '이어가는 중', USER_CONFIRMED: '주문 완료', CANCELLED: '취소됨' } as const,
-    conflictDesc: (statusLabel: string, storeName: string, menuSummary: string, amountLabel: string) =>
-      `${[statusLabel, storeName, menuSummary, amountLabel].filter(Boolean).join(' · ')}. 방금 확인한 주문과 내용이 달라 이어가지 않았어요. 주문을 직접 확인해주세요.`,
-    conflictDescUnknown: '방금 확인한 주문과 내용이 다른 주문이 있어요. 이어가지 않았어요. 내역에서 직접 확인해주세요.',
+    conflictDesc: '방금 확인한 내용과 다른 기존 주문이 있어요. 기존 주문을 확인하거나 장바구니로 돌아가 다시 주문해 주세요.',
+    conflictStatus: { PENDING: '주문 완료가 필요해요', USER_CONFIRMED: '주문 완료', CANCELLED: '취소됨' } as const,
     conflictView: '주문 보기',
+    /** 기존 주문을 조회하지 못했을 때: 본문을 이 문구로 바꾸고 "주문 보기" 대신 "내역 보기"를 보여 준다 */
+    conflictLoadFailed: '기존 주문 정보를 불러오지 못했어요. 내역에서 주문을 확인해 주세요.',
+    conflictViewHistory: '내역 보기',
     conflictToCart: '장바구니로 돌아가기',
     /** 서버가 이 앱 버전의 주문 안내 버전을 받지 않을 때(DISCLOSURE_VERSION_UNSUPPORTED). 초안 */
-    updateRequiredTitle: '앱을 업데이트해 주세요',
-    updateRequiredDesc: '주문 안내가 바뀌어서 이 버전으로는 주문할 수 없어요. 최신 버전으로 업데이트한 뒤 다시 시도해주세요.',
+    updateRequiredTitle: '주문 안내를 확인해 주세요',
+    updateRequiredDesc: '현재 주문 안내 버전으로는 주문할 수 없어요. 앱을 다시 실행한 뒤 다시 시도해 주세요. 문제가 계속되면 최신 버전인지 확인해 주세요.',
     /** 서버가 같은 메뉴·옵션 합산 10 초과를 거절했을 때(QUANTITY_LIMIT_EXCEEDED). 초안 */
     quantityLimitTitle: '같은 메뉴가 너무 많이 담겨 있어요',
     quantityLimitDesc: '같은 메뉴와 옵션은 합쳐서 10개까지 주문할 수 있어요. 장바구니에서 수량을 줄여주세요.',
