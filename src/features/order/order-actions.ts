@@ -124,10 +124,9 @@ export async function recheckCreate(): Promise<void> {
 
 /**
  * 서버의 명확한 거절 코드. 주문이 만들어지지 않았다.
- * TODO(혜지 확인 전): CART_REVISION_CONFLICT(서버가 무엇을 비교하는지)와 IDEMPOTENCY_CONFLICT(같은 키 조회 시 기존 주문을 주는지)는
- * 사용자 안내를 정하지 못해 여기에 넣지 않았다. 지금은 결과를 모르는 오류로 취급되어 '다시 확인'으로 간다.
+ * IDEMPOTENCY_CONFLICT는 여기 넣지 않는다: 거절이 아니라 키로 조회해 기존 주문을 보여 주는 별도 흐름이다(send 참고).
  */
-const REJECTIONS: readonly string[] = ['PRICE_CHANGED', 'ITEM_UNAVAILABLE', 'STORE_CLOSED', 'INVALID_OPTIONS'];
+const REJECTIONS: readonly string[] = ['PRICE_CHANGED', 'ITEM_UNAVAILABLE', 'STORE_CLOSED', 'INVALID_OPTIONS', 'QUANTITY_LIMIT_EXCEEDED'];
 
 async function send(attempt: NonNullable<ReturnType<typeof flow>['attempt']>): Promise<void> {
   try {

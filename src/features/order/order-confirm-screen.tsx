@@ -80,12 +80,13 @@ export function OrderConfirmScreen() {
     }
     if (work === 'CREATE_REJECTED') {
       const accountProblem = rejectedReason === 'ACCOUNT_REQUIRED' || rejectedReason === 'ACCOUNT_REVISION_CONFLICT';
+      const quantityProblem = rejectedReason === 'QUANTITY_LIMIT_EXCEEDED';
       return (
         <Notice
           flush
           tone="danger"
-          title={accountProblem ? copy.accountRequiredTitle : copy.rejectedTitle}
-          description={accountProblem ? copy.accountRequiredDesc : copy.rejectedDesc}
+          title={accountProblem ? copy.accountRequiredTitle : quantityProblem ? copy.quantityLimitTitle : copy.rejectedTitle}
+          description={accountProblem ? copy.accountRequiredDesc : quantityProblem ? copy.quantityLimitDesc : copy.rejectedDesc}
           action={accountProblem ? undefined : { label: copy.rejectedAction, onPress: () => router.dismissTo('/cart') }}
         />
       );
