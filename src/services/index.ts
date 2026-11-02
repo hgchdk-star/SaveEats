@@ -14,6 +14,7 @@ import { createMockOrderService } from '@/mocks/order/mock-order';
 import { createMockTransferService } from '@/mocks/order/mock-transfer';
 import type { AccountService, AuthService, OrderService, TransferService } from '@/mocks/order/types';
 
+import { withLocalDestination, withLocalDestinationHistory } from './order/with-local-destination';
 import { createDestinationResolver } from './transfer/destination-resolver';
 import { createRealTransferService, createTossLauncher } from './transfer/real-transfer-service';
 import { createSupabaseAuthService } from './auth/supabase-auth-service';
@@ -36,7 +37,7 @@ export const accountService: AccountService = createVaultAccountService(accountV
 /** 로그인 직후 이 기기에 저장된 계좌를 세션에 올린다 */
 export const loadDeviceAccountIntoSession = (): Promise<void> => loadAccountFromVault(accountVault);
 // TODO(혜지·지우 합의 전): 주문 생성·조회·완료 확인 API와 오류 응답 계약이 없어 orderService는 아직 Mock이다. 계약이 확정되면 여기서 교체한다.
-export const orderService: OrderService = createMockOrderService();
+export const orderService: OrderService = withLocalDestination(createMockOrderService());
 // 계좌 원문은 데이터 소스와 상관없이 기기 보안 저장소에서 꺼낸다. 토스 실행·원격 설정은 supabase 모드에서만 실제 구현(현재 fail-closed)이다.
 const resolveDestination = createDestinationResolver(accountVault);
 const transferDeps = { resolveDestinationAccountNumber: resolveDestination, getOrder: (orderId: string) => orderService.getOrderStatus(orderId) };
@@ -59,7 +60,7 @@ export const transferService: TransferService =
             }
           : {}),
       };
-export const historyService: HistoryService = createMockHistoryService();
+export const historyService: HistoryService = withLocalDestinationHistory(createMockHistoryService());
 export const reviewService: ReviewService = createMockReviewService();
 export const myService: MyService = createMockMyService();
 // 검색: 서버 모드에서는 가게 검색만 서버(search_stores)다. 인기 검색어는 서버 함수가 아직 없고 Mock 목록은 서버 데이터에서

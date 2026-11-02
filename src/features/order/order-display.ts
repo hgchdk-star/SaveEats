@@ -1,4 +1,5 @@
 import type { MockOrder } from '@/mocks/order/types';
+import { draftCopy } from '@/config/draft-copy';
 import { formatWon } from '@/utils/format';
 
 /**
@@ -12,8 +13,9 @@ export function displayOf(order: MockOrder) {
     menuLine: snapshot.items.map((item) => `${item.menuName}${item.quantity > 1 ? ` ×${item.quantity}` : ''}`).join(' · '),
     total: order.approvedTotalAmount,
     totalLabel: formatWon(order.approvedTotalAmount),
-    bankName: snapshot.destination.bankName,
-    last4: snapshot.destination.last4,
-    accountLabel: `${snapshot.destination.bankName} •••• ${snapshot.destination.last4}`,
+    // 목적지는 이 기기에 저장한 값이다. 없으면 현재 계좌로 대신하지 않고 안내 문구를 보여준다
+    bankName: snapshot.destination?.bankName,
+    last4: snapshot.destination?.last4,
+    accountLabel: snapshot.destination ? `${snapshot.destination.bankName} •••• ${snapshot.destination.last4}` : draftCopy.transfer.rawUnavailable,
   };
 }

@@ -28,11 +28,14 @@ export function createTossLauncher({ resolveDestinationAccountNumber, getOrder }
     // 서버 주문의 금액·당시 은행을 쓰고, 계좌 원문은 목적지 확인을 통과한 것만 쓴다. 원문은 이 함수 안에서만 머문다
     const order = await getOrder(orderId);
     // 검증되지 않은 은행·플랫폼은 여기서도 막는다 (화면은 이미 직접 이어가기로 보낸다)
-    if (!isPrefillVerified(order.snapshot.destination.bankName)) throw new ServiceError('LAUNCH_FAILED');
+    const bankName = order.snapshot.destination?.bankName;
+    // 은행명을 이 기기에서 찾지 못하면 목적지를 확인할 수 없다. 사전입력하지 않는다
+    if (!bankName) throw new ServiceError('DESTINATION_UNAVAILABLE');
+    if (!isPrefillVerified(bankName)) throw new ServiceError('LAUNCH_FAILED');
     const accountNumber = await resolveDestinationAccountNumber(orderId);
     const result = await launchToss({
       mode: 'PREFILL',
-      input: { amount: order.approvedTotalAmount, bankName: order.snapshot.destination.bankName, accountNumber },
+      input: { amount: order.approvedTotalAmount, bankName, accountNumber },
     });
     if (result.kind !== 'DISPATCHED') throw new ServiceError('LAUNCH_FAILED');
   };
