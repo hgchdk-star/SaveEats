@@ -41,6 +41,41 @@ export const draftCopy = {
     sessionExpired: '로그인이 풀렸어요. 다시 로그인해주세요.',
   },
 
+  /**
+   * 닉네임 · 프로필 설정. 제목 · 가입 직후 실패 안내 · 버튼 · 처리 중 문구는 서정 확정(2026-11-02, 디자인 v27).
+   * 라벨 · 도움말 · 오류 문구는 v27 원문을 아직 옮기지 못해 초안이다(서정 확인 필요).
+   */
+  nickname: {
+    label: '닉네임',
+    placeholder: '닉네임',
+    help: `한글·영문·숫자 ${LIMITS.nicknameMinLength}~${LIMITS.nicknameMaxLength}자로 입력해주세요`,
+    errorEmpty: '닉네임을 입력해주세요',
+    errorLength: `${LIMITS.nicknameMinLength}~${LIMITS.nicknameMaxLength}자로 입력해주세요`,
+    errorChars: '한글·영문·숫자만 쓸 수 있어요. 공백·특수문자·이모지·자음/모음만은 안 돼요',
+    /** 서버가 규칙 위반으로 거절했을 때(서버 오류 원문은 보여주지 않는다) */
+    errorServerRejected: '이 닉네임은 사용할 수 없어요. 다른 닉네임을 입력해주세요',
+    /** 설정 줄 */
+    settingsRow: '닉네임',
+    settingsRowSet: '설정하기',
+    /** 계정은 있는데 닉네임이 없는 기존 계정의 표시 이름 */
+    fallbackName: 'SaveEats 이용자',
+    /** 프로필 조회에 실패했을 때. 닉네임이 없는 것과 구분하고, 이메일이나 실명으로 대신하지 않는다 */
+    loadFailed: '프로필을 불러오지 못했어요',
+    loadRetry: '다시 시도',
+    /** 프로필 설정 화면 */
+    setupTitle: '프로필 설정을 완료해 주세요',
+    /** 가입 직후 저장 실패일 때만 쓴다. 기존 계정에는 쓰지 않는다 */
+    setupFailedAfterSignup: '계정은 만들어졌어요. 닉네임을 저장하지 못했어요. 다시 시도해 주세요.',
+    setupFailedNetwork: '닉네임을 저장하지 못했어요. 인터넷 연결을 확인하고 다시 시도해 주세요.',
+    setupFailedUnexpected: '닉네임을 저장하지 못했어요. 잠시 후 다시 시도해 주세요.',
+    setupRetry: '다시 시도',
+    setupSaving: '저장하는 중…',
+    /** 기존 계정이 설정에서 처음 정하거나 바꿀 때 (초안) */
+    editTitle: '닉네임 설정',
+    editCta: '저장',
+    toastSaved: '닉네임을 저장했어요',
+  },
+
   /** 검색 (㉑ ㉒). 검색창 문구는 확정 문구라 confirmed-copy.ts */
   search: {
     recentTitle: '최근 검색어',

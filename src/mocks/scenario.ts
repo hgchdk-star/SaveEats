@@ -94,6 +94,8 @@ export type MockScenario = {
   myRecord: 'ok' | 'newUser' | 'failOnce';
   /** 알림 설정: loadFailOnce는 첫 조회 실패 / saveFailOnce는 첫 저장 실패 → 스위치를 되돌리고 토스트 */
   notif: 'ok' | 'loadFailOnce' | 'saveFailOnce';
+  /** 프로필(닉네임): noNickname은 조회는 되지만 닉네임이 없는 기존 계정 / loadFailOnce는 앞의 조회 두 번 실패(마이 · 설정) / saveFailOnce는 첫 저장 실패 */
+  profile: 'ok' | 'noNickname' | 'loadFailOnce' | 'saveFailOnce';
   /** 앱 실행 절차: firstRun은 매번 처음 실행처럼 온보딩부터 / readFails는 완료 여부를 읽지 못함(처음으로 본다) */
   launch: 'normal' | 'firstRun' | 'readFails';
   /** 최근 검색어: seeded는 기기에 저장된 것이 없을 때 예시 10개를 보여준다 */
@@ -133,6 +135,7 @@ const BASE: MockScenario = {
   favoriteSave: 'ok',
   myRecord: 'ok',
   notif: 'ok',
+  profile: 'ok',
   launch: 'normal',
   recentSearches: 'none',
   delayMs: 400,
@@ -214,6 +217,9 @@ const SCENARIOS = {
   myRecordFails: { ...BASE, auth: 'member', myRecord: 'failOnce' },
   notifLoadFails: { ...BASE, auth: 'member', notif: 'loadFailOnce' },
   notifSaveFails: { ...BASE, auth: 'member', notif: 'saveFailOnce' },
+  profileNoNickname: { ...BASE, auth: 'member', profile: 'noNickname' },
+  profileLoadFails: { ...BASE, auth: 'member', profile: 'loadFailOnce' },
+  profileSaveFails: { ...BASE, profile: 'saveFailOnce' },
   firstRun: { ...BASE, launch: 'firstRun' },
   launchReadFails: { ...BASE, launch: 'readFails' },
 } satisfies Record<string, MockScenario>;

@@ -9,8 +9,7 @@ export function maskEmail(email: string): string {
   return `${Array.from(email.slice(0, at)).slice(0, 2).join('')}****${email.slice(at)}`;
 }
 
-/** 프로필 동그라미에 넣는 한 글자. 이름이 없으면 이메일 첫 글자 */
-export function avatarInitial(maskedName: string | null, maskedEmail: string): string {
-  const source = maskedName || maskedEmail;
-  return Array.from(source)[0]?.toUpperCase() ?? '';
+/** 프로필 동그라미에 넣는 한 글자 */
+export function avatarInitial(name: string): string {
+  return Array.from(name)[0]?.toUpperCase() ?? '';
 }
