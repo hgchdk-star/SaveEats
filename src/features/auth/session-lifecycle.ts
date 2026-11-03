@@ -7,7 +7,8 @@ import { useOrderFlowStore } from '@/features/order/order-flow-store';
 import { recoverOnStart } from '@/features/order/recovery';
 import { useReviewStore } from '@/features/review/review-store';
 import { showToast } from '@/features/toast/toast-store';
-import { authService, loadDeviceAccountIntoSession } from '@/services';
+import { accountVault, authService, loadDeviceAccountIntoSession } from '@/services';
+import { getSession } from '@/services/session';
 
 import { useLoginIntentStore } from './login-intent-store';
 
@@ -31,15 +32,25 @@ export function clearPersonalData(): void {
 
 /** 로그아웃: 확인 시트 없이 바로 한다 (미결정 묶음4 #3). 토큰 정리에 실패해도 이 기기의 세션은 닫는다 */
 export async function logout(): Promise<void> {
+  const uid = getSession().userId;
   try {
     await authService.signOut();
   } catch {
     // 서버 쪽 정리가 실패해도 기기 화면에서는 로그아웃 처리한다. 이미 발급된 토큰의 서버 유효기간과는 별개다
   }
+  // 로그아웃하면 이 사용자의 계좌 원문을 기기 보안 저장소에서 지운다. 지우지 못했다면 지운 것처럼 알리지 않는다
+  let accountCleared = true;
+  if (uid) {
+    try {
+      await accountVault.delete(uid);
+    } catch {
+      accountCleared = false;
+    }
+  }
   clearPersonalData();
   router.dismissAll();
   router.navigate('/');
-  showToast({ message: draftCopy.settings.toastLoggedOut });
+  showToast(accountCleared ? { message: draftCopy.settings.toastLoggedOut } : { message: draftCopy.settings.toastLoggedOutAccountKept, tone: 'error' });
 }
 
 /**

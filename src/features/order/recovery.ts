@@ -2,6 +2,7 @@ import { useCartStore } from '@/features/cart/cart-store';
 import { useHistoryStore } from '@/features/history/history-store';
 import { orderService } from '@/services';
 import { getSession } from '@/services/session';
+import { saveOrderDestinationLink } from '@/services/transfer/order-destination-link';
 import { errorCode } from '@/services/service-error';
 
 import { clearAttempt, clearConfirmQueue, loadAttempt, loadConfirmQueue, saveConfirmQueue } from './order-persistence';
@@ -56,6 +57,8 @@ export async function recoverOnStart(): Promise<void> {
       const found = await orderService.getOrderByRequestKey(attempt.request.idempotencyKey);
       if (found) {
         // 주문은 만들어져 있었다. 시도 기록을 지우고, 만들 때 쓴 장바구니 버전만 비운다
+        // 만들 때 쓴 목적지 참조도 남긴다(응답을 못 받아 화면 흐름에서 못 남겼을 수 있다). 못 남기면 복사·사전입력이 막힐 뿐이다
+        await saveOrderDestinationLink(found.orderId, { destinationRef: attempt.request.accountId, revision: attempt.request.expectedAccountRevision }).catch(() => undefined);
         await clearAttempt();
         await useCartStore.getState().clearIfRevision(attempt.request.expectedCartRevision);
       } else {
