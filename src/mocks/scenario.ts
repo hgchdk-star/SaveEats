@@ -41,7 +41,7 @@ export type MockScenario = {
    * unknownCreated: 응답을 못 받았지만 서버에는 주문이 만들어져 있다 → 같은 키로 조회하면 찾는다
    * priceChanged / itemUnavailable: 서버가 명확히 거절
    */
-  order: 'ok' | 'localSaveFailOnce' | 'unknownLost' | 'unknownCreated' | 'priceChangedOnce' | 'itemUnavailableOnce' | 'idempotencyConflictOnce' | 'disclosureUnsupportedOnce';
+  order: 'ok' | 'localSaveFailOnce' | 'unknownLost' | 'unknownCreated' | 'priceChangedOnce' | 'itemUnavailableOnce' | 'idempotencyConflictOnce' | 'disclosureUnsupportedOnce' | 'invalidInputOnce';
   /** 송금 이어가기 (TRF-005 · 006) */
   transfer: 'tossOn' | 'killSwitch' | 'configTimeout' | 'tossLaunchFailOnce';
   /** 외부 앱에서 돌아온 뒤 서버 상태 조회 (TRF-008) */
@@ -173,6 +173,7 @@ const SCENARIOS = {
   orderItemUnavailable: { ...BASE, auth: 'member', order: 'itemUnavailableOnce' },
   orderIdempotencyConflict: { ...BASE, auth: 'member', order: 'idempotencyConflictOnce' },
   orderDisclosureUnsupported: { ...BASE, auth: 'member', order: 'disclosureUnsupportedOnce' },
+  orderInvalidInput: { ...BASE, auth: 'member', order: 'invalidInputOnce' },
   killSwitch: { ...BASE, auth: 'member', transfer: 'killSwitch' },
   configTimeout: { ...BASE, auth: 'member', transfer: 'configTimeout' },
   tossLaunchFails: { ...BASE, auth: 'member', transfer: 'tossLaunchFailOnce' },

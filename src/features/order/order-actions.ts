@@ -163,6 +163,24 @@ async function send(attempt: NonNullable<ReturnType<typeof flow>['attempt']>): P
       flow().set({ work: 'CREATE_CONFLICT', attempt: null, conflictOrder: existing });
       return;
     }
+    if (code === 'INVALID_INPUT') {
+      // 서버가 요청을 받아들이지 않았다(주문이 만들어지지 않았다는 확정 거절). 다만 같은 키로 이미 만들어진 주문이 있을 수 있어서
+      // 장바구니로 돌려보내기 전에 키로 한 번 조회한다 (혜지 확인 2026-11-03). 있으면 그 주문을 이어가고, 없으면 거절로 본다.
+      // 조회하지 못하면 만들어졌는지 모르는 상태라 같은 키를 유지한다. 장바구니는 어느 쪽에서도 비우지 않는다(주문이 확인될 때만 비운다).
+      try {
+        const found = await orderService.getOrderByRequestKey(attempt.request.idempotencyKey);
+        if (found) {
+          await onCreated(found, attempt.via, attempt.request, attempt.cartRevision);
+          return;
+        }
+      } catch {
+        flow().set({ work: 'CREATE_UNKNOWN' });
+        return;
+      }
+      flow().set({ work: 'CREATE_REJECTED', rejectedReason: 'INVALID_INPUT', attempt: null });
+      void clearAttempt();
+      return;
+    }
     if (code && REJECTIONS.includes(code)) {
       // 서버의 명확한 거절: 만들어지지 않았다. 확인한 뒤에는 새 키로 다시 시도할 수 있다
       flow().set({ work: 'CREATE_REJECTED', rejectedReason: code as RejectedReason, attempt: null });

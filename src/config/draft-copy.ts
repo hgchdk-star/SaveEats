@@ -414,6 +414,9 @@ export const draftCopy = {
     /** 서버가 같은 메뉴·옵션 합산 10 초과를 거절했을 때(QUANTITY_LIMIT_EXCEEDED). 초안 */
     quantityLimitTitle: '같은 메뉴가 너무 많이 담겨 있어요',
     quantityLimitDesc: '같은 메뉴와 옵션은 합쳐서 10개까지 주문할 수 있어요. 장바구니에서 수량을 줄여주세요.',
+    /** 서버가 요청을 받아들이지 않았을 때(INVALID_INPUT). 정상적으로 담은 장바구니에서는 만나기 어렵다. 초안 */
+    invalidInputTitle: '장바구니를 확인해주세요',
+    invalidInputDesc: '주문을 만들지 못했어요. 담긴 메뉴를 확인한 뒤 다시 주문해주세요.',
     accountRequiredTitle: '계좌를 확인해주세요',
     accountRequiredDesc: '등록된 계좌가 바뀌었거나 없어요. 계좌를 확인한 뒤 다시 주문해주세요.',
   },
