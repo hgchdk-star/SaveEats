@@ -13,6 +13,11 @@ export function getSession(): Session {
   return { isMember, userId, email, destinationAccount };
 }
 
+/** 이 기기의 보안 저장소(AccountVault)에서 읽거나 방금 저장한 계좌를 세션에 올린다. null이면 비운다 */
+export function setSessionDestinationAccount(account: MockDestinationAccount | null): void {
+  useMockSession.setState({ destinationAccount: account });
+}
+
 /** 화면 안에서 쓴다. 로그인·계좌가 바뀌면 다시 그려진다 */
 export function useSession(): Session {
   const isMember = useMockSession((s) => s.isMember);
