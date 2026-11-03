@@ -510,6 +510,8 @@ export const draftCopy = {
     noteStoreClosed: '지금은 준비 중이에요',
     /** 디자인 시안 문구. 10/1 결정 문서의 문구는 "한 메뉴는 최대 10개까지 담을 수 있어요." */
     toastOverLimit: '같은 메뉴는 최대 10개까지 담을 수 있어요',
+    /** 서로 다른 메뉴·옵션 조합이 최대 종류 수를 넘을 때. 서정 확정 문구(2026-11-03) */
+    toastOverKinds: (max: number) => `메뉴는 옵션 조합별로 최대 ${max}종까지 담을 수 있어요.`,
     toastAdded: '장바구니에 담았어요',
     toastAddedAction: '보기',
   },

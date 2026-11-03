@@ -108,14 +108,15 @@ export type AddToCartInput = {
 
 export type AddToCartResult =
   | { ok: true; cart: CartEnvelope }
-  /** OTHER_STORE: 다른 가게 메뉴가 담겨 있다. OVER_LIMIT: 같은 조합의 합계가 최대 수량을 넘는다 */
-  | { ok: false; reason: 'OTHER_STORE' | 'OVER_LIMIT' };
+  /** OTHER_STORE: 다른 가게 메뉴가 담겨 있다. OVER_LIMIT: 같은 조합의 합계가 최대 수량을 넘는다. OVER_KINDS: 서로 다른 조합이 최대 종류 수를 넘는다 */
+  | { ok: false; reason: 'OTHER_STORE' | 'OVER_LIMIT' | 'OVER_KINDS' };
 
 /**
  * 담기 (CART-004).
  * - 같은 가게: 같은 조합이면 수량을 더하고, 아니면 새 항목
  * - 다른 가게: replaceOtherStore가 없으면 거절. 있으면 기존 전체 제거 + 새 항목 추가를 한 번의 변경으로
- * - 같은 조합 합계가 최대를 넘으면 거절한다. 자동으로 줄여 담지 않는다
+ * - 같은 조합(옵션 선택 순서가 달라도 같은 조합)은 한 줄로 합치고, 합계가 최대를 넘으면 거절한다. 자동으로 줄여 담지 않는다
+ * - 합친 뒤 서로 다른 조합이 LIMITS.cartLineKindsMax(30종)를 넘게 되는 새 항목은 거절한다
  */
 export function addToCart(cart: CartEnvelope, input: AddToCartInput, options?: { replaceOtherStore?: boolean }): AddToCartResult {
   const otherStore = cart.items.length > 0 && cart.storeId !== input.storeId;
@@ -127,6 +128,7 @@ export function addToCart(cart: CartEnvelope, input: AddToCartInput, options?: {
   const same = base.find((item) => configurationKey(item.menuId, item.optionIds) === key);
 
   if (same && same.quantity + input.quantity > LIMITS.quantityMax) return { ok: false, reason: 'OVER_LIMIT' };
+  if (!same && base.length >= LIMITS.cartLineKindsMax) return { ok: false, reason: 'OVER_KINDS' };
 
   const items = same
     ? base.map((item) => (item === same ? { ...item, quantity: item.quantity + input.quantity } : item))

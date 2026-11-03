@@ -218,10 +218,12 @@ export interface ListMyFavoritesRpcArgs {
   p_page_size?: number;
 }
 
-/** 로그인 사용자 본인 프로필 최소 레코드. name은 수집 정책 미결정(OPEN-DB-004)이라 null일 수 있다 */
+/**
+ * 로그인 사용자 본인 프로필 최소 레코드. 실명(name)은 신규 수집·저장·표시하지 않기로 확정(서정, 2026-11)해 앱 DTO에서 뺐다.
+ * 서버 ensure_my_profile이 당분간 name을 함께 줄 수 있지만 앱은 읽지 않는다. 컬럼 삭제는 서버 migration으로 따로 한다.
+ */
 export interface MyProfileDto {
   id: Uuid;
-  name: string | null;
 }
 
 export interface CatalogRpcResults {

@@ -4,6 +4,8 @@ export const LIMITS = {
   quantityMin: 1,
   /** 기획서 16 · FR-MENU-003 · FR-CART-012 */
   quantityMax: 10,
+  /** 한 장바구니에 담을 수 있는 서로 다른 메뉴·옵션 조합의 수(수량 합계가 아니라 종류 수). 서정 확정 2026-11-03, 서버(create_order)도 같은 기준으로 검증한다 */
+  cartLineKindsMax: 30,
   /** 기획서 11.3 · FR-HOME-009 */
   recentViewedMax: 10,
   toastDurationMs: 3000,
