@@ -60,7 +60,7 @@ export function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState<FormError>({});
-  const [failure, setFailure] = useState<'credentials' | 'network' | null>(null);
+  const [failure, setFailure] = useState<'credentials' | 'network' | 'duplicate' | 'unexpected' | null>(null);
   const [busy, setBusy] = useState(false);
 
   const signup = mode === 'signup';
@@ -85,7 +85,10 @@ export function LoginScreen() {
     } catch (error) {
       setBusy(false);
       // 인증 오류와 네트워크 오류를 다른 문구로 구분한다 (AUTH-002)
-      setFailure(errorCode(error) === 'NETWORK_UNAVAILABLE' ? 'network' : 'credentials');
+      const code = errorCode(error);
+      setFailure(
+        code === 'NETWORK_UNAVAILABLE' ? 'network' : code === 'EMAIL_ALREADY_REGISTERED' ? 'duplicate' : code === 'INVALID_CREDENTIALS' ? 'credentials' : 'unexpected',
+      );
       return;
     }
     setBusy(false);
@@ -126,6 +129,10 @@ export function LoginScreen() {
           <Notice flush tone="danger" title={copy.failedTitle} description={copy.failedDesc} />
         ) : failure === 'network' ? (
           <Notice flush tone="danger" title={copy.networkFailedTitle} description={copy.failedDesc} />
+        ) : failure === 'duplicate' ? (
+          <Notice flush tone="danger" title={copy.duplicateEmailTitle} description={copy.duplicateEmailDesc} />
+        ) : failure === 'unexpected' ? (
+          <Notice flush tone="danger" title={copy.unexpectedFailedTitle} description={copy.failedDesc} />
         ) : null}
 
         <View style={styles.fields}>

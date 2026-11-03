@@ -14,12 +14,16 @@ import type { Uuid, Won } from '@/contracts/common';
 export type SignInInput = { email: string; password: string };
 
 /** 로그인 실패는 인증 오류와 네트워크 오류를 구분한다 (AUTH-002) */
-export type AuthFailureCode = 'INVALID_CREDENTIALS' | 'NETWORK_UNAVAILABLE';
+export type AuthFailureCode = 'INVALID_CREDENTIALS' | 'NETWORK_UNAVAILABLE' | 'EMAIL_ALREADY_REGISTERED' | 'SESSION_NOT_CREATED' | 'AUTH_UNAVAILABLE' | 'AUTH_FAILED';
 
 export interface AuthService {
   signIn(input: SignInInput): Promise<{ userId: string }>;
   signUp(input: SignInInput): Promise<{ userId: string }>;
   signOut(): Promise<void>;
+  /** 앱을 켤 때 저장된 세션을 복원한다. 세션이 없거나 복원하지 못하면 Guest로 둔다(던지지 않는다) */
+  restore(): Promise<void>;
+  /** 사용자가 로그아웃하지 않았는데 세션을 잃었을 때(토큰 만료·무효) 알린다. 해제 함수를 돌려준다 */
+  onForcedSignOut(listener: () => void): () => void;
 }
 
 /* ---------- 계좌 (DB-003) ---------- */

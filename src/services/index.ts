@@ -16,6 +16,7 @@ import type { AccountService, AuthService, OrderService, TransferService } from 
 
 import { createDestinationResolver } from './transfer/destination-resolver';
 import { createRealTransferService, createTossLauncher } from './transfer/real-transfer-service';
+import { createSupabaseAuthService } from './auth/supabase-auth-service';
 import { createVaultAccountService, loadAccountFromVault } from './account/vault-account-service';
 import type { CatalogRepository } from './catalog/catalog-repository';
 import { createSupabaseCatalogRepository, searchStoresFromServer } from './supabase/supabase-catalog-repository';
@@ -27,7 +28,8 @@ import { createSupabaseCatalogRepository, searchStoresFromServer } from './supab
  */
 const mockCatalog = createMockCatalogRepository();
 export const catalogRepository: CatalogRepository = dataSource === 'supabase' ? createSupabaseCatalogRepository(mockCatalog) : mockCatalog;
-export const authService: AuthService = createMockAuthService();
+// 로그인: supabase 모드에서는 실제 Supabase Auth(이메일+비밀번호), mock 모드에서는 Mock. 주문·내역 등 나머지는 각자의 데이터 소스를 따른다.
+export const authService: AuthService = dataSource === 'supabase' ? createSupabaseAuthService() : createMockAuthService();
 // 계좌는 서버에 저장하지 않는다. 데이터 소스와 상관없이 항상 이 기기의 보안 저장소(AccountVault)를 쓴다.
 export const accountVault: AccountVault = createAccountVault(deviceSecureStore);
 export const accountService: AccountService = createVaultAccountService(accountVault);

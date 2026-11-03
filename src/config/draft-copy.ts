@@ -34,6 +34,11 @@ export const draftCopy = {
     switchToLogin: '이미 계정이 있어요 · 로그인',
     toastLoggedIn: '로그인했어요',
     toastSignedUp: '가입했어요',
+    /** 아래 셋은 초안(서정 확정 전): 이미 가입된 이메일 · 예상하지 못한 오류 · 사용자가 로그아웃하지 않았는데 세션을 잃었을 때 */
+    duplicateEmailTitle: '이미 가입된 이메일이에요',
+    duplicateEmailDesc: '로그인으로 이어서 이용해주세요.',
+    unexpectedFailedTitle: '지금은 처리하지 못했어요. 잠시 후 다시 시도해주세요.',
+    sessionExpired: '로그인이 풀렸어요. 다시 로그인해주세요.',
   },
 
   /** 검색 (㉑ ㉒). 검색창 문구는 확정 문구라 confirmed-copy.ts */
