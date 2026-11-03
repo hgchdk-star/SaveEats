@@ -45,6 +45,7 @@ export function MyScreen() {
   // 마이 탭으로 돌아올 때 기록을 다시 맞춘다(처음 한 번은 제외)
   const first = useRef(true);
   const reloadLifetime = lifetime.reload;
+  const reloadProfile = profile.reload;
   useFocusEffect(
     useCallback(() => {
       if (first.current) {
@@ -52,8 +53,9 @@ export function MyScreen() {
         return;
       }
       reloadLifetime();
+      reloadProfile(); // 설정에서 닉네임을 바꾸고 돌아왔을 수 있다
       if (getSession().isMember) void useHistoryStore.getState().loadSummary();
-    }, [reloadLifetime]),
+    }, [reloadLifetime, reloadProfile]),
   );
 
   const top = <TopNavigation title={copy.title} divider />;
@@ -80,7 +82,11 @@ export function MyScreen() {
     <Screen top={top}>
       <ScrollView contentContainerStyle={styles.content}>
         {profile.status === 'ok' ? (
-          <ProfileHeader maskedName={profile.data.maskedName} maskedEmail={profile.data.maskedEmail} initial={avatarInitial(profile.data.maskedName, profile.data.maskedEmail)} />
+          <ProfileHeader
+            name={profile.data.nickname ?? draftCopy.nickname.fallbackName}
+            maskedEmail={profile.data.maskedEmail}
+            initial={avatarInitial(profile.data.nickname ?? draftCopy.nickname.fallbackName)}
+          />
         ) : profile.status === 'loading' ? (
           <View accessibilityLabel="불러오는 중" style={styles.profileSkeleton}>
             <Skeleton width={56} height={56} radius={28} />
@@ -90,7 +96,8 @@ export function MyScreen() {
             </View>
           </View>
         ) : (
-          <SectionRetry message={draftCopy.my.lifetimeError} onRetry={profile.reload} />
+          // 닉네임이 없는 것과 구분한다. 이메일·실명으로 대신 채우지 않는다
+          <SectionRetry message={draftCopy.nickname.loadFailed} retryLabel={draftCopy.nickname.loadRetry} onRetry={profile.reload} />
         )}
 
         <Section title={copy.accountTitle}>
@@ -154,7 +161,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
-function SectionRetry({ message, onRetry }: { message: string; onRetry: () => void }) {
+function SectionRetry({ message, retryLabel = copy.lifetimeRetry, onRetry }: { message: string; retryLabel?: string; onRetry: () => void }) {
   return (
     <View accessibilityRole="alert" style={[styles.life, styles.lifeRow]}>
       <View style={styles.lifeError}>
@@ -162,7 +169,7 @@ function SectionRetry({ message, onRetry }: { message: string; onRetry: () => vo
         <Text style={styles.lifeErrorText}>{message}</Text>
       </View>
       <TextButton size="sm" onPress={onRetry}>
-        {copy.lifetimeRetry}
+        {retryLabel}
       </TextButton>
     </View>
   );

@@ -12,6 +12,7 @@ import { accountVault, authService, loadDeviceAccountIntoSession } from '@/servi
 import { getSession } from '@/services/session';
 
 import { useLoginIntentStore } from './login-intent-store';
+import { loadProfileSetupPending } from './profile-setup-pending';
 
 /**
  * 로그인·로그아웃에 따른 개인 데이터 정리 (AUTH-004).
@@ -82,6 +83,18 @@ export async function startAuth(): Promise<void> {
   // 먼저 열었다가 늦게 복원된 경우: 로그인 직후와 같은 후속 처리를 한다
   if (timedOut) void restored.then(() => (getSession().isMember ? afterLogin() : undefined));
   else if (getSession().isMember) void loadDeviceAccountIntoSession();
+  // 가입만 되고 닉네임 저장이 끝나지 않은 계정이면 같은 계정으로 프로필 설정을 이어간다 (로그인 화면을 거치지 않는 경로)
+  void restored.then(() => openProfileSetupIfPending());
+}
+
+/** 앱을 다시 열었을 때: 닉네임 저장이 끝나지 않은 계정이면 프로필 설정 화면을 연다. 기존 계정의 닉네임 없음은 여기서 막지 않는다 */
+async function openProfileSetupIfPending(): Promise<void> {
+  if (!getSession().isMember || !(await loadProfileSetupPending())) return;
+  try {
+    router.push({ pathname: '/profile-setup', params: { mode: 'recover' } });
+  } catch {
+    // 화면을 열지 못하면 설정의 "설정하기"로 같은 화면에 들어올 수 있다
+  }
 }
 
 /**
