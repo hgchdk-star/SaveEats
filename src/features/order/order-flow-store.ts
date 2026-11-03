@@ -18,6 +18,8 @@ export type OrderWork =
   | 'LOCAL_PERSISTENCE_FAILED'
   /** 서버가 가격·품절 등으로 명확히 거절했다 */
   | 'CREATE_REJECTED'
+  /** 같은 키에 다른 내용이라 서버가 거절했다(IDEMPOTENCY_CONFLICT). 새 주문은 만들어지지 않았고, 기존 주문은 이어가지 않고 따로 보여 준다 */
+  | 'CREATE_CONFLICT'
   | 'PENDING_READY'
   | 'CONFIRM_SYNCING'
   /** 완료 확인을 서버에 저장하지 못했다. 송금 실패가 아니다 */
@@ -27,7 +29,7 @@ export type OrderWork =
   | 'CANCEL_UNKNOWN';
 
 /** 주문 생성이 만들어지지 않았다고 확정된 거절. 장바구니 문제(앞의 넷)와 계좌 문제(ACCOUNT_*, 앱이 로컬에서 판단)로 나뉜다 */
-export type RejectedReason = 'PRICE_CHANGED' | 'ITEM_UNAVAILABLE' | 'STORE_CLOSED' | 'INVALID_OPTIONS' | 'QUANTITY_LIMIT_EXCEEDED' | 'ACCOUNT_REQUIRED' | 'ACCOUNT_REVISION_CONFLICT';
+export type RejectedReason = 'PRICE_CHANGED' | 'ITEM_UNAVAILABLE' | 'STORE_CLOSED' | 'INVALID_OPTIONS' | 'QUANTITY_LIMIT_EXCEEDED' | 'DISCLOSURE_VERSION_UNSUPPORTED' | 'ACCOUNT_REQUIRED' | 'ACCOUNT_REVISION_CONFLICT';
 
 export type TransferState = {
   /** 이어가기 방식 */
@@ -49,6 +51,8 @@ type OrderFlowState = {
   attempt: CreateAttempt | null;
   rejectedReason: RejectedReason | null;
   order: MockOrder | null;
+  /** CREATE_CONFLICT일 때 키로 조회한 기존 주문. 조회하지 못했으면 null. 이 주문은 order에 넣지 않는다(이어가기 대상이 아니다) */
+  conflictOrder: MockOrder | null;
   confirmOperationId: string | null;
   cancelOperationId: string | null;
   transfer: TransferState;
@@ -72,6 +76,7 @@ export const useOrderFlowStore = create<OrderFlowState>((set) => ({
   attempt: null,
   rejectedReason: null,
   order: null,
+  conflictOrder: null,
   confirmOperationId: null,
   cancelOperationId: null,
   transfer: INITIAL_TRANSFER,
@@ -83,6 +88,7 @@ export const useOrderFlowStore = create<OrderFlowState>((set) => ({
       attempt: null,
       rejectedReason: null,
       order: null,
+      conflictOrder: null,
       confirmOperationId: null,
       cancelOperationId: null,
       transfer: INITIAL_TRANSFER,

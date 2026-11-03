@@ -2,6 +2,7 @@ import { router, useFocusEffect } from 'expo-router';
 import { useCallback } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { TextButton } from '@/components/ui/button';
 import { AccountDestinationCard } from '@/components/ui/account-destination-card';
 import { OrderCtaBar } from '@/components/ui/cta-bar';
 import { Notice } from '@/components/ui/notice';
@@ -21,7 +22,8 @@ import { useSession } from '@/services/session';
 import { colors, spacing, text } from '@/theme';
 import { formatWon } from '@/utils/format';
 
-import { createOrder, enterConfirm, leaveConfirm, recheckCreate } from './order-actions';
+import { goHistory, goOrderDetail } from './flow-routes';
+import { createOrder, enterConfirm, leaveConfirm, recheckCreate, startNewOrderAfterConflict } from './order-actions';
 import { useOrderFlowStore } from './order-flow-store';
 
 const copy = draftCopy.confirm;
@@ -33,6 +35,7 @@ export function OrderConfirmScreen() {
   const validation = useCartStore((s) => s.validation);
   const work = useOrderFlowStore((s) => s.work);
   const rejectedReason = useOrderFlowStore((s) => s.rejectedReason);
+  const conflictOrder = useOrderFlowStore((s) => s.conflictOrder);
 
   const store = useAsync(`confirm-store:${cart.storeId}`, () =>
     cart.storeId ? catalogRepository.getStore(cart.storeId) : Promise.reject(new Error('no store')),
@@ -53,7 +56,7 @@ export function OrderConfirmScreen() {
 
   // 담긴 내용은 그대로 두고, 주문을 막는 이유가 있으면 알린다. 가격 변경·품절은 장바구니에서 풀어야 한다
   const mustFixInCart = block.blocked && ['PRICE_CHANGED', 'SOLD_OUT', 'INACTIVE_ENTITY', 'OPTIONS_INVALID', 'STORE_CLOSED'].includes(block.reason);
-  const disabled = !destinationAccount || block.blocked || work === 'CREATE_REJECTED' || work === 'CREATE_UNKNOWN' || saving;
+  const disabled = !destinationAccount || block.blocked || work === 'CREATE_REJECTED' || work === 'CREATE_CONFLICT' || work === 'CREATE_UNKNOWN' || saving;
 
   const back = () => {
     if (saving) return;
@@ -78,7 +81,31 @@ export function OrderConfirmScreen() {
     if (work === 'LOCAL_PERSISTENCE_FAILED') {
       return <Notice flush tone="danger" title={copy.localSaveFailedTitle} description={copy.localSaveFailedDesc} />;
     }
+    if (work === 'CREATE_CONFLICT') {
+      // 키로 조회한 기존 주문은 방금 확인한 주문과 내용이 다르다. 이어가지 않고 따로 알린다. 장바구니는 그대로다
+      const existing = conflictOrder;
+      return (
+        <>
+          <Notice
+            flush
+            tone="danger"
+            title={copy.conflictTitle}
+            description={existing ? copy.conflictDesc(existing.snapshot.storeName, formatWon(existing.approvedTotalAmount)) : copy.conflictDescUnknown}
+            action={{ label: copy.conflictView, onPress: () => (existing ? goOrderDetail(existing.orderId) : goHistory()) }}
+          />
+          <View style={styles.conflictAction}>
+            <TextButton size="sm" onPress={startNewOrderAfterConflict}>
+              {copy.conflictNewOrder}
+            </TextButton>
+          </View>
+        </>
+      );
+    }
     if (work === 'CREATE_REJECTED') {
+      if (rejectedReason === 'DISCLOSURE_VERSION_UNSUPPORTED') {
+        // 앱을 새로 받아야 주문할 수 있다. 장바구니 문제가 아니라서 장바구니로 보내지 않는다
+        return <Notice flush tone="danger" title={copy.updateRequiredTitle} description={copy.updateRequiredDesc} />;
+      }
       const accountProblem = rejectedReason === 'ACCOUNT_REQUIRED' || rejectedReason === 'ACCOUNT_REVISION_CONFLICT';
       const quantityProblem = rejectedReason === 'QUANTITY_LIMIT_EXCEEDED';
       return (
@@ -149,6 +176,10 @@ function toRow(item: CartItem) {
 }
 
 const styles = StyleSheet.create({
+  conflictAction: {
+    alignItems: 'flex-start',
+    marginTop: -spacing[3],
+  },
   content: {
     padding: spacing[5],
     gap: spacing[5],

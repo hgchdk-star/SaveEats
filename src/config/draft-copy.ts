@@ -360,6 +360,15 @@ export const draftCopy = {
     rejectedTitle: '가격이 바뀌었거나 품절된 메뉴가 있어요',
     rejectedDesc: '장바구니에서 확인한 뒤 다시 주문해주세요.',
     rejectedAction: '장바구니로',
+    /** 같은 요청 키에 다른 내용이 와서 서버가 거절했을 때(IDEMPOTENCY_CONFLICT). 초안: 기존 주문은 이어가지 않고 따로 보여 주며 장바구니는 그대로다 */
+    conflictTitle: '이미 진행 중인 주문이 있어요',
+    conflictDesc: (storeName: string, amountLabel: string) => `${storeName} · ${amountLabel} 주문이에요. 방금 확인한 주문과 내용이 달라서 이어가지 않았어요. 장바구니는 그대로예요.`,
+    conflictDescUnknown: '방금 확인한 주문과 내용이 다른 주문이 있어요. 이어가지 않았고 장바구니는 그대로예요. 내역에서 확인해주세요.',
+    conflictView: '주문 보기',
+    conflictNewOrder: '이 내용으로 새로 주문하기',
+    /** 서버가 이 앱 버전의 주문 안내 버전을 받지 않을 때(DISCLOSURE_VERSION_UNSUPPORTED). 초안 */
+    updateRequiredTitle: '앱을 업데이트해 주세요',
+    updateRequiredDesc: '주문 안내가 바뀌어서 이 버전으로는 주문할 수 없어요. 최신 버전으로 업데이트한 뒤 다시 시도해주세요.',
     /** 서버가 같은 메뉴·옵션 합산 10 초과를 거절했을 때(QUANTITY_LIMIT_EXCEEDED). 초안 */
     quantityLimitTitle: '같은 메뉴가 너무 많이 담겨 있어요',
     quantityLimitDesc: '같은 메뉴와 옵션은 합쳐서 10개까지 주문할 수 있어요. 장바구니에서 수량을 줄여주세요.',

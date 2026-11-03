@@ -16,6 +16,7 @@ import { copyToClipboard } from '@/services/clipboard';
 import { ServiceError, errorCode } from '@/services/service-error';
 import { getSession } from '@/services/session';
 import { saveOrderDestinationLink } from '@/services/transfer/order-destination-link';
+import { saveMaskedDestination } from '@/services/order/masked-destination-store';
 import { createLocalId } from '@/utils/id';
 
 import type { CartEnvelope } from '@/features/cart/cart-model';
@@ -96,7 +97,11 @@ export async function createOrder(via: 'TOSS' | 'DIRECT', cart: CartEnvelope, ac
 
   // 저장은 됐지만 전송 전에 멈춘 시도(기기 저장 실패)는 같은 요청을 다시 쓴다. 한 번도 보내지 않았으니 같은 키여도 안전하다
   const attempt = state.attempt ? { ...state.attempt, via } : { request: buildCreateOrderRequest(cart, account), via, cartRevision: cart.localRevision };
-  flow().set({ work: 'CREATE_SAVING', attempt, rejectedReason: null });
+  flow().set({ work: 'CREATE_SAVING', attempt, rejectedReason: null, conflictOrder: null });
+
+  // 이 계좌의 은행명 · 끝 4자리를 기기 보안 저장소에 남긴다. 서버는 계좌를 몰라서 응답에 주지 않고, 나중에 주문 화면이 이 값을 쓴다.
+  // 남기지 못해도 주문은 진행된다(그 주문의 계좌 표시는 "이 기기에 주문 당시 계좌정보가 없어요"로 나온다).
+  await saveMaskedDestination(account.id, { bankName: account.bankName, last4: account.last4 }).catch(() => undefined);
 
   // 보내기 전에 키와 요청을 기기에 먼저 저장한다. 저장하지 못하면 보내지 않는다
   try {
@@ -106,6 +111,15 @@ export async function createOrder(via: 'TOSS' | 'DIRECT', cart: CartEnvelope, ac
     return;
   }
   await send(attempt);
+}
+
+/**
+ * 충돌 안내에서 "이 내용으로 새로 주문하기": 사용자가 다시 확인했으니 상태만 되돌린다. 주문은 만들지 않는다.
+ * 이어서 주문 버튼을 누르면 새 키로 새 요청이 만들어진다(저장된 시도 기록은 충돌 때 지웠다).
+ */
+export function startNewOrderAfterConflict(): void {
+  if (flow().work !== 'CREATE_CONFLICT') return;
+  flow().set({ work: 'READY', conflictOrder: null, attempt: null, rejectedReason: null });
 }
 
 /** 결과를 모를 때 '다시 확인': 같은 키로 서버를 조회하고, 없으면 같은 요청을 다시 보낸다 */
@@ -124,9 +138,9 @@ export async function recheckCreate(): Promise<void> {
 
 /**
  * 서버의 명확한 거절 코드. 주문이 만들어지지 않았다.
- * IDEMPOTENCY_CONFLICT는 여기 넣지 않는다: 거절이 아니라 키로 조회해 기존 주문을 보여 주는 별도 흐름이다(send 참고).
+ * IDEMPOTENCY_CONFLICT는 여기 넣지 않는다: 키로 조회한 기존 주문은 "내용이 다른 주문"이라 이어가지 않고 따로 보여 주는 별도 흐름이다(send 참고).
  */
-const REJECTIONS: readonly string[] = ['PRICE_CHANGED', 'ITEM_UNAVAILABLE', 'STORE_CLOSED', 'INVALID_OPTIONS', 'QUANTITY_LIMIT_EXCEEDED'];
+const REJECTIONS: readonly string[] = ['PRICE_CHANGED', 'ITEM_UNAVAILABLE', 'STORE_CLOSED', 'INVALID_OPTIONS', 'QUANTITY_LIMIT_EXCEEDED', 'DISCLOSURE_VERSION_UNSUPPORTED'];
 
 async function send(attempt: NonNullable<ReturnType<typeof flow>['attempt']>): Promise<void> {
   try {
@@ -135,18 +149,18 @@ async function send(attempt: NonNullable<ReturnType<typeof flow>['attempt']>): P
   } catch (error) {
     const code = errorCode(error);
     if (code === 'IDEMPOTENCY_CONFLICT') {
-      // 같은 키에 다른 내용이 왔다. 서버는 새 주문을 만들지 않았으니 앱도 만들지 않고, 키로 조회해 기존 주문을 보여 준다.
-      // 기존 주문의 목적지 연결은 처음 만들 때 이미 남겼으므로 이번 요청의 목적지로 덮어쓰지 않는다.
+      // 같은 키에 다른 내용이 왔다. 서버는 새 주문을 만들지 않았다. 키로 조회한 기존 주문은 이번 요청과 내용이 다른 주문이다.
+      // 이어가기로 보여 주거나 장바구니를 비우거나 이번 요청의 목적지를 연결하지 않는다. "이미 진행 중인 주문"으로 따로 알리고,
+      // 새 주문은 사용자가 다시 확인한 뒤 새 키로만 만든다(startNewOrderAfterConflict).
+      // 저장해 둔 시도 기록은 지운다: 앱을 다시 켰을 때 복구가 같은 키로 이 기존 주문을 찾아 이번 요청의 결과로 오해하지 않게 한다.
+      void clearAttempt();
+      let existing: MockOrder | null = null;
       try {
-        const existing = await orderService.getOrderByRequestKey(attempt.request.idempotencyKey);
-        if (existing) {
-          await onCreated(existing, attempt.via, attempt.request, attempt.cartRevision, { saveDestinationLink: false });
-          return;
-        }
+        existing = await orderService.getOrderByRequestKey(attempt.request.idempotencyKey);
       } catch {
-        // 조회하지 못했다. 기존 주문이 있는지 모르는 상태로 두고 같은 키로 다시 확인하게 한다
+        // 조회하지 못해도 충돌 안내는 한다. 기존 주문은 내역에서 확인하게 한다
       }
-      flow().set({ work: 'CREATE_UNKNOWN' });
+      flow().set({ work: 'CREATE_CONFLICT', attempt: null, conflictOrder: existing });
       return;
     }
     if (code && REJECTIONS.includes(code)) {
@@ -166,12 +180,11 @@ async function onCreated(
   via: 'TOSS' | 'DIRECT',
   request: CreateOrderRequest,
   cartRevision: number,
-  options: { saveDestinationLink: boolean } = { saveDestinationLink: true },
 ): Promise<void> {
   flow().set({ order, work: 'PENDING_READY', attempt: null, rejectedReason: null, confirmOperationId: null, cancelOperationId: null });
   // 이 주문을 만들 때 쓴 목적지의 참조를 기기에 남긴다. 나중에 계좌번호 복사·사전입력이 바로 그 목적지인지 확인하는 데 쓴다.
   // 남기지 못해도 주문은 이미 만들어졌다. 그 경우 복사·사전입력은 막히고 목적지 확인 안내가 나온다.
-  if (options.saveDestinationLink) await saveOrderDestinationLink(order.orderId, { destinationRef: request.destinationRef }).catch(() => undefined);
+  await saveOrderDestinationLink(order.orderId, { destinationRef: request.destinationRef }).catch(() => undefined);
   void clearAttempt();
   // 미결정 묶음2 #5(= 묶음1 #10): 주문 생성에 성공했을 때 비운다. 생성에 쓴 버전만 비우고 그사이 더 담은 것은 둔다 (ORD-013)
   if (UNDECIDED.cartClearTiming === 'onPendingCreated') await useCartStore.getState().clearIfRevision(cartRevision);
@@ -187,7 +200,7 @@ export async function openTransfer(via: 'TOSS' | 'DIRECT', how: 'replace' | 'pus
     setTimeout(() => resolve({ tossDeepLinkEnabled: false }), LIMITS.tossConfigTimeoutMs),
   );
   // 이 주문의 은행·이 플랫폼에서 사전입력이 검증된 조합이 아니면 처음부터 직접 이어가기로 간다
-  const bankName = flow().order?.snapshot.destination.bankName;
+  const bankName = flow().order?.snapshot.destination?.bankName;
   const config = await Promise.race([transferService.getTransferConfig(bankName ? { bankName } : undefined), timeout]).catch(() => ({ tossDeepLinkEnabled: false }));
   const direct = via === 'DIRECT' || !config.tossDeepLinkEnabled;
   flow().setTransfer({

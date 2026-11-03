@@ -85,7 +85,11 @@ export type MockOrderSnapshot = {
     lineTotal: Won;
     options: { groupName: string; optionName: string; additionalPrice: Won }[];
   }[];
-  destination: { bankName: string; last4: string };
+  /**
+   * 주문 당시 목적지(은행명 · 끝 4자리). 서버는 계좌를 몰라서 응답에 주지 않는다. 앱이 기기 보안 저장소에서 합치고(with-local-destination),
+   * 값이 없으면 null이다. Mock 서버만 화면 확인용으로 채워 줄 수 있다.
+   */
+  destination: { bankName: string; last4: string } | null;
 };
 
 export type MockOrder = {
@@ -97,6 +101,8 @@ export type MockOrder = {
   completedAt: string | null;
   cancelledAt: string | null;
   approvedTotalAmount: Won;
+  /** 같은 키로 이미 만들어진 주문을 돌려받았다는 서버 표시 */
+  replayed?: boolean;
   snapshot: MockOrderSnapshot;
 };
 
@@ -114,6 +120,7 @@ export type OrderFailureCode =
   | 'STORE_CLOSED'
   | 'INVALID_OPTIONS'
   | 'QUANTITY_LIMIT_EXCEEDED'
+  | 'DISCLOSURE_VERSION_UNSUPPORTED'
   | 'IDEMPOTENCY_CONFLICT'
   | 'ACCOUNT_REQUIRED'
   | 'ACCOUNT_REVISION_CONFLICT'
