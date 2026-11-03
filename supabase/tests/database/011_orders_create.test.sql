@@ -46,6 +46,55 @@ returns jsonb language sql as $$
     'disclosureVersion', p_disc, 'disclosureAcknowledged', true)
 $$;
 
+-- 지우의 parseOrderDto(order-dto.ts)가 읽는 모양과 같은지 본다: 키 이름(정확히), 타입. 맞으면 'OK', 아니면 처음 어긋난 곳.
+-- p_replayed: 생성 응답이면 true(replayed 키가 boolean으로 있어야 함), 조회 응답이면 false(replayed 키가 없어야 함)
+create function public.zdto_shape(d jsonb, p_replayed boolean) returns text language plpgsql as $$
+declare
+  v_store jsonb; v_item jsonb; v_opt jsonb;
+  v_base_keys constant text[] := array['cancelledAt', 'completedAt', 'createdAt', 'orderId', 'snapshot', 'status', 'statusRevision', 'totalAmount'];
+begin
+  if (select array_agg(k order by k) from jsonb_object_keys(d) k)
+     is distinct from (select array_agg(k order by k) from unnest(case when p_replayed then v_base_keys || array['replayed'] else v_base_keys end) k) then
+    return 'top-level keys';
+  end if;
+  if jsonb_typeof(d -> 'orderId') <> 'string' then return 'orderId type'; end if;
+  if jsonb_typeof(d -> 'status') <> 'string' or not coalesce((d ->> 'status') = any (array['PENDING', 'USER_CONFIRMED', 'CANCELLED']), false) then
+    return 'status value';
+  end if;
+  if jsonb_typeof(d -> 'statusRevision') <> 'number' then return 'statusRevision type'; end if;
+  if jsonb_typeof(d -> 'createdAt') <> 'string' then return 'createdAt type'; end if;
+  if jsonb_typeof(d -> 'completedAt') not in ('string', 'null') then return 'completedAt type'; end if;
+  if jsonb_typeof(d -> 'cancelledAt') not in ('string', 'null') then return 'cancelledAt type'; end if;
+  if jsonb_typeof(d -> 'totalAmount') <> 'number' then return 'totalAmount type'; end if;
+  if p_replayed and jsonb_typeof(d -> 'replayed') <> 'boolean' then return 'replayed type'; end if;
+  if jsonb_typeof(d -> 'snapshot') <> 'object' then return 'snapshot type'; end if;
+  if (select array_agg(k order by k) from jsonb_object_keys(d -> 'snapshot') k) is distinct from array['items', 'store'] then return 'snapshot keys'; end if;
+  v_store := d -> 'snapshot' -> 'store';
+  if jsonb_typeof(v_store) <> 'object' then return 'store type'; end if;
+  if (select array_agg(k order by k) from jsonb_object_keys(v_store) k) is distinct from array['categoryName', 'id', 'imageRef', 'name'] then return 'store keys'; end if;
+  if jsonb_typeof(v_store -> 'id') <> 'string' or jsonb_typeof(v_store -> 'name') <> 'string' or jsonb_typeof(v_store -> 'categoryName') <> 'string'
+     or jsonb_typeof(v_store -> 'imageRef') not in ('string', 'null') then return 'store value types'; end if;
+  if jsonb_typeof(d -> 'snapshot' -> 'items') <> 'array' then return 'items type'; end if;
+  for v_item in select e from jsonb_array_elements(d -> 'snapshot' -> 'items') e loop
+    if jsonb_typeof(v_item) <> 'object' then return 'item type'; end if;
+    if (select array_agg(k order by k) from jsonb_object_keys(v_item) k)
+       is distinct from array['lineTotal', 'menuId', 'menuImageRef', 'menuName', 'options', 'quantity', 'unitPrice'] then return 'item keys'; end if;
+    if jsonb_typeof(v_item -> 'menuId') <> 'string' or jsonb_typeof(v_item -> 'menuName') <> 'string'
+       or jsonb_typeof(v_item -> 'menuImageRef') not in ('string', 'null') then return 'item string types'; end if;
+    if jsonb_typeof(v_item -> 'unitPrice') <> 'number' or jsonb_typeof(v_item -> 'quantity') <> 'number'
+       or jsonb_typeof(v_item -> 'lineTotal') <> 'number' then return 'item number types'; end if;
+    if jsonb_typeof(v_item -> 'options') <> 'array' then return 'options type'; end if;
+    for v_opt in select o from jsonb_array_elements(v_item -> 'options') o loop
+      if jsonb_typeof(v_opt) <> 'object' then return 'option type'; end if;
+      if (select array_agg(k order by k) from jsonb_object_keys(v_opt) k) is distinct from array['additionalPrice', 'groupName', 'optionName'] then return 'option keys'; end if;
+      if jsonb_typeof(v_opt -> 'groupName') <> 'string' or jsonb_typeof(v_opt -> 'optionName') <> 'string'
+         or jsonb_typeof(v_opt -> 'additionalPrice') <> 'number' then return 'option value types'; end if;
+    end loop;
+  end loop;
+  return 'OK';
+end;
+$$;
+
 -- ---------------------------------------------------------------- 픽스처 (superuser)
 insert into auth.users (id) values
   ('aaaaaaaa-0000-4000-8000-000000000001'),
@@ -218,6 +267,8 @@ select is(private.order_request_fingerprint(private.normalize_order_request(publ
   private.order_request_fingerprint(private.normalize_order_request(jsonb_set(public.zreq(public.zid('S1'),
     jsonb_build_array(public.zitem(public.zid('M2'), null, 1, 2000))), '{items,0,approvedCatalogRevision}', '77'))),
   'approvedCatalogRevision은 지문에 들어가지 않는다');
+select ok(private.normalize_order_request(public.zreq(public.zid('S1'), jsonb_build_array(public.zitem(public.zid('M2'), null, 1, 2000))))::text !~ 'requestVersion|approvedCatalogRevision',
+  '정규화 결과(= 지문 입력의 재료)에 requestVersion · approvedCatalogRevision이 들어 있지 않다');
 select matches(private.order_request_fingerprint(private.normalize_order_request(public.zreq(public.zid('S1'),
     jsonb_build_array(public.zitem(public.zid('M2'), null, 1, 2000))))), '^[0-9a-f]{64}$', '지문은 64자리 hex');
 
@@ -260,6 +311,9 @@ from (values
   ('requestVersion', '3', 'requestVersion 3'),
   ('requestVersion', '"2"', 'requestVersion 문자열'),
   ('requestVersion', '2.5', 'requestVersion 소수'),
+  ('requestVersion', 'null', 'requestVersion null'),
+  ('requestVersion', '0', 'requestVersion 0'),
+  ('requestVersion', 'true', 'requestVersion boolean'),
   ('idempotencyKey', '"abc"', 'idempotencyKey가 UUID가 아님'),
   ('idempotencyKey', '123', 'idempotencyKey가 숫자'),
   ('idempotencyKey', 'null', 'idempotencyKey null'),
@@ -354,6 +408,9 @@ select is((select array_agg(k order by k) from jsonb_object_keys(current_setting
   array['lineTotal', 'menuId', 'menuImageRef', 'menuName', 'options', 'quantity', 'unitPrice'], 'snapshot.items[] 키');
 select is((select array_agg(k order by k) from jsonb_object_keys(current_setting('zz.r1')::jsonb -> 'snapshot' -> 'items' -> 0 -> 'options' -> 0) k),
   array['additionalPrice', 'groupName', 'optionName'], 'snapshot.items[].options[] 키');
+select is(public.zdto_shape(current_setting('zz.r1')::jsonb, true), 'OK', '생성 응답의 키 이름과 타입이 앱 parseOrderDto와 일치 (replayed는 boolean)');
+select is(public.zdto_shape(current_setting('zz.r1')::jsonb - 'replayed', true), 'top-level keys', '(도구 확인) replayed가 빠지면 생성 응답 검사에서 잡힌다');
+select is(public.zdto_shape(current_setting('zz.r1')::jsonb, false), 'top-level keys', '(도구 확인) 조회 응답 검사는 replayed 키가 있으면 잡는다');
 select is(current_setting('zz.r1')::jsonb ->> 'status', 'PENDING', '상태는 PENDING');
 select is((current_setting('zz.r1')::jsonb ->> 'statusRevision')::int, 1, 'statusRevision 1');
 select is((current_setting('zz.r1')::jsonb ->> 'totalAmount')::bigint, 31600::bigint, '총액은 서버 합산 31600');
@@ -403,6 +460,7 @@ select set_config('zz.r1b', public.create_order(public.zreq(public.zid('S1'), js
 select is(current_setting('zz.r1b')::jsonb ->> 'orderId', current_setting('zz.r1')::jsonb ->> 'orderId',
   '같은 키 · 같은 요청(줄 순서와 옵션 순서만 다름)은 같은 주문을 돌려준다');
 select is(current_setting('zz.r1b')::jsonb -> 'replayed', 'true'::jsonb, '다시 받은 주문은 replayed=true');
+select is(public.zdto_shape(current_setting('zz.r1b')::jsonb, true), 'OK', '재생 응답도 같은 키 이름과 타입');
 select is(current_setting('zz.r1b')::jsonb - 'replayed', current_setting('zz.r1')::jsonb - 'replayed', 'replayed 외 내용이 처음 응답과 같다 (줄 순서도 처음 그대로)');
 select is(public.zcode(jsonb_set(public.zreq(public.zid('S1'), jsonb_build_array(
     public.zitem(public.zid('M1'), array[public.zid('O4'), public.zid('O2'), public.zid('O3')], 2, 12800),
@@ -463,6 +521,8 @@ select is(public.zcode(public.zreq(public.zid('S1'), jsonb_build_array(public.zi
   'OK', '허용 목록에 없는 옛 고지 버전이어도 같은 요청 복구는 된다 (멱등성 먼저)');
 select is(public.create_order(public.zreq(public.zid('S1'), jsonb_build_array(public.zitem(public.zid('M2'), null, 1, 2000)), public.zid('KEYOLD'), '2025-01-01'))
     -> 'replayed', 'true'::jsonb, '옛 버전 복구는 replayed=true');
+select is(public.zdto_shape(public.create_order(public.zreq(public.zid('S1'), jsonb_build_array(public.zitem(public.zid('M2'), null, 1, 2000)),
+    public.zid('KEYOLD'), '2025-01-01')), true), 'OK', '줄이 하나도 없는 주문(items: [])도 같은 모양');
 select is(public.zcode(public.zreq(public.zid('S1'), jsonb_build_array(public.zitem(public.zid('M2'), null, 1, 2000)), public.zid('KEYOLD'), '2026-01-01')),
   'P0001:IDEMPOTENCY_CONFLICT', '같은 키에 다른 고지 버전은 충돌');
 select is(public.zcode(public.zreq(public.zid('S1'), jsonb_build_array(public.zitem(public.zid('M2'), null, 1, 2000)), gen_random_uuid(), '2025-01-01')),
@@ -638,6 +698,9 @@ select set_config('request.jwt.claims', '{"sub":"aaaaaaaa-0000-4000-8000-0000000
 set local role authenticated;
 select is(public.get_order_by_request_key(public.zid('KEY1')), current_setting('zz.r1')::jsonb - 'replayed', '[A] 키로 조회하면 주문이 나온다 (replayed 키 없음)');
 select is(public.get_my_order((current_setting('zz.r1')::jsonb ->> 'orderId')::uuid), current_setting('zz.r1')::jsonb - 'replayed', '[A] get_my_order로 같은 주문');
+select is(public.zdto_shape(public.get_order_by_request_key(public.zid('KEY1')), false), 'OK', '[A] 키 조회 응답: 키 이름과 타입 일치, replayed 키 없음');
+select is(public.zdto_shape(public.get_my_order((current_setting('zz.r1')::jsonb ->> 'orderId')::uuid), false), 'OK', '[A] get_my_order 응답: 키 이름과 타입 일치, replayed 키 없음');
+select is(public.zdto_shape(public.get_order_by_request_key(public.zid('KEYM')), false), 'OK', '[A] 합산된 주문의 조회 응답도 같은 모양');
 select ok(public.get_order_by_request_key(gen_random_uuid()) is null, '[A] 없는 키는 오류가 아니라 null');
 select ok(public.get_order_by_request_key(public.zid('KEY1')) is not null and not (public.get_order_by_request_key(public.zid('KEY1')) ? 'replayed'),
   '[A] 조회 결과에는 replayed 키가 없다');
@@ -692,6 +755,18 @@ drop trigger zz_boom on public.order_item_options;
 set local role authenticated;
 select is(public.zcode(public.zreq(public.zid('S1'), jsonb_build_array(public.zitem(public.zid('M2'), null, 1, 2000),
     public.zitem(public.zid('M1'), array[public.zid('O2')], 1, 12000)))), 'OK', '(확인) 트리거를 치우면 같은 요청이 성공한다');
+reset role;
+
+-- 완료 · 취소된 주문의 시각 필드도 문자열로 나온다 (상태 전이 함수는 다음 PR이라 superuser로 직접 바꿔서 본다)
+update public.orders set status = 'USER_CONFIRMED', completed_at = now() where id = (current_setting('zz.m')::jsonb ->> 'orderId')::uuid;
+update public.orders set status = 'CANCELLED', cancelled_at = now() where idempotency_key = public.zid('KEYX');
+set local role authenticated;
+select is(public.zdto_shape(public.get_order_by_request_key(public.zid('KEYM')), false), 'OK', '완료된 주문 응답: completedAt이 문자열이어도 모양 일치');
+select is(public.get_order_by_request_key(public.zid('KEYM')) ->> 'status', 'USER_CONFIRMED', '완료된 주문의 status');
+select is(jsonb_typeof(public.get_order_by_request_key(public.zid('KEYM')) -> 'completedAt'), 'string', '완료된 주문의 completedAt은 문자열');
+select is(jsonb_typeof(public.get_order_by_request_key(public.zid('KEYM')) -> 'cancelledAt'), 'null', '완료된 주문의 cancelledAt은 null');
+select is(public.zdto_shape(public.get_order_by_request_key(public.zid('KEYX')), false), 'OK', '취소된 주문 응답도 모양 일치');
+select is(jsonb_typeof(public.get_order_by_request_key(public.zid('KEYX')) -> 'cancelledAt'), 'string', '취소된 주문의 cancelledAt은 문자열');
 reset role;
 
 -- ---------------------------------------------------------------- 제약 (직접 넣기)
