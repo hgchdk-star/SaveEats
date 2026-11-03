@@ -19,7 +19,7 @@ import { saveOrderDestinationLink } from '@/services/transfer/order-destination-
 import { saveMaskedDestination } from '@/services/order/masked-destination-store';
 import { createLocalId } from '@/utils/id';
 
-import type { CartEnvelope } from '@/features/cart/cart-model';
+import { isValidCatalogRevision, type CartEnvelope } from '@/features/cart/cart-model';
 
 import { clearAttempt, clearConfirmQueue, loadConfirmQueue, saveAttempt, saveConfirmQueue } from './order-persistence';
 import { useOrderFlowStore, type RejectedReason } from './order-flow-store';
@@ -93,6 +93,13 @@ export async function createOrder(via: 'TOSS' | 'DIRECT', cart: CartEnvelope, ac
       flow().set({ work: 'CREATE_REJECTED', rejectedReason: current ? 'ACCOUNT_REVISION_CONFLICT' : 'ACCOUNT_REQUIRED' });
       return;
     }
+  }
+
+  // 서버는 모든 항목의 approvedCatalogRevision이 1 이상의 정수일 것을 요구한다. 아니면 보내도 INVALID_INPUT이므로 보내지 않는다.
+  // 키도 만들지 않고 기기에 저장하지도 않는다(새 요청일 때만 검사. 이미 만든 요청은 그대로 다시 보낸다)
+  if (!state.attempt && cart.items.some((item) => !isValidCatalogRevision(item.acknowledgedCatalogRevision))) {
+    flow().set({ work: 'CREATE_REJECTED', rejectedReason: 'INVALID_INPUT' });
+    return;
   }
 
   // 저장은 됐지만 전송 전에 멈춘 시도(기기 저장 실패)는 같은 요청을 다시 쓴다. 한 번도 보내지 않았으니 같은 키여도 안전하다
