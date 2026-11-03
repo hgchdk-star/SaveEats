@@ -23,8 +23,8 @@ export type AccountFormParams = { mode: 'register' | 'change'; from: 'order' | '
 /**
  * 계좌 등록·변경 입력: 은행 + 계좌번호만 받는다. 예금주·본인 확인은 없다 (미결정 묶음2 #3).
  *
- * 계좌번호는 이 화면의 state에만 있다. 저장·로그·분석 이벤트에 넣지 않고, 서버로 보낸 직후 지운다.
- * 서버가 전체 번호를 어떻게 보관·암호화할지는 아직 정해지지 않았다 (OPEN-DB-001).
+ * 계좌번호는 이 화면의 state에만 있다. 저장·로그·분석 이벤트에 넣지 않고, 이 기기의 보안 저장소(AccountVault)에 저장한 직후 지운다.
+ * 계좌번호 원문은 서버로 보내지 않는다. 서버에는 계좌 원문 · 은행 · 마스킹 값이 없다 (개발 명세 DB-003).
  */
 export function AccountFormScreen({ mode, from }: AccountFormParams) {
   const { destinationAccount } = useSession();
