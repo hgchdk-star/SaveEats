@@ -1,15 +1,28 @@
 # SaveEats 디자인 자료
 
-2026-10-08 서정이 공식 전달했다. 디자인 자료는 저장소에 넣지 않고 아래 정본을 참조한다.
+2026-10-08 서정이 공식 전달했다. 2026-10-31 콘텐츠 출처는 사용자 합의와 v25 프로토타입 검토 결과로 갱신했다. 디자인 자료는 저장소에 넣지 않고 아래 정본을 참조한다.
 
 ## 정본
 
 | 자료 | 위치 | 내용 |
 |---|---|---|
-| 화면 디자인 | [Claude Design 통합 캔버스](https://claude.ai/artifact/B4k9WY1qpt1Fk4Yw6EBZGd) | 화면 32개와 상태별 아트보드. 화면 디자인의 정본 |
+| 화면 디자인 | [Claude Design 통합 캔버스](https://claude.ai/artifact/B4k9WY1qpt1Fk4Yw6EBZGd) | 공용 화면과 상태별 아트보드. 콘텐츠 출처 검토 기준은 v25(2026-10-31); 제품 정책은 아래 기준 문서 우선 |
 | 디자인 시스템 | [SaveEats Design System](https://claude.ai/artifact/4m4Tjo8z5tsb18jWJ6fR5k) | 토큰(`project/tokens.json`), 컴포넌트 명세(`project/components/`), 원칙(`project/README.md`) |
 
 우선순위는 서비스 기획서 › PRD › 개발 명세 › 디자인 시스템이다. 디자인과 기준 문서가 다르면 구현을 멈추고 사용자에게 확인한다.
+
+## 콘텐츠 출처 v25 반영 (2026-10-31)
+
+기준 문서: `SaveEats-service-plan.md` v1.4, `SaveEats-PRD.md` v1.3, `SaveEats-development-spec.md` v0.4의 SRC-001~004. v25는 Claude Design 프로토타입이며 실제 앱 구현·DB·외부 링크 연동 완료를 뜻하지 않는다.
+
+- 가게 상세 하단 SourceNotice의 `출처 확인하기` → 공용 Sheet의 가게별 출처 목록. 내부 열기에는 ↗ 없음, 출처 항목에만 ↗ 표시.
+- 메뉴/이미지 유형 구분 없음. 1개/복수 같은 목록, 이름 줄바꿈·시트 내부 스크롤, ✕/배경 닫기 후 탭·위치 유지.
+- 출처 누락/미확인은 버튼 숨김·빈 시트 없음. 확인 중 문구는 초안이고 실제 공개 정책은 미결정.
+- 유지/수정 보드: `Store-Source`; 추가: `Store-Source-Sheet`; 삭제: `Store-Source-Split`, `Store-Source-Unverified`. 이는 디자인 보드 이력이며 앱 라우트/기능 삭제 지시가 아니다.
+- 온보딩 2페이지 비제휴 문구와 마이의 Guest 접근 가능한 공통 이용 안내는 PRD의 정확한 문구를 따른다.
+- 출처명·URL 플레이스홀더, VERIFIED/UNVERIFIED 예시 값, 항목 클릭 시 미연결 안내 띠는 앱에 복제하지 않는다. 실제 출처 데이터·저장 방식·URL 연결은 별도 개발 사항이다.
+
+검토 자료는 `SaveEats-design-v25.zip`과 사용자가 제공한 스크린샷 4장이다. 기본/단일 시트/미연결 안내 표시/출처 없음은 화면과 소스로 확인했고, 직접 조작·긴 목록·실기기 검증은 완료하지 않았다. 통합 노트와 Claude Code 전달 지침은 아직 이번 작업에서 수정하지 않았다.
 
 ## 토큰
 

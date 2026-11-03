@@ -54,7 +54,8 @@ export const UNDECIDED = {
    * - 계좌를 바꾸면 이전 원문을 지우고 새 참조를 부여한다. 과거 계좌 원문을 따로 쌓아 두지 않는다.
    * - 계좌 삭제·로그아웃 시 해당 사용자의 계좌 원문을 지운다. 그 뒤 과거 PENDING 주문의 계좌 복사·사전입력은 막히고
    *   "이 기기에 주문 당시 계좌정보가 없어요."를 안내한다. 기존 주문 조회·완료 확인·상태 저장 복구는 그대로다.
-   * - 저장 옵션(미결정): iOS 접근 수준(keychainAccessible)과 기기 암호·생체인증 필수 여부는 정하지 않아 라이브러리 기본값을 쓴다
+   * - 저장 옵션(미결정): iOS 접근 수준(keychainAccessible)과 기기 암호·생체인증 필수 여부는 서정이 정할 일이라 라이브러리 기본값을 쓴다.
+   *   이 값이 정해지지 않았다는 이유로 머지를 막지 않는다(혜지 확인 2026-11-03)
    */
   accountOnLogout: 'deleteFromDevice',
   accountStorageOptions: 'libraryDefault',
