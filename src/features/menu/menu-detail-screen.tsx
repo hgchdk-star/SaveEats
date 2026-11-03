@@ -144,6 +144,7 @@ export function MenuDetailScreen({ menuId }: { menuId: string }) {
     if (result.reason === 'OTHER_STORE') setOtherStoreSheet(true);
     // 미결정 묶음1 #3: 같은 조합의 합계가 10을 넘으면 담지 않고 알린다. 자동으로 줄이지 않는다
     else if (result.reason === 'OVER_LIMIT') showToast({ message: draftCopy.menu.toastOverLimit, tone: 'error' });
+    else if (result.reason === 'OVER_KINDS') showToast({ message: draftCopy.menu.toastOverKinds(LIMITS.cartLineKindsMax), tone: 'error' });
     else if (result.reason === 'SAVE_FAILED') showToast({ message: draftCopy.cart.saveFailed, tone: 'error' });
     else showToast({ message: draftCopy.cart.storageErrorTitle, tone: 'error' });
   };
