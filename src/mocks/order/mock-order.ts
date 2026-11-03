@@ -14,13 +14,13 @@ import type { CreateOrderRequest, MockOrder, OrderService } from './types';
  * 같은 idempotencyKey면 같은 주문을 돌려준다 (ORD-006).
  */
 
-/** 요청을 서버가 다시 검증한다: 계좌 버전, 메뉴·옵션 판매 여부, 승인한 가격, 합계 */
+/**
+ * 요청을 서버가 다시 검증한다: 메뉴·옵션 판매 여부, 승인한 가격, 합계.
+ * 실제 서버는 계좌를 모르므로 계좌 확인은 하지 않는다(앱이 주문 전에 로컬에서 한다). Mock만 화면용 스냅샷에 현재 세션 계좌를 쓴다.
+ */
 function verify(request: CreateOrderRequest) {
   const account = useMockSession.getState().destinationAccount;
   if (!account) throw new ServiceError('ACCOUNT_REQUIRED');
-  if (account.id !== request.accountId || account.revision !== request.expectedAccountRevision) {
-    throw new ServiceError('ACCOUNT_REVISION_CONFLICT');
-  }
 
   for (const item of request.items) {
     const menu = mockCatalog.activeMenu(item.menuId);
@@ -97,6 +97,8 @@ export function createMockOrderService(): OrderService {
 
       // 서버에는 주문이 만들어졌지만 응답이 유실됐다. 같은 키로 조회하면 찾을 수 있다
       if (mockScenario.order === 'unknownCreated' && failOnce('order:created')) throw new ServiceError('REQUEST_TIMEOUT', true);
+      // 같은 키로 이미 만들어진 주문이 있는데 이번 요청의 내용이 다르다. 서버는 오류만 주고, 기존 주문은 키로 조회하면 찾을 수 있다
+      if (mockScenario.order === 'idempotencyConflictOnce' && failOnce('order:idempotency')) throw new ServiceError('IDEMPOTENCY_CONFLICT');
       return order;
     },
 
