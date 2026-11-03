@@ -1,8 +1,10 @@
 # SaveEats 통합 개발 명세서
 
-버전: **v0.3 통합 설계 초안** / 갱신일: 2026-10-29 (Asia/Seoul) / v0.3: 계좌 서버 미저장·기기 보안 저장 및 인증 정책 반영
+버전: **v0.4 통합 설계 초안** / 갱신일: 2026-10-31 (Asia/Seoul) / v0.4: 콘텐츠 출처·이용 안내 반영
 
 **수정 이력**
+
+- **2026-10-31 수정:** SSOT v1.4/PRD v1.3 반영. SRC-001~004에 출처 UI·화면 데이터 경계·검증 항목을 추가하고 OPEN-SRC-001~003으로 저장 방식·공개 정책·문구/연결 검증을 분리했다. 실제 API/DB migration·앱 구현은 수행하지 않는다. 기존 장/ID·계좌·인증 정책 유지.
 
 - **2026-10-29 수정:** SSOT v1.3/PRD v1.2 반영. ARCH-006·DB-003·DB-006·SEC·ORD·TRF·API의 서버 계좌 전제를 제거하고 로컬 AccountVault 경계로 교체. 공개 닉네임 MUST, 실명 미수집, 탈퇴/재설정 준비 중. 기존 장/ID 유지.
   - 계좌정보는 은행·번호·예금주·마스킹·암호문 모두 서버 미저장. 주문에 무작위 `destinationRef`만 전달하는 기술안으로 계좌정보와 주문 원장을 분리한다.
@@ -16,7 +18,7 @@
   - 가게 목록 이름순, 카탈로그 조회 응답 형식: API-001, API-002
   - 개발 단계 가상 데이터: OPS-003, OPEN-DB-009
 
-상위 기준은 **SaveEats 최종 서비스 기획서 v1.3(20261029)**이다. PRD v1.2와 개발 명세 Step 1~9를 근거로 통합했다. 기존 FR/AC와 ARCH/DB/AUTH/SEC/CART/ORD/TRF/REV/IMG/HIST/REC/OPS/EVT/API/TASK ID는 유지한다. 이 문서는 구현·배포·실기기 검증 완료를 의미하지 않는다. 제품 규칙과 기술 제안이 충돌하면 상위 기획서를 우선하고 정책 변경은 별도 반영한다.
+상위 기준은 **SaveEats 최종 서비스 기획서 v1.4(20261031)**이다. PRD v1.3과 개발 명세 Step 1~9를 근거로 통합했다. 기존 FR/AC와 ARCH/DB/AUTH/SEC/CART/ORD/TRF/REV/IMG/HIST/REC/OPS/EVT/API/TASK ID는 유지한다. 이 문서는 구현·배포·실기기 검증 완료를 의미하지 않는다. 제품 규칙과 기술 제안이 충돌하면 상위 기획서를 우선하고 정책 변경은 별도 반영한다.
 
 ## 문서 사용과 범위
 
@@ -1993,6 +1995,46 @@ Store/Menu 이름/가격/사진은 특정 예시를 하드코딩하지 않는다
 
 출처 알 수 없는 인터넷 음식 사진을 ‘상용 사용 가능’으로 저장하지 않는다. 권리 검토 전 이미지에는 검수 상태를 manifest에 둔다. 실제 사용자처럼 보이는 가짜 주문수/리뷰수/땡김도 평균을 catalog Seed 컬럼으로 추가하지 않는다. 발표용 예시 리뷰가 필요하면 분리된 Demo 환경/표시를 사용하며 현재 공개 집계에 섞지 않는다.
 
+### SRC-001 출처·비제휴 안내 — 확정 UX
+
+SSOT 15.1~15.2·37.1·39.1·44, PRD FR-STORE-015~021 / FR-ONB-009 / FR-CONTENT-001~002를 따른다(MUST). 가게 상세 공통 하단의 `출처 확인하기`는 현재 가게의 내부 목록 시트를 연다. 목록은 메뉴/이미지 구분 없는 반복 항목이며 출처명에만 외부 이동 표시 ↗를 붙인다. 실제 외부 이동은 항목 선택 시다.
+
+시트 열기/닫기는 현재 가게·탭·스크롤 상태를 초기화하지 않는다. 닫기 버튼/배경 닫기, 긴 이름 줄바꿈, 긴 목록 내부 스크롤, Safe Area/Cart CTA 비겹침을 제공한다. 출처 없음/미확인은 버튼을 숨기며 빈 시트를 열지 않는다. 누락 콘텐츠의 공개 정책과 확인 중 최종 문구는 미결정이다.
+
+온보딩 2페이지 비제휴 카피와 마이의 공통 이용 안내는 PRD의 정확한 문구를 사용한다. Guest는 공통 안내와 공개 가게 출처에 접근할 수 있고 개인 My 데이터 조회 권한을 얻지 않는다. 알림 기능이 SHOULD라는 이유로 공통 안내 진입을 막지 않는다.
+
+### SRC-002 화면 데이터 경계 — 기술 설계안
+
+아래는 화면에 필요한 논리 값이며 DB 컬럼명·확정 DTO·신규 API 계약이 아니다. `getStore` 포함 여부, 별도 출처 자료/서버 공급 여부와 저장 위치는 OPEN-SRC-001에서 정한다. 기존 catalog@0.1 계약이나 스키마를 이 문서 수정만으로 변경하지 않는다.
+
+| 논리 값 | 용도 / 경계 |
+|---|---|
+| 현재 가게 식별자·이름 | 가게 상세와 시트의 대상 일치 |
+| 출처 항목 목록 | 각 항목의 출처명·자신의 URL. 항목 키/안정된 순서는 실제 공급 계약에서 정의 |
+| 출처 누락/미확인 여부 | 버튼·기본 안내 표시 결정. 검증 완료/사용 허락과 다른 개념 |
+
+`kind: menu/image/both`나 출처 동일 여부 비교는 UI 필수 입력이 아니다. UI 단순화와 별개로 내부 원본 출처·사용 근거·권리 점검 기록은 유지한다. 프로토타입의 VERIFIED/UNVERIFIED를 실제 검증 상태로 복사하거나 주문의 USER_CONFIRMED/VERIFIED와 혼용하지 않는다.
+
+### SRC-003 외부 이동과 프로토타입 경계
+
+실서비스에서는 선택한 항목 자신의 실제 URL을 사용한다. 가게명·유형으로 URL을 추측하거나 없는 URL을 만들어서는 안 된다. URL 검사·외부 이동 방식·실패 시 사용자 피드백은 OPEN-SRC-003에서 구체화하고 플랫폼 지원을 확인한 뒤 구현한다. 출처 URL이 없을 때 가짜 링크로 기능 완료를 표시하지 않는다.
+
+v25는 `SourceNotice → Sheet(sourceList)` 흐름이며 항목 클릭은 프로토타입 전용 미연결 안내 띠만 띄우고 시트를 유지한다. 이 띠, 플레이스홀더, 데모 가게/출처 상태 값은 실제 앱에 옮기지 않는다. URL 연결·저장 방식·서비스 구현 완료의 근거가 아니다. UI 동작을 위해 프로토타입과 같은 DB 필드를 만들 필요도 없다.
+
+### SRC-004 검증 계획과 현재 증거
+
+| 검증 | 완료 판단 |
+|---|---|
+| 1개/복수/긴 이름/긴 목록 | 같은 항목 형태, 줄바꿈·마지막 항목 접근 |
+| 현재 가게/탭 | 다른 가게 출처 혼입 없음, 모든 탭에서 동일 대상 |
+| 닫기 | ✕/바깥 배경 각각 닫기, 기존 탭·스크롤 유지 |
+| 출처 없음/미확인 | 버튼 숨김·기본 안내 중복 없음·빈 시트 없음; 공개 허용 판단과 분리 |
+| 실제 URL | 항목별 목적지·실패 처리 확인; 프로토타입 안내로 대체 불가 |
+| 공용 Sheet | 기존 시트 동작·디자인 회귀 없음 |
+| Guest 공통 안내 | 안내 접근 가능, 개인 데이터 노출/조회 없음 |
+
+2026-10-31 v25 ZIP 정적 검토와 제공 스크린샷에서 기본 안내, 단일 출처 시트, 미연결 안내의 시트 위 표시와 시트 유지, 출처 없음 버튼 숨김을 확인했다. 닫기 콜백과 상태 보존 구조는 소스로 확인했으나 직접 클릭·긴 목록 스크롤·실기기·실제 외부 URL 연결 검증은 완료하지 않았다. 이 표는 검증 계획이며 전체 PASS 보고가 아니다.
+
 ### OPS-004 Seed 적용과 데이터 보호
 
 migration은 schema, seed.sql은 data. FK 순서: categories → stores → menus → groups → options → banners/terms → config. Seed 파일/순서/생성 원본을 Git에서 관리한다. Stable ID로 재적용할 때 선택된 catalog 데이터만 upsert하는 기술안.
@@ -2059,7 +2101,8 @@ local db reset은 로컬/테스트 프로젝트 식별 확인 후 사용. stagin
 
 | 영역 | 논리 계약 | auth | 규칙/상세 |
 |---|---|---|---|
-| 초기 | local onboarding state, getPublicConfig | Guest | 온보딩 최초1회/Skip, OPS-002 |
+| 초기 | local onboarding state, getPublicConfig | Guest | 온보딩 최초1회/Skip·2페이지 비제휴 고지, OPS-002/SRC-001 |
+| 공통 안내 | 정적 서비스 및 콘텐츠 이용 안내 | Guest | 개인 My 조회와 분리; 신규 서버 API 불필요, PRD 40.10/SRC-001 |
 | Auth | signUp/signIn/signOut, ensureMyProfile | Auth SDK/본인 | 이메일 인증 없음, 실명 미수집·닉네임; resetPassword/탈퇴는 MVP 준비 중, 변경 요청 없음 |
 | catalog | getHome/listCategories/listStores/getStore/getMenu | Guest | 활성/품절 표시; 안전 DTO. listStores는 이름 → id 오름차순 cursor(2026-10-01 결정), 메뉴 목록 항목에 isPopular 없음(홈 인기 메뉴는 getHome 계약에서 정함) |
 | search | searchStores/getPopularTerms/localRecentSearches | Guest | Store/Menu/Category 검색→StoreCard only |
@@ -2071,7 +2114,7 @@ local db reset은 로컬/테스트 프로젝트 식별 확인 후 사용. stagin
 | History | listMyOrders/getUnreadState/fetchStatusUpdates/markViewed | 본인 | HIST-002~008 |
 | Review | eligibility/listPublic/listMine/create/update/delete/setHelpful | Guest read/본인 write | REV-002~009 |
 | image | prepare/validate/finalize(ref via review)/getAccess | 본인 upload/Guest active read | IMG-002~005 |
-| My | getMySummary/profile/account/myReviews/settings | 본인 | 완료/KST 간단 기록, 확장 SHOULD |
+| My | getMySummary/profile/account/myReviews/settings | 본인 | 완료/KST 간단 기록, 확장 SHOULD; 정적 공통 이용 안내는 별도 Guest 접근 |
 
 검색 최소 기술안: trim한 1자 이상, 300ms debounce, name/category/menu 부분 매칭, 같은 Store dedupe, 매칭 메뉴명/가격 포함. 초성/오타 보정은 미검증·추가 범위이며 자동 MUST 추가하지 않는다. 결과 순서는 안정된 이름+id 등을 구현 계약에 고정한다. 최근 검색/최근 본(max10)은 로컬, 개인 계정 원문과 분리한다.
 
@@ -2090,6 +2133,8 @@ My 간단 요약은 getMySummary에서 기간(KST)을 검증하고 완료 주문
 | HistoryRow | Order 표시 subset/unreadEventIds/reviewEligibility/currentMenuRefs |
 | Review | reviewId/revision/authorNickname/rating/body/createdAt/editedAt/menus/orderAmount/images/helpful |
 | FeatureConfig | 허용 flag/revision/server fetch 시각 |
+
+가게 상세 출처 화면에 필요한 논리 값은 SRC-002를 따른다. 현재 DTO 표만으로 출처 데이터 저장·API 연동이 구현된 것으로 보지 않는다.
 
 선택적 이미지 실패/없음, 평균없음(null), 로그인 전 favorite 접근 구분을 Mock과 실서버가 같은 방식으로 표현한다. 공개 DTO에 계좌·원본 사용자 정보가 스며들지 않게 schema whitelist로 검사한다.
 
@@ -2177,6 +2222,7 @@ Analytics schema/Mock/작업 분해는 SaveEats 설계안이다. 실제 라이�
 | 읽음 원장과 UI | 정확한 event ID, 50%/1초, 로컬 overlay와 서버 summary 교집합 | 설계안, 실기기 검증 전 |
 | 범위·카피 | 닉네임 MUST 반영, 타 사용자 리뷰 모아보기 LATER, 땡김도 정렬 유지, 탈퇴/재설정 준비 중 | 정책·설계 일치 |
 | 미래 단계 안내 | 작성 예정 표현을 현재 장 참조로 교체, 개발 순서는 T00~T11에 통합 | 문서 반영 완료 |
+| 콘텐츠 출처·이용 안내 | SSOT v1.4/PRD v1.3·v25 참고, SRC-001~004; 예시와 서비스 구현 구분 | UX 반영, 실제 연결·검증 전 |
 
 이 검수는 문서의 규칙과 참조를 정리한 결과다. 코드/RPC/RLS/Storage/Toss 실기기 테스트를 통과했다는 뜻이 아니다. 2026-10-29에 Expo SDK58 SecureStore와 Apple/Android 공식 지원 범위를 확인했으며, SaveEats의 실제 저장·삭제·PoC 검증은 미실행이다.
 
@@ -2196,6 +2242,8 @@ Analytics schema/Mock/작업 분해는 SaveEats 설계안이다. 실제 라이�
 | OPEN-ARCH-009 | My 상세 요약 범위 (정렬 카피는 v1.2에서 땡김도 높은/낮은 순으로 확정) | 상세 지표 MUST 추가 금지 | 확장 요약 |
 | OPEN-DB-008 | 여러 메뉴 주문 리뷰의 메뉴 연결 | 기술안은 주문의 서로 다른 모든 menuId 연결, Review는 1개; UI/PRD 검수 | 메뉴별 리뷰·집계 |
 | DB-007 (HIST-010 참조) | 최초 PENDING 이벤트의 빨간 점 의미 | 이력 최초 이벤트 생성안과 사용자 인지 검수; 새 OPEN ID를 임의 재번호화하지 않음 | 최초 unread UX |
+| OPEN-SRC-002 | 출처 누락·미확인 콘텐츠의 공개/보류 | 버튼 숨김은 공개 승인 아님; 기준 미확정 | 실제 콘텐츠 공개 |
+| OPEN-SRC-003 | 확인 중 최종 문구·연결 실패 UX | 확인 중은 초안, 실제 URL 이동/실패 문구 별도 확정 | 최종 카피·실제 외부 이동 |
 
 ### 10.3 기술·데이터 검증 항목
 
@@ -2217,6 +2265,8 @@ Analytics schema/Mock/작업 분해는 SaveEats 설계안이다. 실제 라이�
 | OPEN-HIST-001 | polling/timer/batch 기술안 | focus/가림/foreground·연속 노출, 15초 주기·50개 조회 상한의 성능 검증 |
 | OPEN-HIST-002 | 읽음 큐/summary 설계안 | pending ID 교집합·중복 재시도·계정 분리·로컬 IO 실패·재시작 검증 |
 | OPEN-ARCH-008 | SHOULD 확장 | Calendar/Badge/신고/알림/통계는 별도 범위 결정, MUST 완료의 선행조건 아님 |
+| OPEN-SRC-001 | 가게별 출처명·URL 공급 경계만 정의 | 저장 위치/DB 스키마/관리 방식·내부 원본/권리기록과의 연결 결정 필요; 기존 catalog 계약 자동 변경 없음 |
+| OPEN-SRC-003 | 프로토타입 소스/일부 화면 확인 | 실제 URL·이동 실패·실기기, 닫기 후 위치 유지·긴 목록·기존 시트 회귀 검증 필요 |
 
 이미 상세 설계된 Cart·복구·이미지는 ‘설계 미작성’으로 되돌리지 않는다. 반대로 설계안 작성만으로 구현·보안·PoC 검증을 완료 처리하지 않는다.
 
