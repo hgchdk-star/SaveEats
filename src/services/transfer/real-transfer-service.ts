@@ -1,4 +1,5 @@
 import { LIMITS } from '@/config/limits';
+import { CATALOG_RPC, type GetPublicFeatureConfigDto } from '@/contracts/catalog';
 import { isPrefillVerified, TOSS_CAPABILITY } from '@/config/toss-capability';
 import type { MockOrder, TransferService } from '@/mocks/order/types';
 import { ServiceError } from '@/services/service-error';
@@ -7,11 +8,11 @@ import { getSupabaseClient } from '@/services/supabase/client';
 import { launchToss } from './toss-launch-adapter';
 
 /**
- * 원격 설정 조회 (혜지 확정 2026-11-02): get_public_feature_config() → { configRevision, fetchedAtServer, flags: { tossDeepLinkEnabled } }.
+ * 원격 설정 조회 (혜지 확정 2026-11-02, 실서버 확인 2026-11-03): get_public_feature_config() → { configRevision, fetchedAtServer, flags: { tossDeepLinkEnabled } }.
  * 앱은 flags.tossDeepLinkEnabled만 읽고, 시간 초과 · 실패 · 값 없음 · boolean이 아닌 값은 모두 false다 (fail-closed).
  * 서버 초기값은 false이고 켜는 것은 서버 운영자가 한다. 이 함수가 서버에 배포되기 전에는 호출이 실패해 false가 된다.
  */
-const GET_PUBLIC_FEATURE_CONFIG = 'get_public_feature_config';
+const GET_PUBLIC_FEATURE_CONFIG = CATALOG_RPC.getPublicFeatureConfig;
 
 async function fetchRemoteTossFlag(): Promise<boolean> {
   const client = getSupabaseClient();
@@ -21,9 +22,9 @@ async function fetchRemoteTossFlag(): Promise<boolean> {
   try {
     const { data, error } = await client.rpc(GET_PUBLIC_FEATURE_CONFIG).abortSignal(controller.signal);
     if (error || typeof data !== 'object' || data === null) return false;
-    const flags = (data as { flags?: unknown }).flags;
+    const flags = (data as Partial<GetPublicFeatureConfigDto>).flags;
     if (typeof flags !== 'object' || flags === null) return false;
-    return (flags as { tossDeepLinkEnabled?: unknown }).tossDeepLinkEnabled === true;
+    return (flags as Partial<GetPublicFeatureConfigDto['flags']>).tossDeepLinkEnabled === true;
   } catch {
     return false;
   } finally {
