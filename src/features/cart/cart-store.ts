@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 
-import { MockCartValidationError, mockValidateCart } from '@/mocks/cart/mock-cart-validation';
+import { MockCartValidationError } from '@/mocks/cart/mock-cart-validation';
+import { validateCart } from '@/services';
 
 import {
   acknowledgePrices,
@@ -116,7 +117,7 @@ export const useCartStore = create<CartState>((set, get) => {
       const ticket = ++validationTicket;
       set({ validation: { phase: 'VALIDATING' } });
       try {
-        const result = await mockValidateCart({ storeId: cart.storeId, items: cart.items });
+        const result = await validateCart({ storeId: cart.storeId, items: cart.items });
         // 더 늦게 시작한 확인이 있으면 이 결과는 버린다
         if (ticket === validationTicket) set({ validation: { phase: 'DONE', result } });
       } catch (error) {
