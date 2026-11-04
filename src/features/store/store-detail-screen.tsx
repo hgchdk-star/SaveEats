@@ -39,6 +39,8 @@ import { resolveImageUrl } from '@/services/image';
 import { colors, size, spacing, text } from '@/theme';
 import { formatCount } from '@/utils/format';
 
+import { StoreSourceSection } from './store-source-section';
+
 type TabId = 'menu' | 'review' | 'info';
 
 const TABS = [
@@ -195,6 +197,9 @@ export function StoreDetailScreen({ storeId }: { storeId: string }) {
             <InfoRow label="영업 상태" value={loaded.isOpen ? draftCopy.store.statusOpen : draftCopy.store.statusClosed} />
           </View>
         ) : null}
+
+        {/* 모든 탭의 마지막 섹션. 같은 가게(loaded.id)의 출처만 보인다 */}
+        <StoreSourceSection storeId={loaded.id} storeName={loaded.name} />
       </ScrollView>
 
       {/* 스크롤하면 탭이 상단 바 바로 아래에 고정된다 */}

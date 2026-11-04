@@ -14,7 +14,7 @@ import { TopNavigation } from '@/components/ui/top-navigation';
 import { confirmedCopy } from '@/config/confirmed-copy';
 import { draftCopy } from '@/config/draft-copy';
 import { useHistoryStore } from '@/features/history/history-store';
-import { goAccount, goLogin, goMonthly, goMyReviews, goNotificationSettings, goSettings } from '@/features/order/flow-routes';
+import { goAccount, goContentGuide, goLogin, goMonthly, goMyReviews, goNotificationSettings, goSettings } from '@/features/order/flow-routes';
 import { useAsync } from '@/hooks/use-async';
 import { myService } from '@/services';
 import { getSession, useSession } from '@/services/session';
@@ -61,6 +61,8 @@ export function MyScreen() {
   const top = <TopNavigation title={copy.title} divider />;
 
   const settingsRow: ListRowSpec = { key: 'settings', label: copy.rowSettings, icon: 'user', onPress: goSettings };
+  // 알림 설정 아래 · 설정 위. Guest도 열 수 있고 개인 데이터는 보여주지 않는다 (FR-CONTENT-001)
+  const contentGuideRow: ListRowSpec = { key: 'content-guide', label: confirmedCopy.contentGuide.title, icon: 'receipt', onPress: goContentGuide };
 
   if (!isMember) {
     return (
@@ -69,8 +71,8 @@ export function MyScreen() {
           <View style={styles.guest}>
             <EmptyState icon="user" title={copy.guestTitle} description={copy.guestDesc} action={<PrimaryButton onPress={() => goLogin({ action: 'TAB', tab: 'my' })}>{copy.guestAction}</PrimaryButton>} />
           </View>
-          {/* 설정(이용 방법 · 약관)은 Guest도 쓴다 */}
-          <ListGroup rows={[settingsRow]} />
+          {/* 이용 안내와 설정(이용 방법 · 약관)은 Guest도 쓴다 */}
+          <ListGroup rows={[contentGuideRow, settingsRow]} />
         </ScrollView>
       </Screen>
     );
@@ -132,7 +134,10 @@ export function MyScreen() {
                   </TextButton>
                 </View>
               ) : (
-                <Text style={[styles.life, styles.lifeText]}>{copy.lifetimeLine(lifetime.data.orderCount, formatWon(lifetime.data.deliveredAmount))}</Text>
+                <View style={styles.life}>
+                  <Text style={styles.lifeText}>{copy.lifetimeLine(lifetime.data.orderCount, formatWon(lifetime.data.deliveredAmount))}</Text>
+                  <Text style={styles.lifeHelp}>{copy.deliveredHelp}</Text>
+                </View>
               )}
             </Section>
           </>
@@ -142,6 +147,7 @@ export function MyScreen() {
           rows={[
             { key: 'reviews', label: copy.rowReviews, icon: 'review', onPress: () => goMyReviews() },
             { key: 'notifications', label: copy.rowNotifications, icon: 'clock', onPress: goNotificationSettings },
+            contentGuideRow,
             settingsRow,
           ]}
         />
@@ -187,6 +193,7 @@ const styles = StyleSheet.create({
   life: { minHeight: 56, justifyContent: 'center', paddingVertical: spacing[3], paddingHorizontal: spacing[4], borderWidth: 1, borderColor: colors.line, borderRadius: radius.lg, backgroundColor: colors.surface },
   lifeRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing[3] },
   lifeText: { ...text.title, color: colors.ink },
+  lifeHelp: { ...text.label, color: colors.inkSecondary },
   lifeError: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 4 },
   lifeErrorText: { ...text.label, color: colors.ink, flexShrink: 1 },
 });

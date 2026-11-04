@@ -102,7 +102,7 @@ export function MonthlySummary({ variant, load, summary, title, onOpen, onRetry 
         <Cell label={copy.monthlyOrders} value={copy.summaryOrders(summary.orderCount)} />
         <Cell label={copy.monthlyDelivered} value={formatWon(summary.deliveredAmount)} />
         <Cell label={copy.monthlyTopFood} value={summary.topCategoryName ?? '-'} />
-        <Cell label={copy.monthlyLargest} value={formatWon(summary.largestOrderAmount)} />
+        <Cell label={copy.monthlyLargest} value={summary.largestOrderAmount === null ? copy.monthlyLargestNone : formatWon(summary.largestOrderAmount)} />
       </View>
     </View>
   );

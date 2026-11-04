@@ -63,6 +63,7 @@ export function MonthlyScreen({ initialMonth }: { initialMonth?: string }) {
           onRetry={() => setRetry((n) => n + 1)}
         />
         <Text style={styles.help}>{copy.monthlyHelp}</Text>
+        <Text style={styles.help}>{copy.deliveredHelp}</Text>
       </ScrollView>
     </Screen>
   );

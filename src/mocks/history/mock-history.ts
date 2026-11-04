@@ -150,7 +150,7 @@ export function createMockHistoryService(): HistoryService {
         orderCount: done.length,
         deliveredAmount: done.reduce((sum, o) => sum + o.approvedTotalAmount, 0),
         topCategoryName: top,
-        largestOrderAmount: done.reduce((max, o) => Math.max(max, o.approvedTotalAmount), 0),
+        largestOrderAmount: done.length === 0 ? null : done.reduce((max, o) => Math.max(max, o.approvedTotalAmount), 0),
       };
       return summary;
     },
