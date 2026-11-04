@@ -113,6 +113,9 @@ export type MockOrder = {
  * IDEMPOTENCY_CONFLICT: 같은 키에 다른 내용이면 서버는 오류만 주고 새 주문을 만들지 않는다. 앱은 키로 조회해 기존 주문을 보여 준다.
  * QUANTITY_LIMIT_EXCEEDED: 같은 메뉴·옵션 조합의 합산이 10을 넘으면 서버가 거절한다. 장바구니는 기기에만 있어 CART_REVISION_CONFLICT는 쓰지 않는다.
  * INVALID_INPUT: 서버가 요청을 받아들이지 않았다(알 수 없는 키 · requestVersion이 2가 아님 · 합친 뒤 30종 초과 · 원본 100줄 초과 · 같은 조합 줄의 승인 단가 불일치 등). 주문이 만들어지지 않았다는 확정 거절이지만, 같은 키의 주문이 이미 있을 수 있어 앱이 키로 한 번 조회한 뒤 거절로 본다.
+ * INVALID_ORDER_TRANSITION: 지금 상태에서는 할 수 없는 완료·취소(이미 취소된 주문을 완료하거나, 이미 완료된 주문을 취소). 앱은 서버 상태를 읽어 그대로 보여 준다.
+ * OPERATION_CONFLICT: 같은 주문에서 이 operationId가 이미 다른 종류의 명령에 쓰였다(취소 번호로 완료, 생성 키 재사용 등). 다른 주문에서 쓴 번호는 충돌이 아니다.
+ *   같은 번호로 다시 보내지 않고 서버 상태를 읽은 뒤 새 operationId로 한 번 더 보낸다.
  * ACCOUNT_REQUIRED · ACCOUNT_REVISION_CONFLICT는 서버가 계좌를 몰라서 앱이 주문 전에 로컬에서 판단하는 코드다.
  */
 export type OrderFailureCode =
@@ -124,6 +127,8 @@ export type OrderFailureCode =
   | 'DISCLOSURE_VERSION_UNSUPPORTED'
   | 'INVALID_INPUT'
   | 'IDEMPOTENCY_CONFLICT'
+  | 'INVALID_ORDER_TRANSITION'
+  | 'OPERATION_CONFLICT'
   | 'ACCOUNT_REQUIRED'
   | 'ACCOUNT_REVISION_CONFLICT'
   | 'NETWORK_UNAVAILABLE'

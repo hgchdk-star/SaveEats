@@ -21,6 +21,7 @@ import { createLocalId } from '@/utils/id';
 
 import { isValidCatalogRevision, type CartEnvelope } from '@/features/cart/cart-model';
 
+import { confirmOnServer } from './confirm-on-server';
 import { clearAttempt, clearConfirmQueue, loadConfirmQueue, saveAttempt, saveConfirmQueue } from './order-persistence';
 import { useOrderFlowStore, type RejectedReason } from './order-flow-store';
 
@@ -405,7 +406,7 @@ export async function confirmOrder(opts: { navigateToQuestion: boolean }): Promi
   }
 
   try {
-    const confirmed = await orderService.confirmOrder(order.orderId, operationId);
+    const confirmed = await confirmOnServer(order.orderId, operationId);
     void clearConfirmQueue();
     flow().set({ order: confirmed, work: 'SERVER_CONFIRMED' });
     syncHistory();
@@ -420,7 +421,13 @@ export async function confirmOrder(opts: { navigateToQuestion: boolean }): Promi
   }
 }
 
-/** SaveEats 주문 기록을 취소한다 (PENDING만). 결과를 못 받으면 취소됐다고 단정하지 않는다 */
+/**
+ * SaveEats 주문 기록을 취소한다 (PENDING만). 결과를 못 받으면 취소됐다고 단정하지 않는다.
+ * 서버가 분명히 답한 두 경우는 "결과 모름"으로 두지 않는다 (혜지 확인 2026-11-04):
+ * - INVALID_ORDER_TRANSITION: 이미 완료된(또는 취소된) 주문이다. 서버 상태를 읽어 그대로 보여 준다.
+ * - OPERATION_CONFLICT: 이 operationId가 다른 명령에 쓰였다. 같은 번호로는 계속 실패하니 버리고, 서버 상태를 읽어 보여 준다.
+ *   아직 PENDING이면 새 번호로 다시 눌러 취소할 수 있게 둔다(자동으로 다시 보내지 않는다).
+ */
 export async function cancelOrder(): Promise<void> {
   const state = flow();
   const order = state.order;
@@ -432,7 +439,23 @@ export async function cancelOrder(): Promise<void> {
     flow().set({ order: cancelled, work: 'READY' });
     syncHistory();
     router.replace('/order/cancelled');
-  } catch {
+  } catch (error) {
+    const code = errorCode(error);
+    if (code === 'INVALID_ORDER_TRANSITION') {
+      flow().set({ cancelOperationId: null });
+      startReturnCheck('replace');
+      return;
+    }
+    if (code === 'OPERATION_CONFLICT') {
+      flow().set({ cancelOperationId: null, work: 'CANCEL_UNKNOWN' });
+      try {
+        const latest = await orderService.getOrderStatus(order.orderId);
+        if (latest.status !== 'PENDING') startReturnCheck('replace');
+      } catch {
+        // 상태를 읽지 못했다. 결과를 모르는 상태로 두고 다시 시도하게 한다
+      }
+      return;
+    }
     flow().set({ work: 'CANCEL_UNKNOWN' });
   }
 }
