@@ -8,6 +8,7 @@ import { createMockCatalogRepository } from '@/mocks/catalog/mock-catalog-reposi
 import { createMockHistoryService } from '@/mocks/history/mock-history';
 import { createMockReviewService } from '@/mocks/history/mock-review';
 import type { HistoryService, ReviewService } from '@/mocks/history/types';
+import { mockValidateCart } from '@/mocks/cart/mock-cart-validation';
 import { createMockMyService } from '@/mocks/my/mock-my';
 import type { MyService } from '@/mocks/my/types';
 import { createMockOrderService } from '@/mocks/order/mock-order';
@@ -17,7 +18,9 @@ import type { AccountService, AuthService, OrderService, TransferService } from 
 import { withLocalDestination, withLocalDestinationHistory } from './order/with-local-destination';
 import { createDestinationResolver } from './transfer/destination-resolver';
 import { createRealTransferService, createTossLauncher } from './transfer/real-transfer-service';
+import { createCatalogCartValidator } from './cart/validate-cart';
 import { createSupabaseAuthService } from './auth/supabase-auth-service';
+import { createSupabaseOrderService } from './order/supabase-order-service';
 import { createSupabaseMyService } from './profile/supabase-profile';
 import { createVaultAccountService, loadAccountFromVault } from './account/vault-account-service';
 import type { CatalogRepository } from './catalog/catalog-repository';
@@ -37,8 +40,11 @@ export const accountVault: AccountVault = createAccountVault(deviceSecureStore);
 export const accountService: AccountService = createVaultAccountService(accountVault);
 /** 로그인 직후 이 기기에 저장된 계좌를 세션에 올린다 */
 export const loadDeviceAccountIntoSession = (): Promise<void> => loadAccountFromVault(accountVault);
-// TODO(혜지·지우 합의 전): 주문 생성·조회·완료 확인 API와 오류 응답 계약이 없어 orderService는 아직 Mock이다. 계약이 확정되면 여기서 교체한다.
-export const orderService: OrderService = withLocalDestination(createMockOrderService());
+// 주문: supabase 모드에서는 실서버(create_order · get_order_by_request_key · get_my_order · confirm_order · cancel_order), mock 모드에서는 Mock.
+// 서버는 계좌를 몰라서 응답에 목적지가 없다. 어느 쪽이든 기기에 저장한 은행명·끝 4자리를 서비스 경계에서 합친다(withLocalDestination).
+export const orderService: OrderService = withLocalDestination(dataSource === 'supabase' ? createSupabaseOrderService() : createMockOrderService());
+// 장바구니 가격·품절 확인: supabase 모드에서는 서버 카탈로그(get_menu)로 다시 읽어 판단하고, mock 모드에서는 시나리오가 있는 Mock이다.
+export const validateCart = dataSource === 'supabase' ? createCatalogCartValidator(catalogRepository) : mockValidateCart;
 // 계좌 원문은 데이터 소스와 상관없이 기기 보안 저장소에서 꺼낸다. 토스 실행·원격 설정은 supabase 모드에서만 실제 구현(현재 fail-closed)이다.
 const resolveDestination = createDestinationResolver(accountVault);
 const transferDeps = { resolveDestinationAccountNumber: resolveDestination, getOrder: (orderId: string) => orderService.getOrderStatus(orderId) };
