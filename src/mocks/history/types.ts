@@ -29,7 +29,9 @@ export type MockReviewEligibility = {
 /** 내역 한 줄 = 주문 + 읽지 않은 업데이트 + 리뷰 자격 + 지금도 볼 수 있는 메뉴 (HIST-002) */
 export type MockHistoryRow = MockOrder & {
   unreadUpdates: MockStatusUpdate[];
-  reviewEligibility: MockReviewEligibility;
+  /** 서버가 주지 않으면 null이다(리뷰 서버가 생기기 전의 첫 버전). null이면 리뷰 작성 버튼을 숨긴다 (혜지 확인 2026-11-04) */
+  reviewEligibility: MockReviewEligibility | null;
+  /** 메뉴와 가게가 활성이면 포함(품절 · 영업 종료도 포함), 비활성 · 사라진 것만 제외 */
   validCurrentMenuRefs: Uuid[];
 };
 

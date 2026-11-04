@@ -52,7 +52,8 @@ export function hasUnreadUpdate(unread: MockUnreadSummary['unreadEvents'] | null
 /** 리뷰 버튼 (REV-002). Case A·C = 리뷰 쓰기 / B = 작성 완료 · 보기 / D·E = 기간이 지났어요 / 그 외 = 버튼 없음 */
 export type ReviewButton = 'available' | 'written' | 'expired';
 
-export function reviewButtonOf(eligibility: MockReviewEligibility): ReviewButton | null {
+export function reviewButtonOf(eligibility: MockReviewEligibility | null): ReviewButton | null {
+  if (!eligibility) return null; // 서버가 리뷰 자격을 주지 않으면 리뷰 작성 버튼을 숨긴다
   switch (eligibility.eligibility) {
     case 'CAN_WRITE':
       return 'available';

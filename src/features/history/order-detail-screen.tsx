@@ -89,7 +89,7 @@ export function OrderDetailScreen({ orderId }: { orderId: string }) {
             <Text style={styles.reviewHelp}>{copy.detailReviewHelp}</Text>
             <ReviewWriteButton
               status={review}
-              onPress={() => (review === 'written' && row.reviewEligibility.activeReviewId ? goMyReviews(row.reviewEligibility.activeReviewId) : goReviewWrite(row.orderId))}
+              onPress={() => (review === 'written' && row.reviewEligibility?.activeReviewId ? goMyReviews(row.reviewEligibility.activeReviewId) : goReviewWrite(row.orderId))}
             />
           </View>
         ) : null}
