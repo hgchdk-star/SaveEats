@@ -169,7 +169,7 @@ export function ReviewListSection({ scope, reportEnabled, errorDescription }: Pr
           return (
             <ReviewCard
               key={review.reviewId}
-              author={review.maskedAuthorName}
+              author={review.authorNickname ?? draftCopy.nickname.fallbackName}
               isMine={review.isMine}
               rating={review.rating}
               date={formatReviewDate(review.createdAt, now)}

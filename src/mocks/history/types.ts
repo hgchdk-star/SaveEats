@@ -75,13 +75,14 @@ export type ReviewSort = 'LATEST' | 'HELPFUL' | 'RATING_DESC' | 'RATING_ASC';
 
 export type ReviewScope = { type: 'store' | 'menu'; id: Uuid };
 
-/** 공개 리뷰 (REV-008). 이름은 마스킹된 표시명만, 계좌·내부 ID는 없다 */
+/** 공개 리뷰 (REV-008). 작성자는 공개 닉네임만 보여 주고, 계좌·내부 ID는 없다 */
 export type MockReview = {
   reviewId: string;
   orderId: string;
   storeId: Uuid;
   menuIds: Uuid[];
-  maskedAuthorName: string;
+  /** 공개 닉네임. 닉네임이 없는 작성자는 서버가 null을 주고, 앱이 "SaveEats 이용자"로 표시한다 (혜지 확인 2026-11-04) */
+  authorNickname: string | null;
   /** 로그인한 사용자 본인의 리뷰인지. Guest에게는 항상 false */
   isMine: boolean;
   /** 땡김도 1~5 (맛 평가가 아니다) */
