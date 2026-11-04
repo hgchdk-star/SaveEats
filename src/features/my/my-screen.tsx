@@ -132,7 +132,10 @@ export function MyScreen() {
                   </TextButton>
                 </View>
               ) : (
-                <Text style={[styles.life, styles.lifeText]}>{copy.lifetimeLine(lifetime.data.orderCount, formatWon(lifetime.data.deliveredAmount))}</Text>
+                <View style={styles.life}>
+                  <Text style={styles.lifeText}>{copy.lifetimeLine(lifetime.data.orderCount, formatWon(lifetime.data.deliveredAmount))}</Text>
+                  <Text style={styles.lifeHelp}>{copy.deliveredHelp}</Text>
+                </View>
               )}
             </Section>
           </>
@@ -187,6 +190,7 @@ const styles = StyleSheet.create({
   life: { minHeight: 56, justifyContent: 'center', paddingVertical: spacing[3], paddingHorizontal: spacing[4], borderWidth: 1, borderColor: colors.line, borderRadius: radius.lg, backgroundColor: colors.surface },
   lifeRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing[3] },
   lifeText: { ...text.title, color: colors.ink },
+  lifeHelp: { ...text.label, color: colors.inkSecondary },
   lifeError: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 4 },
   lifeErrorText: { ...text.label, color: colors.ink, flexShrink: 1 },
 });
