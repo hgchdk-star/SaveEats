@@ -14,7 +14,8 @@ type ReviewSummaryProps = {
   average: number | null;
   count: number;
   photoOnly: boolean;
-  onTogglePhotoOnly: () => void;
+  /** 없으면 사진 필터를 보이지 않는다(서버가 사진을 받지 않는 동안) */
+  onTogglePhotoOnly?: () => void;
   sortLabel: string;
   onOpenSort: () => void;
 };
@@ -39,7 +40,7 @@ export function ReviewSummary({ average, count, photoOnly, onTogglePhotoOnly, so
       ) : null}
       <Text style={styles.count}>{hasReviews ? draftCopy.review.countLabel(formatCount(count)) : draftCopy.review.noReviews}</Text>
       <View style={styles.bar}>
-        <FilterChip label={draftCopy.review.photoFilter} selected={photoOnly} onPress={onTogglePhotoOnly} />
+        {onTogglePhotoOnly ? <FilterChip label={draftCopy.review.photoFilter} selected={photoOnly} onPress={onTogglePhotoOnly} /> : <View />}
         <Pressable accessibilityRole="button" accessibilityLabel={`정렬: ${sortLabel}`} onPress={onOpenSort} style={styles.sort}>
           <Text style={styles.sortLabel}>{sortLabel}</Text>
           <Icon name="chevronDown" size={16} color={colors.ink} />

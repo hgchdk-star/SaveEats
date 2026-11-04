@@ -21,6 +21,7 @@ import { createDestinationResolver } from './transfer/destination-resolver';
 import { createRealTransferService, createTossLauncher } from './transfer/real-transfer-service';
 import { createCatalogCartValidator } from './cart/validate-cart';
 import { createSupabaseAuthService } from './auth/supabase-auth-service';
+import { createSupabaseReviewService } from './review/supabase-review-service';
 import { createSupabaseHistoryService } from './order/supabase-history-service';
 import { createSupabaseOrderService } from './order/supabase-order-service';
 import { createSupabaseMyService } from './profile/supabase-profile';
@@ -75,7 +76,9 @@ export const transferService: TransferService =
 // 내역: supabase 모드에서는 목록 · 한 건 · 안 읽은 요약 · 읽음 표시가 실서버이고, 월간 요약은 서버 함수가 아직 없어 Mock이다.
 const mockHistory = createMockHistoryService();
 export const historyService: HistoryService = withLocalDestinationHistory(dataSource === 'supabase' ? createSupabaseHistoryService(mockHistory) : mockHistory);
-export const reviewService: ReviewService = createMockReviewService();
+// 리뷰: supabase 모드에서는 실서버다. 사진은 서버가 받지 않아 이 모드에서는 사진 선택 · 사진 필터를 숨긴다.
+export const reviewService: ReviewService = dataSource === 'supabase' ? createSupabaseReviewService() : createMockReviewService();
+export const reviewPhotosEnabled = dataSource !== 'supabase';
 // 프로필(닉네임)만 supabase 모드에서 서버(get_my_profile · set_my_nickname)를 쓴다. 알림 설정·누적 기록은 아직 Mock이다.
 export const myService: MyService = dataSource === 'supabase' ? createSupabaseMyService(createMockMyService()) : createMockMyService();
 // 검색: 서버 모드에서는 가게 검색만 서버(search_stores)다. 인기 검색어는 서버 함수가 아직 없고 Mock 목록은 서버 데이터에서

@@ -33,6 +33,14 @@ const SERVER_CODES: readonly string[] = [
   'RESOURCE_NOT_FOUND',
   'INVALID_ORDER_TRANSITION',
   'OPERATION_CONFLICT',
+  // 리뷰 (혜지, 2026-11-04)
+  'ORDER_NOT_COMPLETED',
+  'REVIEW_OPERATION_CONFLICT',
+  'REVIEW_DEADLINE_EXCEEDED',
+  'INVALID_REVIEW_INPUT',
+  'ACTIVE_REVIEW_EXISTS',
+  'REVIEW_REVISION_CONFLICT',
+  'SELF_HELPFUL_NOT_ALLOWED',
 ];
 
 export async function callOrderRpc(name: string, args: Record<string, unknown>): Promise<unknown> {

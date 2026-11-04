@@ -12,7 +12,7 @@ import { LIMITS } from '@/config/limits';
 import { draftCopy } from '@/config/draft-copy';
 import { goReviewEdit } from '@/features/order/flow-routes';
 import type { MockReview, ReviewScope, ReviewSort, ReviewSummary as Summary } from '@/mocks/history/types';
-import { reviewService } from '@/services';
+import { reviewPhotosEnabled, reviewService } from '@/services';
 import { useSession } from '@/services/session';
 import { colors, spacing, text } from '@/theme';
 import { formatReviewDate } from '@/utils/date';
@@ -155,7 +155,7 @@ export function ReviewListSection({ scope, reportEnabled, errorDescription }: Pr
         average={current.summary.average}
         count={current.summary.count}
         photoOnly={photoOnly}
-        onTogglePhotoOnly={() => setPhotoOnly((v) => !v)}
+        onTogglePhotoOnly={reviewPhotosEnabled ? () => setPhotoOnly((v) => !v) : undefined}
         sortLabel={sortLabel(sort)}
         onOpenSort={() => setSortOpen(true)}
       />
