@@ -74,6 +74,7 @@ export function createMockOrderService(): OrderService {
 
       if (mockScenario.order === 'priceChangedOnce' && failOnce('order:price')) throw new ServiceError('PRICE_CHANGED');
       if (mockScenario.order === 'itemUnavailableOnce' && failOnce('order:item')) throw new ServiceError('ITEM_UNAVAILABLE');
+      if (mockScenario.order === 'invalidInputOnce' && failOnce('order:invalid')) throw new ServiceError('INVALID_INPUT');
       if (mockScenario.order === 'disclosureUnsupportedOnce' && failOnce('order:disclosure')) throw new ServiceError('DISCLOSURE_VERSION_UNSUPPORTED');
       // 응답을 못 받았고 서버에는 아무것도 없다. 같은 키로 다시 보내면 성공한다
       if (mockScenario.order === 'unknownLost' && failOnce('order:lost')) throw new ServiceError('REQUEST_TIMEOUT', true);

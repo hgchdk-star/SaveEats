@@ -7,7 +7,7 @@ import { getSupabaseClient } from '@/services/supabase/client';
 import { maskEmail } from '@/utils/mask';
 
 /**
- * 닉네임 저장·프로필 조회 (혜지와 합의 2026-11-03, 서버 배포 전이다). 모양은 src/contracts/catalog.ts.
+ * 닉네임 저장·프로필 조회 (혜지와 합의 2026-11-03, 같은 날 실서버에서 호출해 확인했다). 모양은 src/contracts/catalog.ts.
  * - set_my_nickname({ p_nickname }) → { nickname }. 가입 직후 저장과 설정에서 변경에 같이 쓴다. 같은 값을 다시 보내도 같은 결과다.
  *   오류는 NICKNAME_INVALID와 AUTH_REQUIRED다. 서버는 앞뒤 일반 공백만 지우고 탭·줄바꿈·전각 공백은 거절하지만, 앱은 먼저 trim()한다.
  * - get_my_profile() → { nickname: null | 문자열 }. profiles 테이블을 select *로 읽지 않는다. name은 받지 않는다.
