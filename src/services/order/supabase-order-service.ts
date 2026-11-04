@@ -35,7 +35,7 @@ const SERVER_CODES: readonly string[] = [
   'OPERATION_CONFLICT',
 ];
 
-async function call(name: string, args: Record<string, unknown>): Promise<unknown> {
+export async function callOrderRpc(name: string, args: Record<string, unknown>): Promise<unknown> {
   const client = getSupabaseClient();
   if (!client) throw new ServiceError('AUTH_UNAVAILABLE');
   const controller = new AbortController();
@@ -61,25 +61,25 @@ async function call(name: string, args: Record<string, unknown>): Promise<unknow
 export function createSupabaseOrderService(): OrderService {
   return {
     async createOrder(request) {
-      return parseOrderDto(await call('create_order', { p_request: request }), request.idempotencyKey);
+      return parseOrderDto(await callOrderRpc('create_order', { p_request: request }), request.idempotencyKey);
     },
 
     async getOrderByRequestKey(idempotencyKey) {
-      const data = await call('get_order_by_request_key', { p_idempotency_key: idempotencyKey });
+      const data = await callOrderRpc('get_order_by_request_key', { p_idempotency_key: idempotencyKey });
       return data === null ? null : parseOrderDto(data, idempotencyKey);
     },
 
     // 주문 한 건 조회에는 생성 키가 오지 않는다. 앱 화면은 이 값을 쓰지 않는다
     async getOrderStatus(orderId): Promise<MockOrder> {
-      return parseOrderDto(await call('get_my_order', { p_order_id: orderId }), '');
+      return parseOrderDto(await callOrderRpc('get_my_order', { p_order_id: orderId }), '');
     },
 
     async confirmOrder(orderId, operationId) {
-      return parseOrderDto(await call('confirm_order', { p_order_id: orderId, p_operation_id: operationId }), '');
+      return parseOrderDto(await callOrderRpc('confirm_order', { p_order_id: orderId, p_operation_id: operationId }), '');
     },
 
     async cancelOrder(orderId, operationId) {
-      return parseOrderDto(await call('cancel_order', { p_order_id: orderId, p_operation_id: operationId }), '');
+      return parseOrderDto(await callOrderRpc('cancel_order', { p_order_id: orderId, p_operation_id: operationId }), '');
     },
   };
 }

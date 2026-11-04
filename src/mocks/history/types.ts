@@ -53,7 +53,8 @@ export type MockMonthlySummary = {
   orderCount: number;
   deliveredAmount: Won;
   topCategoryName: string | null;
-  largestOrderAmount: Won;
+  /** 해당 월 주문 완료 중 최대 금액. 대상 주문이 없으면 null(0원으로 대신하지 않는다) */
+  largestOrderAmount: Won | null;
 };
 
 /** 내역 조회 실패는 첫 페이지면 전체 오류, 다음 페이지면 기존 목록 유지 + 다시 시도 */

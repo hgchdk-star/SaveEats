@@ -21,6 +21,7 @@ import { createDestinationResolver } from './transfer/destination-resolver';
 import { createRealTransferService, createTossLauncher } from './transfer/real-transfer-service';
 import { createCatalogCartValidator } from './cart/validate-cart';
 import { createSupabaseAuthService } from './auth/supabase-auth-service';
+import { createSupabaseHistoryService } from './order/supabase-history-service';
 import { createSupabaseOrderService } from './order/supabase-order-service';
 import { createSupabaseMyService } from './profile/supabase-profile';
 import { createVaultAccountService, loadAccountFromVault } from './account/vault-account-service';
@@ -71,7 +72,9 @@ export const transferService: TransferService =
             }
           : {}),
       };
-export const historyService: HistoryService = withLocalDestinationHistory(createMockHistoryService());
+// 내역: supabase 모드에서는 목록 · 한 건 · 안 읽은 요약 · 읽음 표시가 실서버이고, 월간 요약은 서버 함수가 아직 없어 Mock이다.
+const mockHistory = createMockHistoryService();
+export const historyService: HistoryService = withLocalDestinationHistory(dataSource === 'supabase' ? createSupabaseHistoryService(mockHistory) : mockHistory);
 export const reviewService: ReviewService = createMockReviewService();
 // 프로필(닉네임)만 supabase 모드에서 서버(get_my_profile · set_my_nickname)를 쓴다. 알림 설정·누적 기록은 아직 Mock이다.
 export const myService: MyService = dataSource === 'supabase' ? createSupabaseMyService(createMockMyService()) : createMockMyService();
