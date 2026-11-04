@@ -89,16 +89,18 @@ create function public.zrow_shape(r jsonb) returns text language plpgsql as $$
 declare v_u jsonb; v_ref jsonb; v_base text;
 begin
   if (select array_agg(k order by k) from jsonb_object_keys(r) k)
-     is distinct from array['cancelledAt', 'completedAt', 'createdAt', 'orderId', 'snapshot', 'status', 'statusRevision', 'totalAmount', 'unreadUpdates', 'validCurrentMenuRefs'] then
+     is distinct from array['cancelledAt', 'completedAt', 'createdAt', 'orderId', 'reviewEligibility', 'snapshot', 'status', 'statusRevision', 'totalAmount', 'unreadUpdates', 'validCurrentMenuRefs'] then
     return 'row keys';
   end if;
-  v_base := public.zdto_shape(r - 'unreadUpdates' - 'validCurrentMenuRefs');
+  v_base := public.zdto_shape(r - 'unreadUpdates' - 'validCurrentMenuRefs' - 'reviewEligibility');
   if v_base <> 'OK' then return 'order dto: ' || v_base; end if;
   if jsonb_typeof(r -> 'unreadUpdates') <> 'array' then return 'unreadUpdates type'; end if;
   for v_u in select e from jsonb_array_elements(r -> 'unreadUpdates') e loop
     if (select array_agg(k order by k) from jsonb_object_keys(v_u) k) is distinct from array['createdAt', 'eventId', 'revision'] then return 'unread keys'; end if;
     if jsonb_typeof(v_u -> 'eventId') <> 'string' or jsonb_typeof(v_u -> 'revision') <> 'number' or jsonb_typeof(v_u -> 'createdAt') <> 'string' then return 'unread types'; end if;
   end loop;
+  if (select array_agg(k order by k) from jsonb_object_keys(r -> 'reviewEligibility') k) is distinct from array['activeReviewId', 'completedAt', 'eligibility', 'reviewDeadline', 'serverNow'] then return 'eligibility keys'; end if;
+  if not coalesce((r -> 'reviewEligibility' ->> 'eligibility') = any (array['CAN_WRITE', 'HAS_ACTIVE_REVIEW', 'DEADLINE_EXCEEDED', 'NOT_COMPLETED']), false) then return 'eligibility value'; end if;
   if jsonb_typeof(r -> 'validCurrentMenuRefs') <> 'array' then return 'refs type'; end if;
   for v_ref in select e from jsonb_array_elements(r -> 'validCurrentMenuRefs') e loop
     if jsonb_typeof(v_ref) <> 'string' then return 'ref element type'; end if;
@@ -234,12 +236,14 @@ select is((select string_agg(e ->> 'orderId', ',' order by ord) from jsonb_array
 select is(current_setting('zz.p')::jsonb -> 'items' -> 0 ->> 'orderId', public.zo('om3')::text, '가장 최근 주문이 맨 위');
 select is((select count(*)::int from jsonb_array_elements(current_setting('zz.p')::jsonb -> 'items') e where e ->> 'orderId' = public.zo('ob')::text), 0, 'B의 주문은 A의 목록에 없다');
 select is((select string_agg(public.zrow_shape(e), ',') from jsonb_array_elements(current_setting('zz.p')::jsonb -> 'items') e where public.zrow_shape(e) <> 'OK'), null,
-  '모든 행이 앱 파서 모양(주문 DTO + unreadUpdates + validCurrentMenuRefs, reviewEligibility 없음)');
-select is((select count(*)::int from jsonb_array_elements(current_setting('zz.p')::jsonb -> 'items') e where e ? 'reviewEligibility' or e ? 'replayed'), 0, 'reviewEligibility · replayed 키가 없다');
+  '모든 행이 앱 파서 모양(주문 DTO + unreadUpdates + validCurrentMenuRefs + reviewEligibility)');
+select is((select count(*)::int from jsonb_array_elements(current_setting('zz.p')::jsonb -> 'items') e where e ? 'replayed'), 0, 'replayed 키가 없다 (생성 응답 전용)');
+select is((select count(*)::int from jsonb_array_elements(current_setting('zz.p')::jsonb -> 'items') e where e ? 'reviewEligibility'), 13, '모든 행에 reviewEligibility가 있다 (리뷰 서버 PR에서 추가됨)');
+select is((select count(*)::int from jsonb_array_elements(current_setting('zz.p')::jsonb -> 'items') e where e ? 'images'), 0, 'images 키는 없다 (사진은 후속)');
 select is((select count(*)::int from jsonb_array_elements(current_setting('zz.p')::jsonb -> 'items') e
-    where e <> public.get_my_history_order((e ->> 'orderId')::uuid)), 0, '목록의 각 행은 단건 조회와 같다');
+    where (e #- '{reviewEligibility,serverNow}') <> (public.get_my_history_order((e ->> 'orderId')::uuid) #- '{reviewEligibility,serverNow}')), 0, '목록의 각 행은 단건 조회와 같다 (조회 시각 serverNow만 다를 수 있다)');
 select is((select count(*)::int from jsonb_array_elements(current_setting('zz.p')::jsonb -> 'items') e
-    where (e - 'unreadUpdates' - 'validCurrentMenuRefs') <> public.get_my_order((e ->> 'orderId')::uuid)), 0, '주문 DTO 부분은 get_my_order와 같다');
+    where (e - 'unreadUpdates' - 'validCurrentMenuRefs' - 'reviewEligibility') <> public.get_my_order((e ->> 'orderId')::uuid)), 0, '주문 DTO 부분은 get_my_order와 같다');
 select ok(not (public.get_my_order(public.zo('o5')) ? 'unreadUpdates'), '(확인) get_my_order는 바뀌지 않았다: unreadUpdates 키 없음');
 
 -- 페이지 크기
@@ -383,7 +387,7 @@ set local role authenticated;
 select ok(public.test_err($$update public.order_status_updates set viewed_at = now()$$, '42501'), '[A] 이력 직접 UPDATE 금지 (읽음 처리는 함수로만)');
 
 -- ---------------------------------------------------------------- 단건 조회
-select is(public.get_my_history_order(public.zo('om1')), (select e from jsonb_array_elements(public.list_my_orders(null, 50) -> 'items') e where e ->> 'orderId' = public.zo('om1')::text), '단건 조회 = 목록의 같은 행');
+select is(public.get_my_history_order(public.zo('om1')) #- '{reviewEligibility,serverNow}', (select e #- '{reviewEligibility,serverNow}' from jsonb_array_elements(public.list_my_orders(null, 50) -> 'items') e where e ->> 'orderId' = public.zo('om1')::text), '단건 조회 = 목록의 같은 행 (serverNow 제외)');
 select ok(public.test_err($$select public.get_my_history_order(null)$$, 'P0001', 'INVALID_INPUT'), '주문 ID null → INVALID_INPUT');
 select ok(public.test_err($$select public.get_my_history_order(gen_random_uuid())$$, 'P0001', 'RESOURCE_NOT_FOUND'), '없는 주문 → RESOURCE_NOT_FOUND');
 select ok(public.test_err(format('select public.get_my_history_order(%L)', public.zo('ob')), 'P0001', 'RESOURCE_NOT_FOUND'), '남의 주문 → RESOURCE_NOT_FOUND (없는 주문과 구별되지 않는다)');
