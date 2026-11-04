@@ -66,11 +66,14 @@ export function parseOrderDto(data: unknown, idempotencyKey: string): MockOrder 
  */
 const ELIGIBILITIES: readonly string[] = ['CAN_WRITE', 'HAS_ACTIVE_REVIEW', 'DEADLINE_EXCEEDED', 'NOT_COMPLETED'];
 
+/**
+ * 내역 행의 reviewEligibility. 모양을 알 수 없으면 null(리뷰 버튼 숨김)로 받는다.
+ * 리뷰 자격은 부가 정보라, 모양이 달라도 주문 내역 전체가 INVALID_RESPONSE로 실패하지 않게 한다.
+ */
 function parseEligibility(value: unknown): MockReviewEligibility | null {
   if (value === undefined || value === null) return null;
-  const bad = () => new ServiceError('INVALID_RESPONSE');
-  if (!isObj(value) || !isStr(value.serverNow) || !isStrOrNull(value.completedAt) || !isStrOrNull(value.reviewDeadline) || !isStrOrNull(value.activeReviewId)) throw bad();
-  if (!isStr(value.eligibility) || !ELIGIBILITIES.includes(value.eligibility)) throw bad();
+  if (!isObj(value) || !isStr(value.serverNow) || !isStrOrNull(value.completedAt) || !isStrOrNull(value.reviewDeadline) || !isStrOrNull(value.activeReviewId)) return null;
+  if (!isStr(value.eligibility) || !ELIGIBILITIES.includes(value.eligibility)) return null;
   return {
     serverNow: value.serverNow,
     completedAt: value.completedAt,
