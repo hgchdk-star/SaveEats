@@ -47,9 +47,9 @@ export type MockScenario = {
   /** 외부 앱에서 돌아온 뒤 서버 상태 조회 (TRF-008) */
   statusQuery: 'ok' | 'failOnce' | 'alreadyConfirmed' | 'alreadyCancelled';
   /** '주문 완료했어요' 저장 (ORD-008 · 010) */
-  confirm: 'ok' | 'failOnce';
+  confirm: 'ok' | 'failOnce' | 'operationConflictOnce';
   /** 주문 취소 (ORD-009): unknownOnce는 취소는 적용됐는데 응답을 못 받는 경우 */
-  cancel: 'ok' | 'unknownOnce';
+  cancel: 'ok' | 'unknownOnce' | 'alreadyConfirmedOnce' | 'operationConflictOnce';
   /** 클립보드 쓰기 실패 (TRF-007) */
   clipboardFails: boolean;
 
@@ -181,6 +181,9 @@ const SCENARIOS = {
   returnAlreadyCancelled: { ...BASE, auth: 'member', statusQuery: 'alreadyCancelled' },
   confirmSaveFails: { ...BASE, auth: 'member', confirm: 'failOnce' },
   cancelUnknown: { ...BASE, auth: 'member', cancel: 'unknownOnce' },
+  cancelAlreadyConfirmed: { ...BASE, auth: 'member', cancel: 'alreadyConfirmedOnce' },
+  cancelOperationConflict: { ...BASE, auth: 'member', cancel: 'operationConflictOnce' },
+  confirmOperationConflict: { ...BASE, auth: 'member', confirm: 'operationConflictOnce' },
   clipboardFails: { ...BASE, auth: 'member', clipboardFails: true },
 
   // ---- 묶음 3: 내역·리뷰 (Guest로 시작하면 내역·리뷰 쓰기의 로그인 유도를 볼 수 있다) ----

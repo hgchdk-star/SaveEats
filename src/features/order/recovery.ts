@@ -5,6 +5,7 @@ import { getSession } from '@/services/session';
 import { saveOrderDestinationLink } from '@/services/transfer/order-destination-link';
 import { errorCode } from '@/services/service-error';
 
+import { confirmOnServer } from './confirm-on-server';
 import { clearAttempt, clearConfirmQueue, loadAttempt, loadConfirmQueue, saveConfirmQueue } from './order-persistence';
 import { useOrderFlowStore } from './order-flow-store';
 
@@ -37,7 +38,7 @@ export async function recoverOnStart(): Promise<void> {
         await clearConfirmQueue();
       } else if (latest.status === 'PENDING') {
         try {
-          await orderService.confirmOrder(queue.orderId, queue.operationId);
+          await confirmOnServer(queue.orderId, queue.operationId);
           await clearConfirmQueue();
         } catch (error) {
           // 이미 취소된 경우는 다시 보내도 같은 답이 온다. 큐는 그대로 두고 상태만 기록한다

@@ -131,6 +131,8 @@ export function createMockOrderService(): OrderService {
       // 저장 전에 실패한다 (적용되지 않음). 같은 operationId로 다시 시도하면 성공한다
       if (mockScenario.confirm === 'failOnce' && failOnce('confirm:fail')) throw new ServiceError('NETWORK_UNAVAILABLE', true);
       const order = find(state, orderId);
+      // 이 operationId가 다른 명령에 쓰였다고 서버가 답한다(한 번만). 같은 번호로는 계속 실패하므로 앱이 번호를 바꿔야 한다
+      if (mockScenario.confirm === 'operationConflictOnce' && failOnce('confirm:opconflict')) throw new ServiceError('OPERATION_CONFLICT');
       if (state.operations[operationId]) return order; // 같은 명령 재시도: 기존 결과
       if (order.status === 'USER_CONFIRMED') return order;
       if (order.status === 'CANCELLED') throw new ServiceError('INVALID_ORDER_TRANSITION');
@@ -143,6 +145,12 @@ export function createMockOrderService(): OrderService {
       await mockDelay();
       const state = await getDb();
       const order = find(state, orderId);
+      // 다른 곳에서 이미 완료한 주문을 취소하려는 경우를 흉내 낸다(한 번만): 서버 상태는 완료로 바뀌고 취소는 거절된다
+      if (mockScenario.cancel === 'alreadyConfirmedOnce' && order.status === 'PENDING' && failOnce('cancel:already')) {
+        transition(state, order, 'USER_CONFIRMED');
+        throw new ServiceError('INVALID_ORDER_TRANSITION');
+      }
+      if (mockScenario.cancel === 'operationConflictOnce' && failOnce('cancel:opconflict')) throw new ServiceError('OPERATION_CONFLICT');
       if (state.operations[operationId]) return order;
       if (order.status === 'USER_CONFIRMED') throw new ServiceError('INVALID_ORDER_TRANSITION');
       state.operations[operationId] = 'CANCEL';
