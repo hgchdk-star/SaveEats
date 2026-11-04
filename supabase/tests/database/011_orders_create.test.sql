@@ -198,9 +198,6 @@ select ok(not exists (
       'order_line_options', 'normalize_order_request', 'order_request_fingerprint', 'validate_order_catalog')
       and coalesce(p.proacl::text, '') ~ '(anon|authenticated)=|(^|[{,])=X'),
   'private 주문 보조 함수는 앱에 열려 있지 않다');
-select ok(not exists (
-    select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
-    where n.nspname = 'public' and p.proname in ('confirm_order', 'cancel_order')), 'confirm_order · cancel_order는 아직 없다 (다음 PR)');
 
 -- 제약 (superuser로 직접 넣어 본다)
 select ok(public.test_err($$insert into public.orders (user_id, store_id, idempotency_key, request_fingerprint, total_amount,
@@ -757,10 +754,11 @@ select is(public.zcode(public.zreq(public.zid('S1'), jsonb_build_array(public.zi
     public.zitem(public.zid('M1'), array[public.zid('O2')], 1, 12000)))), 'OK', '(확인) 트리거를 치우면 같은 요청이 성공한다');
 reset role;
 
--- 완료 · 취소된 주문의 시각 필드도 문자열로 나온다 (상태 전이 함수는 다음 PR이라 superuser로 직접 바꿔서 본다)
-update public.orders set status = 'USER_CONFIRMED', completed_at = now() where id = (current_setting('zz.m')::jsonb ->> 'orderId')::uuid;
-update public.orders set status = 'CANCELLED', cancelled_at = now() where idempotency_key = public.zid('KEYX');
+-- 완료 · 취소된 주문의 시각 필드도 문자열로 나온다 (confirm_order · cancel_order로 실제 전이시켜 본다. 전이 자체의 테스트는 012)
+select set_config('request.jwt.claims', '{"sub":"aaaaaaaa-0000-4000-8000-000000000001","role":"authenticated"}', true);
 set local role authenticated;
+select is(public.confirm_order((current_setting('zz.m')::jsonb ->> 'orderId')::uuid, public.zid('OP-M')) ->> 'status', 'USER_CONFIRMED', '(준비) KEYM 주문을 완료로 전이');
+select is(public.cancel_order((select o.id from public.orders o where o.idempotency_key = public.zid('KEYX')), public.zid('OP-X')) ->> 'status', 'CANCELLED', '(준비) KEYX 주문을 취소로 전이');
 select is(public.zdto_shape(public.get_order_by_request_key(public.zid('KEYM')), false), 'OK', '완료된 주문 응답: completedAt이 문자열이어도 모양 일치');
 select is(public.get_order_by_request_key(public.zid('KEYM')) ->> 'status', 'USER_CONFIRMED', '완료된 주문의 status');
 select is(jsonb_typeof(public.get_order_by_request_key(public.zid('KEYM')) -> 'completedAt'), 'string', '완료된 주문의 completedAt은 문자열');
