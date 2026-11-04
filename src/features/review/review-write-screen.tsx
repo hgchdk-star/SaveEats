@@ -20,7 +20,7 @@ import { showToast } from '@/features/toast/toast-store';
 import { useAsync } from '@/hooks/use-async';
 import type { ImageAction, MockReview, MockReviewEligibility } from '@/mocks/history/types';
 import type { MockOrder } from '@/mocks/order/types';
-import { historyService, reviewService } from '@/services';
+import { historyService, reviewPhotosEnabled, reviewService } from '@/services';
 import { errorCode } from '@/services/service-error';
 import { colors, spacing, text } from '@/theme';
 import { createLocalId } from '@/utils/id';
@@ -182,6 +182,11 @@ function WriteForm({ top, loaded }: { top: React.ReactElement; loaded: Loaded })
       if (code === 'REVIEW_DEADLINE_EXCEEDED') setNotice('blocked');
       else if (code === 'ACTIVE_REVIEW_EXISTS') setNotice('exists');
       else if (code === 'REVIEW_REVISION_CONFLICT') setNotice('conflict');
+      else if (code === 'REVIEW_OPERATION_CONFLICT') {
+        // 같은 요청 번호가 다른 내용에 쓰였다. 다음 시도는 새 번호로 보낸다
+        operation.current = null;
+        setNotice('saveFailed');
+      }
       else if (code === 'UPLOAD_FAILED' || code === 'INVALID_IMAGE') {
         if (photo?.kind === 'new') setPhoto({ ...photo, status: 'failed' });
       } else setNotice('saveFailed');
@@ -249,31 +254,33 @@ function WriteForm({ top, loaded }: { top: React.ReactElement; loaded: Loaded })
               />
             </View>
 
-            <View style={styles.field}>
-              <Text style={styles.label}>
-                {w.photoLabel} <Text style={styles.hint}>{w.photoOptional}</Text>
-              </Text>
-              <View style={styles.photoRow}>
-                <PhotoPicker
-                  photo={photo ? { uri: photo.kind === 'new' ? photo.uri : null, status: photo.kind === 'new' ? photo.status : 'ready' } : null}
-                  addLabel={w.photoAdd}
-                  countLabel={`${photo ? 1 : 0}/${LIMITS.reviewImageMax}`}
-                  removeLabel={w.photoRemove}
-                  disabled={saving}
-                  onAdd={() => void addPhoto()}
-                  onRemove={removePhoto}
-                />
+            {reviewPhotosEnabled ? (
+              <View style={styles.field}>
+                <Text style={styles.label}>
+                  {w.photoLabel} <Text style={styles.hint}>{w.photoOptional}</Text>
+                </Text>
+                <View style={styles.photoRow}>
+                  <PhotoPicker
+                    photo={photo ? { uri: photo.kind === 'new' ? photo.uri : null, status: photo.kind === 'new' ? photo.status : 'ready' } : null}
+                    addLabel={w.photoAdd}
+                    countLabel={`${photo ? 1 : 0}/${LIMITS.reviewImageMax}`}
+                    removeLabel={w.photoRemove}
+                    disabled={saving}
+                    onAdd={() => void addPhoto()}
+                    onRemove={removePhoto}
+                  />
+                </View>
+                {photoFailed ? (
+                  <Notice
+                    flush
+                    tone="danger"
+                    title={confirmedCopy.reviewPhotoFailed}
+                    description={w.photoFailedDesc}
+                    action={{ label: w.photoRetry, onPress: () => photo?.kind === 'new' && void startUpload(photo.uri) }}
+                  />
+                ) : null}
               </View>
-              {photoFailed ? (
-                <Notice
-                  flush
-                  tone="danger"
-                  title={confirmedCopy.reviewPhotoFailed}
-                  description={w.photoFailedDesc}
-                  action={{ label: w.photoRetry, onPress: () => photo?.kind === 'new' && void startUpload(photo.uri) }}
-                />
-              ) : null}
-            </View>
+            ) : null}
 
             {edit ? <Text style={styles.hint}>{w.helpEdit}</Text> : <Text style={styles.hint}>{confirmedCopy.reviewWindowHelp}</Text>}
           </>
