@@ -467,6 +467,13 @@ export const draftCopy = {
     doneHeader: '주문 완료 🎉', // 기획서 22: 이모지는 이 헤더만 예외
     doneReview: 'SaveEats 리뷰 남기기',
     cancelledDesc: '이 주문은 내역에 취소로 남아요. 이미 보낸 돈은 취소되지 않아요.',
+    /**
+     * 서버 상태를 다시 읽어 실제로 취소된 주문으로 확인됐을 때만, 사용자가 방금 취소한 것이 아닌 경우의 안내 (서정 확정 2026-11-04, 기준 문서 반영 전).
+     * 완료 확인이 막힌 경우와 앱으로 돌아와 상태를 읽었더니 취소였던 경우에 쓴다. 완료 확인을 반복하거나 금융앱을 자동으로 열지 않는다.
+     */
+    cancelledFoundTitle: '취소된 주문이에요',
+    cancelledFoundDesc: '이 주문은 취소되어 완료 확인을 할 수 없어요. 이미 송금했다면 사용한 금융앱에서 송금 내역을 확인해 주세요.',
+    cancelledFoundAction: '주문 내역 보기',
     /** ORD-009 제안 문구 그대로. 제품 검수 필요 */
     cancelSheetTitle: 'SaveEats 주문 기록을 취소할까요?',
     cancelSheetDesc: '이미 보낸 돈은 취소되지 않아요.',

@@ -36,13 +36,17 @@ export async function recoverOnStart(): Promise<void> {
       const latest = await orderService.getOrderStatus(queue.orderId);
       if (latest.status === 'USER_CONFIRMED') {
         await clearConfirmQueue();
+      } else if (latest.status === 'CANCELLED') {
+        // 취소된 주문은 완료 확인을 할 수 없다. 같은 확인을 반복해서 보내지 않도록 큐를 지운다(서정 확정 2026-11-04)
+        await clearConfirmQueue();
       } else if (latest.status === 'PENDING') {
         try {
           await confirmOnServer(queue.orderId, queue.operationId);
           await clearConfirmQueue();
         } catch (error) {
-          // 이미 취소된 경우는 다시 보내도 같은 답이 온다. 큐는 그대로 두고 상태만 기록한다
-          await saveConfirmQueue({ ...queue, phase: 'SAVE_FAILED', attemptCount: queue.attemptCount + 1, lastErrorCode: errorCode(error) ?? 'UNKNOWN' }).catch(() => undefined);
+          // 읽은 뒤 사이에 취소된 경우(INVALID_ORDER_TRANSITION)는 다시 보내도 같은 답이 오므로 큐를 지운다. 그 밖의 실패는 상태만 기록한다
+          if (errorCode(error) === 'INVALID_ORDER_TRANSITION') await clearConfirmQueue();
+          else await saveConfirmQueue({ ...queue, phase: 'SAVE_FAILED', attemptCount: queue.attemptCount + 1, lastErrorCode: errorCode(error) ?? 'UNKNOWN' }).catch(() => undefined);
         }
       }
     } catch {
