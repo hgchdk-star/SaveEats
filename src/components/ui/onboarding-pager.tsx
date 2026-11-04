@@ -8,7 +8,7 @@ import { FoodImage } from './food-image';
 import { Icon } from './icon';
 import { Price } from './price';
 
-export type OnboardingPage = { key: string; title: string; desc: string; art: 'browse' | 'deliver' | 'start' };
+export type OnboardingPage = { key: string; title: string; desc: string; art: 'browse' | 'deliver' | 'start'; /** 설명 아래 보조 문구 */ note?: string };
 
 type OnboardingPagerProps = {
   pages: OnboardingPage[];
@@ -55,6 +55,7 @@ export function OnboardingPager({ pages, page, onPageChange }: OnboardingPagerPr
                 {p.title}
               </Text>
               <Text style={styles.desc}>{p.desc}</Text>
+              {p.note ? <Text style={styles.note}>{p.note}</Text> : null}
             </View>
           </View>
         ))}
@@ -133,6 +134,7 @@ const styles = StyleSheet.create({
   text: { paddingTop: spacing[8], paddingHorizontal: spacing[1] },
   title: { ...text.display, fontSize: 26, lineHeight: 36, color: colors.ink },
   desc: { ...text.body1, color: colors.inkSecondary, marginTop: spacing[3] },
+  note: { ...text.body2, color: colors.inkTertiary, marginTop: spacing[3] },
   dots: { flexDirection: 'row', gap: spacing[2], paddingHorizontal: spacing[5], paddingVertical: spacing[4] },
   dot: { width: 8, height: 8, borderRadius: radius.full, backgroundColor: colors.lineStrong },
   dotOn: { width: 24, backgroundColor: colors.brand },
