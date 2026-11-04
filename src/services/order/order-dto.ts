@@ -1,4 +1,4 @@
-import type { HistoryPage, MockHistoryRow, MockReviewEligibility, ReviewEligibilityKind } from '@/mocks/history/types';
+import type { HistoryPage, MockHistoryRow, MockReviewEligibility, MockUnreadSummary, ReviewEligibilityKind } from '@/mocks/history/types';
 import type { MockOrder, MockOrderStatus } from '@/mocks/order/types';
 import { ServiceError } from '@/services/service-error';
 
@@ -80,22 +80,42 @@ function parseEligibility(value: unknown): MockReviewEligibility | null {
   };
 }
 
+/** 내역 한 줄(list_my_orders의 items 원소, get_my_history_order의 응답 모두 같은 모양) */
+export function parseHistoryRowDto(raw: unknown): MockHistoryRow {
+  const bad = () => new ServiceError('INVALID_RESPONSE');
+  if (!isObj(raw) || !Array.isArray(raw.unreadUpdates) || !Array.isArray(raw.validCurrentMenuRefs)) throw bad();
+  const unreadUpdates = raw.unreadUpdates.map((u) => {
+    if (!isObj(u) || !isStr(u.eventId) || !isNum(u.revision) || !isStr(u.createdAt)) throw bad();
+    return { eventId: u.eventId, revision: u.revision, createdAt: u.createdAt };
+  });
+  if (!raw.validCurrentMenuRefs.every(isStr)) throw bad();
+  return {
+    ...parseOrderDto(raw, ''),
+    unreadUpdates,
+    reviewEligibility: parseEligibility(raw.reviewEligibility),
+    validCurrentMenuRefs: raw.validCurrentMenuRefs as string[],
+  };
+}
+
 export function parseHistoryPageDto(data: unknown): HistoryPage {
   const bad = () => new ServiceError('INVALID_RESPONSE');
   if (!isObj(data) || !Array.isArray(data.items) || typeof data.hasMore !== 'boolean' || !isStrOrNull(data.nextCursor)) throw bad();
-  const rows: MockHistoryRow[] = data.items.map((raw) => {
-    if (!isObj(raw) || !Array.isArray(raw.unreadUpdates) || !Array.isArray(raw.validCurrentMenuRefs)) throw bad();
-    const unreadUpdates = raw.unreadUpdates.map((u) => {
-      if (!isObj(u) || !isStr(u.eventId) || !isNum(u.revision) || !isStr(u.createdAt)) throw bad();
-      return { eventId: u.eventId, revision: u.revision, createdAt: u.createdAt };
-    });
-    if (!raw.validCurrentMenuRefs.every(isStr)) throw bad();
-    return {
-      ...parseOrderDto(raw, ''),
-      unreadUpdates,
-      reviewEligibility: parseEligibility(raw.reviewEligibility),
-      validCurrentMenuRefs: raw.validCurrentMenuRefs as string[],
-    };
+  return { rows: data.items.map(parseHistoryRowDto), nextCursor: data.nextCursor, hasMore: data.hasMore };
+}
+
+/** get_my_history_unread_summary: { unreadEvents[{eventId, orderId, revision}], unreadOrderCount, asOf } */
+export function parseUnreadSummaryDto(data: unknown): MockUnreadSummary {
+  const bad = () => new ServiceError('INVALID_RESPONSE');
+  if (!isObj(data) || !Array.isArray(data.unreadEvents) || !isNum(data.unreadOrderCount) || !isStr(data.asOf)) throw bad();
+  const unreadEvents = data.unreadEvents.map((e) => {
+    if (!isObj(e) || !isStr(e.eventId) || !isStr(e.orderId) || !isNum(e.revision)) throw bad();
+    return { eventId: e.eventId, orderId: e.orderId, revision: e.revision };
   });
-  return { rows, nextCursor: data.nextCursor, hasMore: data.hasMore };
+  return { unreadEvents, unreadOrderCount: data.unreadOrderCount, asOf: data.asOf };
+}
+
+/** mark_status_updates_viewed: { acknowledgedEventIds[] } */
+export function parseViewedDto(data: unknown): { acknowledgedEventIds: string[] } {
+  if (!isObj(data) || !Array.isArray(data.acknowledgedEventIds) || !data.acknowledgedEventIds.every(isStr)) throw new ServiceError('INVALID_RESPONSE');
+  return { acknowledgedEventIds: data.acknowledgedEventIds as string[] };
 }
