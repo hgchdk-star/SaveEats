@@ -19,7 +19,7 @@ import { saveOrderDestinationLink } from '@/services/transfer/order-destination-
 import { saveMaskedDestination } from '@/services/order/masked-destination-store';
 import { createLocalId } from '@/utils/id';
 
-import type { CartEnvelope } from '@/features/cart/cart-model';
+import { isValidCatalogRevision, type CartEnvelope } from '@/features/cart/cart-model';
 
 import { confirmOnServer } from './confirm-on-server';
 import { clearAttempt, clearConfirmQueue, loadConfirmQueue, saveAttempt, saveConfirmQueue } from './order-persistence';
@@ -96,6 +96,13 @@ export async function createOrder(via: 'TOSS' | 'DIRECT', cart: CartEnvelope, ac
     }
   }
 
+  // 서버는 모든 항목의 approvedCatalogRevision이 1 이상의 정수일 것을 요구한다. 아니면 보내도 INVALID_INPUT이므로 보내지 않는다.
+  // 키도 만들지 않고 기기에 저장하지도 않는다(새 요청일 때만 검사. 이미 만든 요청은 그대로 다시 보낸다)
+  if (!state.attempt && cart.items.some((item) => !isValidCatalogRevision(item.acknowledgedCatalogRevision))) {
+    flow().set({ work: 'CREATE_REJECTED', rejectedReason: 'INVALID_INPUT' });
+    return;
+  }
+
   // 저장은 됐지만 전송 전에 멈춘 시도(기기 저장 실패)는 같은 요청을 다시 쓴다. 한 번도 보내지 않았으니 같은 키여도 안전하다
   const attempt = state.attempt ? { ...state.attempt, via } : { request: buildCreateOrderRequest(cart, account), via, cartRevision: cart.localRevision };
   flow().set({ work: 'CREATE_SAVING', attempt, rejectedReason: null, conflictOrder: null });
@@ -162,6 +169,24 @@ async function send(attempt: NonNullable<ReturnType<typeof flow>['attempt']>): P
         // 조회하지 못해도 충돌 안내는 한다. 기존 주문은 내역에서 확인하게 한다
       }
       flow().set({ work: 'CREATE_CONFLICT', attempt: null, conflictOrder: existing });
+      return;
+    }
+    if (code === 'INVALID_INPUT') {
+      // 서버가 요청을 받아들이지 않았다(주문이 만들어지지 않았다는 확정 거절). 다만 같은 키로 이미 만들어진 주문이 있을 수 있어서
+      // 장바구니로 돌려보내기 전에 키로 한 번 조회한다 (혜지 확인 2026-11-03). 있으면 그 주문을 이어가고, 없으면 거절로 본다.
+      // 조회하지 못하면 만들어졌는지 모르는 상태라 같은 키를 유지한다. 장바구니는 어느 쪽에서도 비우지 않는다(주문이 확인될 때만 비운다).
+      try {
+        const found = await orderService.getOrderByRequestKey(attempt.request.idempotencyKey);
+        if (found) {
+          await onCreated(found, attempt.via, attempt.request, attempt.cartRevision);
+          return;
+        }
+      } catch {
+        flow().set({ work: 'CREATE_UNKNOWN' });
+        return;
+      }
+      flow().set({ work: 'CREATE_REJECTED', rejectedReason: 'INVALID_INPUT', attempt: null });
+      void clearAttempt();
       return;
     }
     if (code && REJECTIONS.includes(code)) {

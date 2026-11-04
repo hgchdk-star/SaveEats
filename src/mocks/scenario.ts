@@ -41,7 +41,7 @@ export type MockScenario = {
    * unknownCreated: 응답을 못 받았지만 서버에는 주문이 만들어져 있다 → 같은 키로 조회하면 찾는다
    * priceChanged / itemUnavailable: 서버가 명확히 거절
    */
-  order: 'ok' | 'localSaveFailOnce' | 'unknownLost' | 'unknownCreated' | 'priceChangedOnce' | 'itemUnavailableOnce' | 'idempotencyConflictOnce' | 'disclosureUnsupportedOnce';
+  order: 'ok' | 'localSaveFailOnce' | 'unknownLost' | 'unknownCreated' | 'priceChangedOnce' | 'itemUnavailableOnce' | 'idempotencyConflictOnce' | 'disclosureUnsupportedOnce' | 'invalidInputOnce';
   /** 송금 이어가기 (TRF-005 · 006) */
   transfer: 'tossOn' | 'killSwitch' | 'configTimeout' | 'tossLaunchFailOnce';
   /** 외부 앱에서 돌아온 뒤 서버 상태 조회 (TRF-008) */
@@ -58,7 +58,7 @@ export type MockScenario = {
    * empty: 주문 0개 / firstPageFailOnce: 첫 페이지 실패 → 전체 오류 / nextPageFailOnce: 다음 페이지 실패 → 기존 목록 유지 + 다시 시도
    * long: 주문 40개를 더해 여러 페이지로 나눈다
    */
-  history: 'ok' | 'empty' | 'firstPageFailOnce' | 'nextPageFailOnce' | 'long';
+  history: 'ok' | 'empty' | 'firstPageFailOnce' | 'nextPageFailOnce' | 'long' | 'noReviewEligibility';
   /** 읽음 저장 (HIST-007): 실패해도 화면에는 알리지 않고 조용히 다시 시도한다 */
   readSave: 'ok' | 'failOnce';
   /** 이번 달 요약 조회 */
@@ -173,6 +173,7 @@ const SCENARIOS = {
   orderItemUnavailable: { ...BASE, auth: 'member', order: 'itemUnavailableOnce' },
   orderIdempotencyConflict: { ...BASE, auth: 'member', order: 'idempotencyConflictOnce' },
   orderDisclosureUnsupported: { ...BASE, auth: 'member', order: 'disclosureUnsupportedOnce' },
+  orderInvalidInput: { ...BASE, auth: 'member', order: 'invalidInputOnce' },
   killSwitch: { ...BASE, auth: 'member', transfer: 'killSwitch' },
   configTimeout: { ...BASE, auth: 'member', transfer: 'configTimeout' },
   tossLaunchFails: { ...BASE, auth: 'member', transfer: 'tossLaunchFailOnce' },
@@ -188,6 +189,7 @@ const SCENARIOS = {
 
   // ---- 묶음 3: 내역·리뷰 (Guest로 시작하면 내역·리뷰 쓰기의 로그인 유도를 볼 수 있다) ----
   historyEmpty: { ...BASE, auth: 'member', history: 'empty' },
+  historyNoReviewEligibility: { ...BASE, auth: 'member', history: 'noReviewEligibility' },
   historyFirstPageFails: { ...BASE, auth: 'member', history: 'firstPageFailOnce' },
   historyNextPageFails: { ...BASE, auth: 'member', history: 'nextPageFailOnce' },
   historyLong: { ...BASE, auth: 'member', history: 'long' },

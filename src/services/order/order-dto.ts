@@ -1,3 +1,4 @@
+import type { HistoryPage, MockHistoryRow, MockReviewEligibility, ReviewEligibilityKind } from '@/mocks/history/types';
 import type { MockOrder, MockOrderStatus } from '@/mocks/order/types';
 import { ServiceError } from '@/services/service-error';
 
@@ -54,4 +55,47 @@ export function parseOrderDto(data: unknown, idempotencyKey: string): MockOrder 
       destination: null,
     },
   };
+}
+
+/**
+ * 서버 내역 목록 응답 (혜지 제안 2026-11-04, 서버 함수는 아직 없다): { items, hasMore, nextCursor }.
+ * 인자는 p_page_size · p_cursor이고 cursor는 불투명 텍스트다(앱은 내용을 해석하지 않고 그대로 되돌려 보낸다).
+ * 한 줄 = 주문 DTO + unreadUpdates[{eventId, revision, createdAt}] + validCurrentMenuRefs[menuId] (+ 있으면 reviewEligibility).
+ * 첫 버전에는 reviewEligibility가 없다(리뷰 서버가 없음). 없으면 null로 두고 리뷰 작성 버튼을 숨긴다.
+ * 목록의 주문에는 생성 키가 없다. 내역 화면은 키를 쓰지 않으므로 빈 문자열로 둔다.
+ */
+const ELIGIBILITIES: readonly string[] = ['CAN_WRITE', 'HAS_ACTIVE_REVIEW', 'DEADLINE_EXCEEDED', 'NOT_COMPLETED'];
+
+function parseEligibility(value: unknown): MockReviewEligibility | null {
+  if (value === undefined || value === null) return null;
+  const bad = () => new ServiceError('INVALID_RESPONSE');
+  if (!isObj(value) || !isStr(value.serverNow) || !isStrOrNull(value.completedAt) || !isStrOrNull(value.reviewDeadline) || !isStrOrNull(value.activeReviewId)) throw bad();
+  if (!isStr(value.eligibility) || !ELIGIBILITIES.includes(value.eligibility)) throw bad();
+  return {
+    serverNow: value.serverNow,
+    completedAt: value.completedAt,
+    reviewDeadline: value.reviewDeadline,
+    activeReviewId: value.activeReviewId,
+    eligibility: value.eligibility as ReviewEligibilityKind,
+  };
+}
+
+export function parseHistoryPageDto(data: unknown): HistoryPage {
+  const bad = () => new ServiceError('INVALID_RESPONSE');
+  if (!isObj(data) || !Array.isArray(data.items) || typeof data.hasMore !== 'boolean' || !isStrOrNull(data.nextCursor)) throw bad();
+  const rows: MockHistoryRow[] = data.items.map((raw) => {
+    if (!isObj(raw) || !Array.isArray(raw.unreadUpdates) || !Array.isArray(raw.validCurrentMenuRefs)) throw bad();
+    const unreadUpdates = raw.unreadUpdates.map((u) => {
+      if (!isObj(u) || !isStr(u.eventId) || !isNum(u.revision) || !isStr(u.createdAt)) throw bad();
+      return { eventId: u.eventId, revision: u.revision, createdAt: u.createdAt };
+    });
+    if (!raw.validCurrentMenuRefs.every(isStr)) throw bad();
+    return {
+      ...parseOrderDto(raw, ''),
+      unreadUpdates,
+      reviewEligibility: parseEligibility(raw.reviewEligibility),
+      validCurrentMenuRefs: raw.validCurrentMenuRefs as string[],
+    };
+  });
+  return { rows, nextCursor: data.nextCursor, hasMore: data.hasMore };
 }
