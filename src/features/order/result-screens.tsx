@@ -214,14 +214,17 @@ export function DoneScreen() {
 /** 주문 취소 후. 서버에 CANCELLED가 저장된 뒤에만 보인다. 보낸 돈이 없다고 단정하지 않는다 (ORD-009) */
 export function CancelledScreen() {
   const order = useCurrentOrder();
+  const cancelledByUser = useOrderFlowStore((s) => s.cancelledByUser);
   if (!order) return null;
   const d = displayOf(order);
+  // 사용자가 방금 취소했을 때만 기존 안내. 서버 상태를 읽었더니 취소였던 경우는 완료 확인을 할 수 없다는 안내를 쓴다
+  const found = !cancelledByUser;
 
   return (
-    <Screen top={<TopNavigation onClose={goHome} />} bottom={<ActionStack secondary={{ label: copy.toHistory, onPress: goHistory }} />}>
+    <Screen top={<TopNavigation onClose={goHome} />} bottom={<ActionStack secondary={{ label: found ? copy.cancelledFoundAction : copy.toHistory, onPress: goHistory }} />}>
       <ScrollView contentContainerStyle={styles.content}>
-        <DeliveryStatus status="cancelled" />
-        <Text style={styles.sub}>{copy.cancelledDesc}</Text>
+        <DeliveryStatus status="cancelled" title={found ? copy.cancelledFoundTitle : undefined} />
+        <Text style={styles.sub}>{found ? copy.cancelledFoundDesc : copy.cancelledDesc}</Text>
         <KeyValueCard
           rows={[
             { label: labels.kvStore, value: d.storeName },

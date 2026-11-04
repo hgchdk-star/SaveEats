@@ -53,6 +53,11 @@ type OrderFlowState = {
   order: MockOrder | null;
   /** CREATE_CONFLICT일 때 키로 조회한 기존 주문. 조회하지 못했으면 null. 이 주문은 order에 넣지 않는다(이어가기 대상이 아니다) */
   conflictOrder: MockOrder | null;
+  /**
+   * 취소된 주문 화면을 사용자가 방금 취소해서 보는지. false이면 서버 상태를 읽었더니 취소였던 경우라서
+   * "취소된 주문이에요 / 완료 확인을 할 수 없어요" 안내를 보여 준다.
+   */
+  cancelledByUser: boolean;
   confirmOperationId: string | null;
   cancelOperationId: string | null;
   transfer: TransferState;
@@ -77,6 +82,7 @@ export const useOrderFlowStore = create<OrderFlowState>((set) => ({
   rejectedReason: null,
   order: null,
   conflictOrder: null,
+  cancelledByUser: false,
   confirmOperationId: null,
   cancelOperationId: null,
   transfer: INITIAL_TRANSFER,
@@ -89,6 +95,7 @@ export const useOrderFlowStore = create<OrderFlowState>((set) => ({
       rejectedReason: null,
       order: null,
       conflictOrder: null,
+      cancelledByUser: false,
       confirmOperationId: null,
       cancelOperationId: null,
       transfer: INITIAL_TRANSFER,

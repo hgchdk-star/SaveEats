@@ -361,6 +361,8 @@ export async function runStatusQuery(): Promise<void> {
       flow().set({ work: 'SERVER_CONFIRMED' });
       router.replace('/order/done');
     } else if (latest.status === 'CANCELLED') {
+      // 사용자가 방금 취소한 것이 아니라 서버 상태를 읽었더니 취소였다
+      flow().set({ cancelledByUser: false });
       router.replace('/order/cancelled');
     } else {
       flow().set({ work: 'PENDING_READY' });
@@ -413,8 +415,29 @@ export async function confirmOrder(opts: { navigateToQuestion: boolean }): Promi
     router.replace('/order/done');
   } catch (error) {
     if (errorCode(error) === 'INVALID_ORDER_TRANSITION') {
-      // 다른 곳에서 이미 취소됐다. 서버 상태를 그대로 보여준다
-      startReturnCheck('replace');
+      // 지금 상태에서는 완료할 수 없다고 서버가 답했다. 서버 상태를 다시 읽어 실제 상태에 맞게 처리한다.
+      // 취소된 주문이라고 단정하지 않는다: 읽은 상태가 취소일 때만 취소 안내를 보이고, 완료로 읽히면 완료 화면으로 간다.
+      // 어느 쪽이든 완료 확인을 다시 보내지 않으므로 기기에 남긴 완료 확인 큐는 지운다.
+      try {
+        const latest = await orderService.getOrderStatus(order.orderId);
+        if (latest.status === 'CANCELLED') {
+          await clearConfirmQueue().catch(() => undefined);
+          flow().set({ order: latest, work: 'READY', cancelledByUser: false, confirmOperationId: null });
+          syncHistory();
+          router.replace('/order/cancelled');
+          return;
+        }
+        if (latest.status === 'USER_CONFIRMED') {
+          await clearConfirmQueue().catch(() => undefined);
+          flow().set({ order: latest, work: 'SERVER_CONFIRMED', confirmOperationId: null });
+          syncHistory();
+          router.replace('/order/done');
+          return;
+        }
+      } catch {
+        // 상태를 읽지 못했다. 취소됐다고 단정하지 않고 저장 실패로 두어 사용자가 내역에서 확인하게 한다
+      }
+      flow().set({ work: 'CONFIRM_SAVE_FAILED' });
       return;
     }
     flow().set({ work: 'CONFIRM_SAVE_FAILED' });
@@ -436,7 +459,7 @@ export async function cancelOrder(): Promise<void> {
   flow().set({ cancelOperationId: operationId });
   try {
     const cancelled = await orderService.cancelOrder(order.orderId, operationId);
-    flow().set({ order: cancelled, work: 'READY' });
+    flow().set({ order: cancelled, work: 'READY', cancelledByUser: true });
     syncHistory();
     router.replace('/order/cancelled');
   } catch (error) {
