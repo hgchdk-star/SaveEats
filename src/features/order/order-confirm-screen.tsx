@@ -131,7 +131,7 @@ export function OrderConfirmScreen() {
           tone="danger"
           title={accountProblem ? copy.accountRequiredTitle : quantityProblem ? copy.quantityLimitTitle : invalidInput ? copy.invalidInputTitle : copy.rejectedTitle}
           description={accountProblem ? copy.accountRequiredDesc : quantityProblem ? copy.quantityLimitDesc : invalidInput ? copy.invalidInputDesc : copy.rejectedDesc}
-          action={accountProblem ? undefined : { label: copy.rejectedAction, onPress: () => router.dismissTo('/cart') }}
+          action={accountProblem ? undefined : { label: invalidInput ? copy.invalidInputAction : copy.rejectedAction, onPress: () => router.dismissTo('/cart') }}
         />
       );
     }

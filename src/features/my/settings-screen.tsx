@@ -49,15 +49,19 @@ export function SettingsScreen() {
   );
 
   // 닉네임 줄: 조회 실패는 닉네임 없음과 구분한다(이메일·실명으로 대신하지 않는다). 없으면 "설정하기"로 프로필 설정에 연결한다
+  const currentNickname = profile.status === 'ok' ? (profile.data?.nickname ?? null) : null;
   const nicknameRow: ListRowSpec | null =
     profile.status === 'error'
-      ? { key: 'nickname', label: nicknameCopy.settingsRow, value: `${nicknameCopy.loadFailed} · ${nicknameCopy.loadRetry}`, onPress: profile.reload }
+      ? // 조회에 실패한 동안에는 설정하기/변경으로 연결하지 않는다. 다시 불러오기만 한다
+        { key: 'nickname', label: nicknameCopy.settingsRow, desc: nicknameCopy.loadFailed, value: nicknameCopy.loadRetry, onPress: profile.reload }
       : profile.status === 'ok' && profile.data
         ? {
             key: 'nickname',
             label: nicknameCopy.settingsRow,
-            value: profile.data.nickname ?? nicknameCopy.settingsRowSet,
-            onPress: () => router.push({ pathname: '/profile-setup', params: { mode: 'edit' } }),
+            // 닉네임이 있으면 현재 값을 아래에 보여 주고 "변경", 없으면 "설정하기"
+            ...(profile.data.nickname ? { desc: profile.data.nickname } : {}),
+            value: profile.data.nickname ? nicknameCopy.settingsRowChange : nicknameCopy.settingsRowSet,
+            onPress: () => router.push({ pathname: '/profile-setup', params: { mode: currentNickname ? 'change' : 'set' } }),
           }
         : null;
 
