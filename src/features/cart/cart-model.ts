@@ -183,13 +183,22 @@ export function isPriceChanged(item: CartItem, validation: CartValidation): bool
   return v?.status === 'PRICE_CHANGED' && v.currentUnitPrice !== item.acknowledgedUnitPrice;
 }
 
-/** 가격 변경 일괄 확인. 서버가 준 현재 가격과 catalogRevision을 로컬에 저장한다 */
+/** 서버가 주문 요청에서 요구하는 catalogRevision: 1 이상의 정수 (혜지 확인 2026-11-03). 거절 근거로는 쓰이지 않는다 */
+export function isValidCatalogRevision(value: number): boolean {
+  return Number.isSafeInteger(value) && value >= 1;
+}
+
+/** 가격 변경 일괄 확인. 서버가 준 현재 가격과 catalogRevision을 로컬에 저장한다. 올바르지 않은 revision은 받지 않고 기존 값을 둔다 */
 export function acknowledgePrices(cart: CartEnvelope, validation: CartValidation): CartEnvelope {
   return edited(cart, {
     items: cart.items.map((item) => {
       const v = validationOf(validation, item.clientItemId);
       return v && isPriceChanged(item, validation)
-        ? { ...item, acknowledgedUnitPrice: v.currentUnitPrice, acknowledgedCatalogRevision: v.currentCatalogRevision }
+        ? {
+            ...item,
+            acknowledgedUnitPrice: v.currentUnitPrice,
+            acknowledgedCatalogRevision: isValidCatalogRevision(v.currentCatalogRevision) ? v.currentCatalogRevision : item.acknowledgedCatalogRevision,
+          }
         : item;
     }),
   });

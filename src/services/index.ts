@@ -42,7 +42,7 @@ export const orderService: OrderService = withLocalDestination(createMockOrderSe
 // 계좌 원문은 데이터 소스와 상관없이 기기 보안 저장소에서 꺼낸다. 토스 실행·원격 설정은 supabase 모드에서만 실제 구현(현재 fail-closed)이다.
 const resolveDestination = createDestinationResolver(accountVault);
 const transferDeps = { resolveDestinationAccountNumber: resolveDestination, getOrder: (orderId: string) => orderService.getOrderStatus(orderId) };
-// [미연결] 주문 API는 아직 Mock이다. 서버가 정해지면 orderService를 실제 구현으로 바꾼다. supabase 모드의 원격 설정은 get_public_feature_config를 부른다(서버 배포 전에는 실패해 꺼짐).
+// [미연결] 주문 API는 아직 Mock이다. 서버가 정해지면 orderService를 실제 구현으로 바꾼다. supabase 모드의 원격 설정은 get_public_feature_config를 부른다(실패하면 꺼짐).
 // mock 모드: 원격 설정과 시나리오는 Mock 그대로. 검증된 조합(EXPO_PUBLIC_TOSS_PREFILL_VERIFIED)이 설정된 빌드에서만 토스를 실제로 연다.
 // 이때도 Mock 원격 설정이 ON이고 주문의 은행이 검증된 조합일 때만 토스 이어가기가 보인다. 사용자가 토스에서 승인하기 전에는 송금되지 않는다.
 export const transferService: TransferService =
@@ -64,7 +64,6 @@ export const transferService: TransferService =
 export const historyService: HistoryService = withLocalDestinationHistory(createMockHistoryService());
 export const reviewService: ReviewService = createMockReviewService();
 // 프로필(닉네임)만 supabase 모드에서 서버(get_my_profile · set_my_nickname)를 쓴다. 알림 설정·누적 기록은 아직 Mock이다.
-// 서버 함수가 배포되기 전에는 supabase 모드에서 가입 직후 닉네임 저장이 실패한다(프로필 설정 화면으로 이어진다).
 export const myService: MyService = dataSource === 'supabase' ? createSupabaseMyService(createMockMyService()) : createMockMyService();
 // 검색: 서버 모드에서는 가게 검색만 서버(search_stores)다. 인기 검색어는 서버 함수가 아직 없고 Mock 목록은 서버 데이터에서
 // 결과가 나오지 않을 수 있어서, 서버 모드에서는 비워 섹션을 숨긴다.
