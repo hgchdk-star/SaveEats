@@ -1,4 +1,4 @@
-import type { HistoryPage, MockHistoryRow, MockReviewEligibility, MockUnreadSummary, ReviewEligibilityKind } from '@/mocks/history/types';
+import type { HistoryPage, MockHistoryRow, MockMonthlySummary, MockReviewEligibility, MockUnreadSummary, ReviewEligibilityKind } from '@/mocks/history/types';
 import type { MockOrder, MockOrderStatus } from '@/mocks/order/types';
 import { ServiceError } from '@/services/service-error';
 
@@ -115,6 +115,20 @@ export function parseUnreadSummaryDto(data: unknown): MockUnreadSummary {
     return { eventId: e.eventId, orderId: e.orderId, revision: e.revision };
   });
   return { unreadEvents, unreadOrderCount: data.unreadOrderCount, asOf: data.asOf };
+}
+
+const isCount = (v: unknown): v is number => typeof v === 'number' && Number.isInteger(v) && v >= 0;
+
+/**
+ * get_monthly_summary: { monthKey, orderCount, deliveredAmount, topCategoryName, largestOrderAmount } (혜지, 2026-11-05).
+ * 대상 주문이 없으면 topCategoryName · largestOrderAmount는 null이고 orderCount · deliveredAmount는 0이다.
+ * largestOrderAmount가 null이면 화면은 "—"로 보여 준다(0원으로 대신하지 않는다). 월 경계는 서버가 KST로 계산한다.
+ */
+export function parseMonthlySummaryDto(data: unknown, monthKey: string): MockMonthlySummary {
+  const bad = () => new ServiceError('INVALID_RESPONSE');
+  if (!isObj(data) || data.monthKey !== monthKey || !isCount(data.orderCount) || !isCount(data.deliveredAmount) || !isStrOrNull(data.topCategoryName)) throw bad();
+  if (data.largestOrderAmount !== null && !isCount(data.largestOrderAmount)) throw bad();
+  return { monthKey, orderCount: data.orderCount, deliveredAmount: data.deliveredAmount, topCategoryName: data.topCategoryName, largestOrderAmount: data.largestOrderAmount };
 }
 
 /** mark_status_updates_viewed: { acknowledgedEventIds[] } */
