@@ -38,9 +38,9 @@ set local role anon;
 select ok(not exists (
     select 1 from jsonb_array_elements(public.list_stores(null, null, 50) -> 'items') e
     where e -> 'reviewSummary' is distinct from '{"count":0,"averageCravingRating":null}'::jsonb),
-  '리뷰 요약: 모든 가게 카드가 {count:0, averageCravingRating:null}');
+  '리뷰 요약: seed에는 리뷰가 없으므로 모든 가게 카드가 {count:0, averageCravingRating:null} (실제 집계는 015에서 확인)');
 select is(public.get_store('20000000-0000-4000-8000-000000000001') -> 'reviewSummary',
-  '{"count":0,"averageCravingRating":null}'::jsonb, '리뷰 요약: 가게 상세도 같은 고정값');
+  '{"count":0,"averageCravingRating":null}'::jsonb, '리뷰 요약: 가게 상세도 리뷰가 없으면 {count:0, averageCravingRating:null}');
 
 select is((public.get_menu('30000000-0000-4000-8000-000000000101') ->> 'storeIsOpen'), 'true',
   'get_menu: 영업 중 가게의 메뉴는 storeIsOpen=true');
