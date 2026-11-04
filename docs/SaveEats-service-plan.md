@@ -1330,7 +1330,7 @@ User, DestinationAccount, Store, Menu, MenuOption, Cart, Order, OrderStatusUpdat
 
 1. Toss URL Scheme에서 은행/계좌/금액 사전입력이 Android/iOS 최신 실기기에서 안정적으로 동작하는지 PoC.
 2. Toss 앱 버전/OS별 실패·복귀 동작과 Kill Switch 전환 검증.
-3. 계좌 서버 미저장·기기 보안 저장은 확정. SecureStore 설정·접근제어·백업·삭제·로그 누출·유실 복구의 실제 구현 검증은 필요.
+3. 계좌 서버 미저장·기기 보안 저장은 확정. 2026-11-04 지우 보고상 Android Expo Go·mock 모드 확인에 한정되며, iOS 보관·삭제, 실제 SaveEats 빌드(iOS/Android), iCloud·Google 백업/재설치/복원, 삭제 실패 안내는 미검증이다. 검증 담당·일정은 미배정이며 개발 명세 10.1.1 / OPEN-DB-001에서 추적한다. 접근 수준·기기 암호·생체인증 필수 여부는 별도 제품 결정 항목(서정 담당)이며, 결정 전 라이브러리 기본값 사용은 최종 정책 확정이 아니다.
 4. `USER_CONFIRMED` 상태 저장 실패 및 앱 강제종료 복구 테스트.
 5. Seed Store/Menu 데이터의 실제 MVP 범위와 이미지 출처 정리.
 6. 상용화 시 음식점/상표/이미지/가격 데이터 사용권 확보 방식.
