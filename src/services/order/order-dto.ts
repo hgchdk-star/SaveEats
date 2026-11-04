@@ -1,4 +1,4 @@
-import type { HistoryPage, MockHistoryRow, MockReviewEligibility, MockUnreadSummary, ReviewEligibilityKind } from '@/mocks/history/types';
+import type { HistoryPage, MockHistoryRow, MockMonthlySummary, MockReviewEligibility, MockUnreadSummary, ReviewEligibilityKind } from '@/mocks/history/types';
 import type { MockOrder, MockOrderStatus } from '@/mocks/order/types';
 import { ServiceError } from '@/services/service-error';
 
@@ -66,11 +66,14 @@ export function parseOrderDto(data: unknown, idempotencyKey: string): MockOrder 
  */
 const ELIGIBILITIES: readonly string[] = ['CAN_WRITE', 'HAS_ACTIVE_REVIEW', 'DEADLINE_EXCEEDED', 'NOT_COMPLETED'];
 
+/**
+ * 내역 행의 reviewEligibility. 모양을 알 수 없으면 null(리뷰 버튼 숨김)로 받는다.
+ * 리뷰 자격은 부가 정보라, 모양이 달라도 주문 내역 전체가 INVALID_RESPONSE로 실패하지 않게 한다.
+ */
 function parseEligibility(value: unknown): MockReviewEligibility | null {
   if (value === undefined || value === null) return null;
-  const bad = () => new ServiceError('INVALID_RESPONSE');
-  if (!isObj(value) || !isStr(value.serverNow) || !isStrOrNull(value.completedAt) || !isStrOrNull(value.reviewDeadline) || !isStrOrNull(value.activeReviewId)) throw bad();
-  if (!isStr(value.eligibility) || !ELIGIBILITIES.includes(value.eligibility)) throw bad();
+  if (!isObj(value) || !isStr(value.serverNow) || !isStrOrNull(value.completedAt) || !isStrOrNull(value.reviewDeadline) || !isStrOrNull(value.activeReviewId)) return null;
+  if (!isStr(value.eligibility) || !ELIGIBILITIES.includes(value.eligibility)) return null;
   return {
     serverNow: value.serverNow,
     completedAt: value.completedAt,
@@ -112,6 +115,20 @@ export function parseUnreadSummaryDto(data: unknown): MockUnreadSummary {
     return { eventId: e.eventId, orderId: e.orderId, revision: e.revision };
   });
   return { unreadEvents, unreadOrderCount: data.unreadOrderCount, asOf: data.asOf };
+}
+
+const isCount = (v: unknown): v is number => typeof v === 'number' && Number.isInteger(v) && v >= 0;
+
+/**
+ * get_monthly_summary: { monthKey, orderCount, deliveredAmount, topCategoryName, largestOrderAmount } (혜지, 2026-11-05).
+ * 대상 주문이 없으면 topCategoryName · largestOrderAmount는 null이고 orderCount · deliveredAmount는 0이다.
+ * largestOrderAmount가 null이면 화면은 "—"로 보여 준다(0원으로 대신하지 않는다). 월 경계는 서버가 KST로 계산한다.
+ */
+export function parseMonthlySummaryDto(data: unknown, monthKey: string): MockMonthlySummary {
+  const bad = () => new ServiceError('INVALID_RESPONSE');
+  if (!isObj(data) || data.monthKey !== monthKey || !isCount(data.orderCount) || !isCount(data.deliveredAmount) || !isStrOrNull(data.topCategoryName)) throw bad();
+  if (data.largestOrderAmount !== null && !isCount(data.largestOrderAmount)) throw bad();
+  return { monthKey, orderCount: data.orderCount, deliveredAmount: data.deliveredAmount, topCategoryName: data.topCategoryName, largestOrderAmount: data.largestOrderAmount };
 }
 
 /** mark_status_updates_viewed: { acknowledgedEventIds[] } */

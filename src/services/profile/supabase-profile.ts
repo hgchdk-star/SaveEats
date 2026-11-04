@@ -1,6 +1,6 @@
 import { LIMITS } from '@/config/limits';
 import { CATALOG_RPC, type ProfileErrorCode, type SetMyNicknameRpcArgs } from '@/contracts/catalog';
-import type { MockProfile, MyService } from '@/mocks/my/types';
+import type { MockLifetimeRecord, MockProfile, MyService } from '@/mocks/my/types';
 import { ServiceError } from '@/services/service-error';
 import { getSession } from '@/services/session';
 import { getSupabaseClient } from '@/services/supabase/client';
@@ -16,7 +16,7 @@ import { maskEmail } from '@/utils/mask';
 const SET_MY_NICKNAME = CATALOG_RPC.setMyNickname;
 const GET_MY_PROFILE = CATALOG_RPC.getMyProfile;
 
-async function call(name: string, args?: SetMyNicknameRpcArgs): Promise<unknown> {
+async function call(name: string, args?: Record<string, unknown>): Promise<unknown> {
   const client = getSupabaseClient();
   if (!client) throw new ServiceError('AUTH_UNAVAILABLE');
   const controller = new AbortController();
@@ -47,13 +47,28 @@ function parseNickname(data: unknown): string | null {
   throw new ServiceError('PROFILE_FAILED');
 }
 
-/** 닉네임 · 프로필 부분만 서버로 바꾼다. 알림·누적 기록은 base(Mock) 그대로다 */
+/**
+ * get_my_cumulative_summary() → { orderCount, deliveredAmount, hasAnyOrder } (혜지, 2026-11-05). 인자 없음, 로그인 상태에서만 부른다.
+ * 마이의 누적 한 줄에 쓴다. 주문 완료(USER_CONFIRMED)만 센다.
+ */
+function parseCumulative(data: unknown): MockLifetimeRecord {
+  const isCount = (v: unknown): v is number => typeof v === 'number' && Number.isInteger(v) && v >= 0;
+  if (typeof data !== 'object' || data === null || Array.isArray(data)) throw new ServiceError('PROFILE_FAILED');
+  const d = data as Record<string, unknown>;
+  if (!isCount(d.orderCount) || !isCount(d.deliveredAmount) || typeof d.hasAnyOrder !== 'boolean') throw new ServiceError('PROFILE_FAILED');
+  return { orderCount: d.orderCount, deliveredAmount: d.deliveredAmount, hasAnyOrder: d.hasAnyOrder };
+}
+
+/** 닉네임 · 프로필 · 누적 기록을 서버로 바꾼다. 알림 설정은 base(Mock) 그대로다 */
 export function createSupabaseMyService(base: MyService): MyService {
   return {
     ...base,
     async getProfile(): Promise<MockProfile> {
       const nickname = parseNickname(await call(GET_MY_PROFILE));
       return { nickname, maskedEmail: maskEmail(getSession().email ?? '') };
+    },
+    async getLifetimeRecord() {
+      return parseCumulative(await call('get_my_cumulative_summary'));
     },
     async saveNickname(nickname) {
       parseNickname(await call(SET_MY_NICKNAME, { p_nickname: nickname } satisfies SetMyNicknameRpcArgs));
