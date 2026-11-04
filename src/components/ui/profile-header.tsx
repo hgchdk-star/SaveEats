@@ -3,22 +3,22 @@ import { StyleSheet, Text, View } from 'react-native';
 import { colors, font, spacing, text } from '@/theme';
 
 type ProfileHeaderProps = {
-  /** 마스킹된 이름. 이름을 수집하지 않으면 null이고 이메일만 보여준다 */
-  maskedName: string | null;
+  /** 공개 닉네임(닉네임이 없는 기존 계정은 대체 이름). 실명이나 이메일로 대신하지 않는다 */
+  name: string;
   maskedEmail: string;
   initial: string;
 };
 
-/** 마이 맨 위 프로필: 동그란 첫 글자 + 마스킹 이름 · 마스킹 이메일. 편집은 없다. [새 컴포넌트 제안] ProfileHeader */
-export function ProfileHeader({ maskedName, maskedEmail, initial }: ProfileHeaderProps) {
+/** 마이 맨 위 프로필: 동그란 첫 글자 + 닉네임 · 마스킹 이메일. 편집은 설정에서 한다. [새 컴포넌트 제안] ProfileHeader */
+export function ProfileHeader({ name, maskedEmail, initial }: ProfileHeaderProps) {
   return (
     <View style={styles.row}>
       <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={styles.avatar}>
         <Text style={styles.initial}>{initial}</Text>
       </View>
       <View style={styles.who}>
-        {maskedName ? <Text style={styles.name}>{maskedName}</Text> : null}
-        <Text style={maskedName ? styles.email : styles.name}>{maskedEmail}</Text>
+        <Text style={styles.name}>{name}</Text>
+        <Text style={styles.email}>{maskedEmail}</Text>
       </View>
     </View>
   );

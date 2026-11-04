@@ -4,6 +4,8 @@ export const LIMITS = {
   quantityMin: 1,
   /** 기획서 16 · FR-MENU-003 · FR-CART-012 */
   quantityMax: 10,
+  /** 한 장바구니에 담을 수 있는 서로 다른 메뉴·옵션 조합의 수(수량 합계가 아니라 종류 수). 서정 확정 2026-11-03, 서버(create_order)도 같은 기준으로 검증한다 */
+  cartLineKindsMax: 30,
   /** 기획서 11.3 · FR-HOME-009 */
   recentViewedMax: 10,
   toastDurationMs: 3000,
@@ -13,6 +15,11 @@ export const LIMITS = {
   accountNumberMinLength: 10,
   /** 비밀번호 최소 글자 수. Supabase Auth 설정(Minimum password length)과 같아야 한다: 6자 (혜지 확인 2026-10-29). 서버 설정을 바꾸면 여기와 문구가 함께 바뀐다 */
   passwordMinLength: 6,
+  /** 닉네임 글자 수(앞뒤 공백 제거 후). 서정 확정 2026-11-02 (OPEN-DB-004). 서버도 같은 규칙으로 검증해야 한다 */
+  nicknameMinLength: 2,
+  nicknameMaxLength: 12,
+  /** 앱을 켤 때 저장된 로그인 세션을 복원하는 데 기다리는 최대 시간. 넘으면 먼저 Guest로 열고, 복원이 끝나면 로그인 상태로 바뀐다 (AUTH-002) */
+  authRestoreTimeoutMs: 4000,
   /** 토스 실행 직전 원격 설정 조회 제한 시간. 넘으면 직접 흐름 (TRF-005) */
   tossConfigTimeoutMs: 3000,
   /** 외부 앱에서 돌아온 뒤 주문 상태 조회를 기다리는 최대 시간. 넘으면 조회 실패 화면 (TRF-008) */
@@ -54,5 +61,6 @@ export const LIMITS = {
 /** 최종 주문 확인 고지 버전. 표시한 고지 문구의 버전을 요청에 함께 보낸다 (ORD-004) */
 export const ORDER = {
   disclosureVersion: '2026-09-30',
-  requestVersion: 1,
+  /** 주문 생성 요청 버전. 서버는 v2만 받는다 (혜지 합의 2026-11) */
+  requestVersion: 2,
 } as const;

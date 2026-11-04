@@ -215,7 +215,7 @@ export function HistoryScreen() {
               onResume={() => void resume(row)}
               onRetrySave={() => void retryQueuedConfirm(row)}
               reviewStatus={review}
-              onReview={() => (review === 'written' && row.reviewEligibility.activeReviewId ? goMyReviews(row.reviewEligibility.activeReviewId) : goReviewWrite(row.orderId))}
+              onReview={() => (review === 'written' && row.reviewEligibility?.activeReviewId ? goMyReviews(row.reviewEligibility.activeReviewId) : goReviewWrite(row.orderId))}
               onSameMenu={sameMenuId ? () => router.push({ pathname: '/menu/[menuId]', params: { menuId: sameMenuId } }) : undefined}
             />
           );

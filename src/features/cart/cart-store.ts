@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 
-import { MockCartValidationError, mockValidateCart } from '@/mocks/cart/mock-cart-validation';
+import { MockCartValidationError } from '@/mocks/cart/mock-cart-validation';
+import { validateCart } from '@/services';
 
 import {
   acknowledgePrices,
@@ -28,7 +29,7 @@ export type CartStatus =
   /** 저장된 장바구니를 읽을 수 없다. 조용히 초기화하지 않고 사용자가 비우기를 고른다 */
   | 'STORAGE_ERROR';
 
-export type CartEditResult = { ok: true } | { ok: false; reason: 'OTHER_STORE' | 'OVER_LIMIT' | 'SAVE_FAILED' | 'NOT_READY' };
+export type CartEditResult = { ok: true } | { ok: false; reason: 'OTHER_STORE' | 'OVER_LIMIT' | 'OVER_KINDS' | 'SAVE_FAILED' | 'NOT_READY' };
 
 type CartState = {
   status: CartStatus;
@@ -63,7 +64,7 @@ let validationTicket = 0;
 export const useCartStore = create<CartState>((set, get) => {
   /** 최신 장바구니에 편집을 적용하고, 저장에 성공하면 내보낸다 */
   const commit = (
-    edit: (cart: CartEnvelope) => CartEnvelope | { reason: 'OTHER_STORE' | 'OVER_LIMIT' },
+    edit: (cart: CartEnvelope) => CartEnvelope | { reason: 'OTHER_STORE' | 'OVER_LIMIT' | 'OVER_KINDS' },
     /** 새 항목이 생기거나 장바구니가 통째로 바뀌면 이전 서버 확인 결과를 버린다. 수량 변경·삭제는 그대로 둔다 */
     { resetValidation = false, allowWhenBroken = false } = {},
   ) =>
@@ -116,7 +117,7 @@ export const useCartStore = create<CartState>((set, get) => {
       const ticket = ++validationTicket;
       set({ validation: { phase: 'VALIDATING' } });
       try {
-        const result = await mockValidateCart({ storeId: cart.storeId, items: cart.items });
+        const result = await validateCart({ storeId: cart.storeId, items: cart.items });
         // 더 늦게 시작한 확인이 있으면 이 결과는 버린다
         if (ticket === validationTicket) set({ validation: { phase: 'DONE', result } });
       } catch (error) {

@@ -176,6 +176,9 @@ export const CATALOG_RPC = {
   setFavorite: 'set_favorite',
   listMyFavorites: 'list_my_favorites',
   ensureMyProfile: 'ensure_my_profile',
+  setMyNickname: 'set_my_nickname',
+  getMyProfile: 'get_my_profile',
+  getPublicFeatureConfig: 'get_public_feature_config',
 } as const;
 
 /** 가게 목록은 이름 → id 오름차순 */
@@ -218,11 +221,47 @@ export interface ListMyFavoritesRpcArgs {
   p_page_size?: number;
 }
 
-/** 로그인 사용자 본인 프로필 최소 레코드. name은 수집 정책 미결정(OPEN-DB-004)이라 null일 수 있다 */
+/**
+ * 로그인 사용자 본인 프로필 최소 레코드. 실명(name)은 신규 수집·저장·표시하지 않기로 확정(서정, 2026-11)해 앱 DTO에서 뺐다.
+ * 서버 ensure_my_profile이 당분간 name을 함께 줄 수 있지만 앱은 읽지 않는다. 컬럼 삭제는 서버 migration으로 따로 한다.
+ */
 export interface MyProfileDto {
   id: Uuid;
-  name: string | null;
 }
+
+/**
+ * 닉네임 저장 (로그인 필요). 가입 직후 저장과 설정에서 변경에 같이 쓴다. 같은 값을 다시 보내도 결과가 같다.
+ * 프로필 행이 없으면 서버가 먼저 만든다. 규칙은 앱과 서버가 같다: 앞뒤 일반 공백을 지운 뒤 2~12자, 완성형 한글·영문·숫자만, 중복 허용.
+ * 서버는 앞뒤 일반 공백(스페이스)만 지우고 탭·줄바꿈·전각 공백은 거절한다. 앱은 보내기 전에 trim()하므로 사용자에게는 차이가 없다.
+ * 규칙 위반은 NICKNAME_INVALID 하나다.
+ */
+export interface SetMyNicknameRpcArgs {
+  p_nickname: string;
+}
+
+export interface SetMyNicknameResultDto {
+  nickname: string;
+}
+
+/** 본인 프로필 읽기 (로그인 필요). profiles를 select *로 읽지 않고 이 함수로 읽는다. nickname이 null이면 아직 정하지 않은 계정이다 */
+export interface GetMyProfileDto {
+  nickname: string | null;
+}
+
+/**
+ * 공개 원격 설정 (Guest도 호출 가능, 인자 없음). 실서버에서 확인한 응답 (2026-11-03).
+ * 앱은 flags.tossDeepLinkEnabled가 true일 때만 켜고, 시간 초과 · 실패 · 값 없음 · boolean이 아닌 값은 false로 본다(fail-closed).
+ * 서버 초기값은 false이고 켜는 것은 서버 운영자가 한다. configRevision은 값이 바뀔 때마다 오르며 앱은 아직 쓰지 않는다.
+ */
+export interface GetPublicFeatureConfigDto {
+  configRevision: number;
+  /** 서버 시각(ISO 문자열) */
+  fetchedAtServer: string;
+  flags: { tossDeepLinkEnabled: boolean };
+}
+
+/** 프로필 RPC의 업무 오류 코드. P0001의 message로 온다. Guest는 실행 권한 오류(42501)가 오며 AUTH_REQUIRED로 본다 */
+export type ProfileErrorCode = 'NICKNAME_INVALID' | 'AUTH_REQUIRED';
 
 export interface CatalogRpcResults {
   list_categories: CategoryDto[];
@@ -232,6 +271,9 @@ export interface CatalogRpcResults {
   set_favorite: SetFavoriteResultDto;
   list_my_favorites: Page<FavoriteStoreCardDto>;
   ensure_my_profile: MyProfileDto;
+  set_my_nickname: SetMyNicknameResultDto;
+  get_my_profile: GetMyProfileDto;
+  get_public_feature_config: GetPublicFeatureConfigDto;
 }
 
 /**

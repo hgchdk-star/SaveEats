@@ -12,6 +12,7 @@ import { KeyValueCard } from '@/components/ui/order-info';
 import { Screen } from '@/components/ui/screen';
 import { TopNavigation } from '@/components/ui/top-navigation';
 import { confirmedCopy } from '@/config/confirmed-copy';
+import { TOSS_CAPABILITY } from '@/config/toss-capability';
 import { draftCopy } from '@/config/draft-copy';
 import { colors, spacing, text } from '@/theme';
 
@@ -124,9 +125,11 @@ export function DirectScreen() {
           <CopyCard.Row label={copy.amountLabel} value={d.totalLabel} action={{ label: copy.copyAmount, onPress: () => void copyAmount() }} />
         </CopyCard>
 
-        <SecondaryButton block onPress={() => void openTossPlain()}>
+        {/* 토스만 여는 방법이 검증되기 전에는 누를 때마다 실패하는 버튼을 두지 않고, 비활성과 이유를 보여준다 */}
+        <SecondaryButton block disabled={!TOSS_CAPABILITY.openOnlyValidated} onPress={() => void openTossPlain()}>
           {copy.openToss}
         </SecondaryButton>
+        {TOSS_CAPABILITY.openOnlyValidated ? null : <Text style={styles.guideDirect}>{copy.openTossUnavailable}</Text>}
       </ScrollView>
     </Screen>
   );

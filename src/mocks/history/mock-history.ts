@@ -52,7 +52,8 @@ function toRow(state: ServerDb, order: MockOrder, now: number): MockHistoryRow {
   return {
     ...order,
     unreadUpdates: unread.map((e) => ({ eventId: e.eventId, revision: e.revision, createdAt: e.createdAt })),
-    reviewEligibility: eligibilityOf(state, order, now),
+    // noReviewEligibility: 리뷰 서버가 없는 첫 버전처럼 리뷰 자격을 주지 않는다(리뷰 작성 버튼이 숨겨진다)
+    reviewEligibility: mockScenario.history === 'noReviewEligibility' ? null : eligibilityOf(state, order, now),
     // 지금도 열 수 있는(판매 중인 활성 메뉴) 것만. 사라진 메뉴는 주문 기록은 그대로 두고 '같은 메뉴 보기'만 숨긴다
     validCurrentMenuRefs: menuIds.filter((id) => mockCatalog.activeMenu(id) !== null),
   };

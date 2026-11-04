@@ -59,7 +59,7 @@ export function OrderDetailScreen({ orderId }: { orderId: string }) {
     { label: '가게', value: snapshot.storeName },
     { label: copy.detailItemsLabel, value: snapshot.items.map((i) => `${i.menuName} × ${i.quantity}`).join('\n') || orderMenuLabel(snapshot) },
     { label: copy.detailAmount, value: formatWon(row.approvedTotalAmount) },
-    { label: done ? copy.detailDestinationDone : copy.detailDestinationPending, value: `${snapshot.destination.bankName} •••• ${snapshot.destination.last4}` },
+    { label: done ? copy.detailDestinationDone : copy.detailDestinationPending, value: snapshot.destination ? `${snapshot.destination.bankName} •••• ${snapshot.destination.last4}` : draftCopy.transfer.rawUnavailable },
     { label: copy.detailStatus, value: done ? copy.detailStatusDone : cancelled ? copy.detailStatusCancelled : copy.detailStatusPending },
     { label: copy.detailOrderedAt, value: formatDateTime(row.createdAt) },
     ...(row.completedAt ? [{ label: copy.detailDoneAt, value: formatDateTime(row.completedAt) }] : []),
@@ -89,7 +89,7 @@ export function OrderDetailScreen({ orderId }: { orderId: string }) {
             <Text style={styles.reviewHelp}>{copy.detailReviewHelp}</Text>
             <ReviewWriteButton
               status={review}
-              onPress={() => (review === 'written' && row.reviewEligibility.activeReviewId ? goMyReviews(row.reviewEligibility.activeReviewId) : goReviewWrite(row.orderId))}
+              onPress={() => (review === 'written' && row.reviewEligibility?.activeReviewId ? goMyReviews(row.reviewEligibility.activeReviewId) : goReviewWrite(row.orderId))}
             />
           </View>
         ) : null}

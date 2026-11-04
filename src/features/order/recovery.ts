@@ -2,8 +2,10 @@ import { useCartStore } from '@/features/cart/cart-store';
 import { useHistoryStore } from '@/features/history/history-store';
 import { orderService } from '@/services';
 import { getSession } from '@/services/session';
+import { saveOrderDestinationLink } from '@/services/transfer/order-destination-link';
 import { errorCode } from '@/services/service-error';
 
+import { confirmOnServer } from './confirm-on-server';
 import { clearAttempt, clearConfirmQueue, loadAttempt, loadConfirmQueue, saveConfirmQueue } from './order-persistence';
 import { useOrderFlowStore } from './order-flow-store';
 
@@ -34,13 +36,17 @@ export async function recoverOnStart(): Promise<void> {
       const latest = await orderService.getOrderStatus(queue.orderId);
       if (latest.status === 'USER_CONFIRMED') {
         await clearConfirmQueue();
+      } else if (latest.status === 'CANCELLED') {
+        // 취소된 주문은 완료 확인을 할 수 없다. 같은 확인을 반복해서 보내지 않도록 큐를 지운다(서정 확정 2026-11-04)
+        await clearConfirmQueue();
       } else if (latest.status === 'PENDING') {
         try {
-          await orderService.confirmOrder(queue.orderId, queue.operationId);
+          await confirmOnServer(queue.orderId, queue.operationId);
           await clearConfirmQueue();
         } catch (error) {
-          // 이미 취소된 경우는 다시 보내도 같은 답이 온다. 큐는 그대로 두고 상태만 기록한다
-          await saveConfirmQueue({ ...queue, phase: 'SAVE_FAILED', attemptCount: queue.attemptCount + 1, lastErrorCode: errorCode(error) ?? 'UNKNOWN' }).catch(() => undefined);
+          // 읽은 뒤 사이에 취소된 경우(INVALID_ORDER_TRANSITION)는 다시 보내도 같은 답이 오므로 큐를 지운다. 그 밖의 실패는 상태만 기록한다
+          if (errorCode(error) === 'INVALID_ORDER_TRANSITION') await clearConfirmQueue();
+          else await saveConfirmQueue({ ...queue, phase: 'SAVE_FAILED', attemptCount: queue.attemptCount + 1, lastErrorCode: errorCode(error) ?? 'UNKNOWN' }).catch(() => undefined);
         }
       }
     } catch {
@@ -56,8 +62,10 @@ export async function recoverOnStart(): Promise<void> {
       const found = await orderService.getOrderByRequestKey(attempt.request.idempotencyKey);
       if (found) {
         // 주문은 만들어져 있었다. 시도 기록을 지우고, 만들 때 쓴 장바구니 버전만 비운다
+        // 만들 때 쓴 목적지 참조도 남긴다(응답을 못 받아 화면 흐름에서 못 남겼을 수 있다). 못 남기면 복사·사전입력이 막힐 뿐이다
+        await saveOrderDestinationLink(found.orderId, { destinationRef: attempt.request.destinationRef }).catch(() => undefined);
         await clearAttempt();
-        await useCartStore.getState().clearIfRevision(attempt.request.expectedCartRevision);
+        await useCartStore.getState().clearIfRevision(attempt.cartRevision);
       } else {
         useOrderFlowStore.getState().set({ attempt, work: 'CREATE_UNKNOWN' });
       }

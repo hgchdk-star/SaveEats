@@ -7,9 +7,12 @@ import { useOrderFlowStore } from '@/features/order/order-flow-store';
 import { recoverOnStart } from '@/features/order/recovery';
 import { useReviewStore } from '@/features/review/review-store';
 import { showToast } from '@/features/toast/toast-store';
-import { authService } from '@/services';
+import { LIMITS } from '@/config/limits';
+import { accountVault, authService, loadDeviceAccountIntoSession } from '@/services';
+import { getSession } from '@/services/session';
 
 import { useLoginIntentStore } from './login-intent-store';
+import { loadProfileSetupPending } from './profile-setup-pending';
 
 /**
  * 로그인·로그아웃에 따른 개인 데이터 정리 (AUTH-004).
@@ -31,15 +34,67 @@ export function clearPersonalData(): void {
 
 /** 로그아웃: 확인 시트 없이 바로 한다 (미결정 묶음4 #3). 토큰 정리에 실패해도 이 기기의 세션은 닫는다 */
 export async function logout(): Promise<void> {
+  const uid = getSession().userId;
   try {
     await authService.signOut();
   } catch {
     // 서버 쪽 정리가 실패해도 기기 화면에서는 로그아웃 처리한다. 이미 발급된 토큰의 서버 유효기간과는 별개다
   }
+  // 로그아웃하면 이 사용자의 계좌 원문을 기기 보안 저장소에서 지운다. 지우지 못했다면 지운 것처럼 알리지 않는다
+  let accountCleared = true;
+  if (uid) {
+    try {
+      await accountVault.delete(uid);
+    } catch {
+      accountCleared = false;
+    }
+  }
   clearPersonalData();
   router.dismissAll();
   router.navigate('/');
-  showToast({ message: draftCopy.settings.toastLoggedOut });
+  showToast(accountCleared ? { message: draftCopy.settings.toastLoggedOut } : { message: draftCopy.settings.toastLoggedOutAccountKept, tone: 'error' });
+}
+
+/**
+ * 앱을 켤 때 한 번: 저장된 로그인 세션을 복원하고, 사용자가 로그아웃하지 않았는데 세션을 잃으면 개인 데이터를 정리한다 (AUTH-002).
+ * 복원이 느리면(네트워크 갱신 등) LIMITS.authRestoreTimeoutMs까지만 기다리고 먼저 Guest로 연다. 늦게 복원되면 그때 로그인 상태가 되고
+ * 기기 기록 복구와 계좌 불러오기를 이어서 한다. 세션이 없는 Guest는 서버를 부르지 않는다.
+ */
+let authStarted = false;
+export async function startAuth(): Promise<void> {
+  if (authStarted) return;
+  authStarted = true;
+  authService.onForcedSignOut(() => {
+    clearPersonalData();
+    showToast({ message: draftCopy.login.sessionExpired });
+  });
+
+  let timedOut = false;
+  const restored = authService.restore();
+  await Promise.race([
+    restored,
+    new Promise<void>((resolve) =>
+      setTimeout(() => {
+        timedOut = true;
+        resolve();
+      }, LIMITS.authRestoreTimeoutMs),
+    ),
+  ]);
+  // 먼저 열었다가 늦게 복원된 경우: 로그인 직후와 같은 후속 처리를 한다
+  if (timedOut) void restored.then(() => (getSession().isMember ? afterLogin() : undefined));
+  else if (getSession().isMember) void loadDeviceAccountIntoSession();
+  // 가입만 되고 닉네임 저장이 끝나지 않은 계정이면 같은 계정으로 프로필 설정을 이어간다 (로그인 화면을 거치지 않는 경로)
+  void restored.then(() => openProfileSetupIfPending());
+}
+
+/** 앱을 다시 열었을 때: 닉네임 저장이 끝나지 않은 계정이면 프로필 설정 화면을 연다. 기존 계정의 닉네임 없음은 여기서 막지 않는다 */
+async function openProfileSetupIfPending(): Promise<void> {
+  if (!getSession().isMember || !(await loadProfileSetupPending())) return;
+  try {
+    router.push({ pathname: '/profile-setup', params: { mode: 'recover' } });
+  } catch {
+    // 화면을 열지 못하면 설정의 "설정하기"로 같은 화면에 들어올 수 있다
+  }
 }
 
 /**
@@ -48,4 +103,6 @@ export async function logout(): Promise<void> {
  */
 export function afterLogin(): void {
   void recoverOnStart();
+  // 이 기기에 저장된 이 사용자의 계좌를 세션에 올린다 (계좌는 서버에 없다)
+  void loadDeviceAccountIntoSession();
 }

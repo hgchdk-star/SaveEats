@@ -34,6 +34,48 @@ export const draftCopy = {
     switchToLogin: '이미 계정이 있어요 · 로그인',
     toastLoggedIn: '로그인했어요',
     toastSignedUp: '가입했어요',
+    /** 아래 셋은 초안(서정 확정 전): 이미 가입된 이메일 · 예상하지 못한 오류 · 사용자가 로그아웃하지 않았는데 세션을 잃었을 때 */
+    duplicateEmailTitle: '이미 가입된 이메일이에요',
+    duplicateEmailDesc: '로그인으로 이어서 이용해주세요.',
+    unexpectedFailedTitle: '지금은 처리하지 못했어요. 잠시 후 다시 시도해주세요.',
+    sessionExpired: '로그인이 풀렸어요. 다시 로그인해주세요.',
+  },
+
+  /**
+   * 닉네임 · 프로필 설정. 제목 · 가입 직후 실패 안내 · 버튼 · 처리 중 문구는 서정 확정(2026-11-02, 디자인 v27).
+   * 라벨 · 도움말 · 오류 문구는 v27 원문을 아직 옮기지 못해 초안이다(서정 확인 필요).
+   */
+  nickname: {
+    label: '닉네임',
+    placeholder: '닉네임을 입력해 주세요',
+    help: `SaveEats 리뷰에 표시돼요. 한글·영문·숫자 ${LIMITS.nicknameMinLength}~${LIMITS.nicknameMaxLength}자로 입력해 주세요.`,
+    errorEmpty: '닉네임을 입력해 주세요.',
+    errorLength: `닉네임은 ${LIMITS.nicknameMinLength}~${LIMITS.nicknameMaxLength}자로 입력해 주세요.`,
+    errorChars: '한글, 영문, 숫자만 사용할 수 있어요.',
+    /** 서버가 규칙 위반으로 거절했을 때(서버 오류 원문은 보여주지 않는다). 중복은 허용이라 "다른 닉네임" 안내는 하지 않는다 */
+    errorServerRejected: '닉네임 입력 규칙을 확인해 주세요.',
+    /** 설정 줄: 닉네임이 있으면 "변경", 없으면 "설정하기" */
+    settingsRow: '닉네임',
+    settingsRowChange: '변경',
+    settingsRowSet: '설정하기',
+    /** 계정은 있는데 닉네임이 없는 기존 계정의 표시 이름 */
+    fallbackName: 'SaveEats 이용자',
+    /** 프로필 조회에 실패했을 때. 닉네임이 없는 것과 구분하고, 이메일이나 실명으로 대신하지 않는다 */
+    loadFailed: '프로필을 불러오지 못했어요',
+    loadRetry: '다시 시도',
+    /** 프로필 설정 화면. 가입 직후 복구와 닉네임 없는 기존 계정의 최초 설정은 제목이 같다 */
+    setupTitle: '프로필 설정을 완료해 주세요',
+    /** 가입 직후 저장 실패일 때만 쓴다. 기존 계정에는 쓰지 않는다 */
+    setupFailedAfterSignup: '계정은 만들어졌어요. 닉네임을 저장하지 못했어요. 다시 시도해 주세요.',
+    setupFailedNetwork: '닉네임을 저장하지 못했어요. 인터넷 연결을 확인하고 다시 시도해 주세요.',
+    setupFailedUnexpected: '닉네임을 저장하지 못했어요. 잠시 후 다시 시도해 주세요.',
+    setupRetry: '다시 시도',
+    setupSaving: '저장하는 중…',
+    /** 닉네임 변경 / 최초 설정 (서정 확정 2026-11-04) */
+    changeTitle: '닉네임 변경',
+    saveCta: '저장하기',
+    toastSaved: '닉네임을 저장했어요',
+    toastChanged: '닉네임을 바꿨어요',
   },
 
   /** 검색 (㉑ ㉒). 검색창 문구는 확정 문구라 confirmed-copy.ts */
@@ -123,6 +165,8 @@ export const draftCopy = {
     version: '앱 버전',
     withdraw: '회원 탈퇴',
     toastLoggedOut: '로그아웃했어요',
+    /** 로그아웃은 됐지만 이 기기의 계좌정보를 지우지 못했을 때. 지웠다고 알리지 않는다 */
+    toastLoggedOutAccountKept: '로그아웃했어요. 이 기기의 계좌정보를 삭제하지 못했어요. 다시 로그인한 뒤 계좌 관리에서 삭제해 주세요.',
     withdrawTitle: '회원 탈퇴할까요?',
     withdrawDescs: ['탈퇴하면 이 계정으로 다시 로그인할 수 없어요.', '진행 중인 주문이 있다면 먼저 내역에서 확인해주세요.'],
     withdrawConfirm: '탈퇴하기',
@@ -305,11 +349,14 @@ export const draftCopy = {
     manageHelp: '지금은 계좌를 1개만 등록할 수 있어요.',
     change: '계좌 변경',
     remove: '계좌 삭제',
-    pendingOrderNotice: '진행 중인 주문은 주문 당시 계좌로 이어가요',
+    /** 초안. 계좌를 바꾸거나 지우면 이전 계좌 원문도 지워져서 진행 중인 주문의 계좌번호 복사·사전입력이 막힌다 (서정 확정 기준 2026-11) */
+    pendingOrderNotice: '진행 중인 주문의 돈은 주문 당시 계좌로 가요. 계좌를 바꾸거나 지우면 이 기기에서 그 계좌번호를 복사할 수 없어요.',
     deleteTitle: '계좌를 삭제할까요?',
     deleteDesc: '삭제하면 다시 등록하기 전까지 주문할 수 없어요.',
     deleteConfirm: '삭제하기',
     toastDeleted: '계좌를 삭제했어요',
+    /** 삭제하지 못했을 때. 지워진 것처럼 보이지 않게 실패를 알린다 */
+    deleteFailed: '계좌를 삭제하지 못했어요. 다시 시도해주세요.',
     toastChanged: '계좌를 변경했어요',
     formTitleRegister: '계좌 등록',
     formTitleChange: '계좌 변경',
@@ -349,6 +396,29 @@ export const draftCopy = {
     rejectedTitle: '가격이 바뀌었거나 품절된 메뉴가 있어요',
     rejectedDesc: '장바구니에서 확인한 뒤 다시 주문해주세요.',
     rejectedAction: '장바구니로',
+    /**
+     * 같은 요청 키에 다른 내용이 와서 서버가 거절했을 때(IDEMPOTENCY_CONFLICT). 문구는 서정 확정(2026-11-02).
+     * 기존 주문이 완료·취소 상태일 수도 있어 "진행 중"이라고 쓰지 않는다. 기존 주문의 상태·가게·메뉴·금액은 본문과 따로 보여 준다.
+     * 새 주문은 장바구니로 돌아가 최종 금액·고지를 다시 확인한 뒤 사용자가 명시적으로 주문할 때 새 키로 만든다. 장바구니는 보존한다.
+     */
+    conflictTitle: '기존 주문을 확인해 주세요',
+    conflictDesc: '방금 확인한 내용과 다른 기존 주문이 있어요. 기존 주문을 확인하거나 장바구니로 돌아가 다시 주문해 주세요.',
+    conflictStatus: { PENDING: '주문 완료가 필요해요', USER_CONFIRMED: '주문 완료', CANCELLED: '취소됨' } as const,
+    conflictView: '주문 보기',
+    /** 기존 주문을 조회하지 못했을 때: 본문을 이 문구로 바꾸고 "주문 보기" 대신 "내역 보기"를 보여 준다 */
+    conflictLoadFailed: '기존 주문 정보를 불러오지 못했어요. 내역에서 주문을 확인해 주세요.',
+    conflictViewHistory: '내역 보기',
+    conflictToCart: '장바구니로 돌아가기',
+    /** 서버가 이 앱 버전의 주문 안내 버전을 받지 않을 때(DISCLOSURE_VERSION_UNSUPPORTED). 초안 */
+    updateRequiredTitle: '주문 안내를 확인해 주세요',
+    updateRequiredDesc: '현재 주문 안내 버전으로는 주문할 수 없어요. 앱을 다시 실행한 뒤 다시 시도해 주세요. 문제가 계속되면 최신 버전인지 확인해 주세요.',
+    /** 서버가 같은 메뉴·옵션 합산 10 초과를 거절했을 때(QUANTITY_LIMIT_EXCEEDED). 초안 */
+    quantityLimitTitle: '같은 메뉴가 너무 많이 담겨 있어요',
+    quantityLimitDesc: '같은 메뉴와 옵션은 합쳐서 10개까지 주문할 수 있어요. 장바구니에서 수량을 줄여주세요.',
+    /** 서버가 요청을 받아들이지 않았을 때(INVALID_INPUT). 정상적으로 담은 장바구니에서는 만나기 어렵다. 초안 */
+    invalidInputTitle: '장바구니를 확인해 주세요',
+    invalidInputDesc: '주문을 만들지 못했어요. 담긴 메뉴를 확인한 뒤 다시 주문해 주세요.',
+    invalidInputAction: '장바구니로 돌아가기',
     accountRequiredTitle: '계좌를 확인해주세요',
     accountRequiredDesc: '등록된 계좌가 바뀌었거나 없어요. 계좌를 확인한 뒤 다시 주문해주세요.',
   },
@@ -367,7 +437,10 @@ export const draftCopy = {
     copyAccount: '계좌번호 복사',
     copyAmount: '금액 복사',
     openToss: '토스 열기',
-    rawUnavailable: '계좌 정보를 확인하지 못했어요',
+    /** 주문 당시 계좌의 원문이 없거나 연결이 다를 때(서정 확정 문구). 새 계좌로 보내라고 안내하지 않는다 */
+    rawUnavailable: '이 기기에 주문 당시 계좌정보가 없어요.',
+    /** '토스 열기'를 쓸 수 없을 때 버튼 아래 안내(서정 확정 문구). 토스만 여는 방법이 검증되기 전까지 보인다 */
+    openTossUnavailable: '사용 중인 금융앱에서 직접 이어가 주세요.',
     rawRetry: '다시 확인',
     copyFailed: '복사하지 못했어요. 다시 시도해주세요.',
     kvStore: '가게',
@@ -396,6 +469,13 @@ export const draftCopy = {
     doneHeader: '주문 완료 🎉', // 기획서 22: 이모지는 이 헤더만 예외
     doneReview: 'SaveEats 리뷰 남기기',
     cancelledDesc: '이 주문은 내역에 취소로 남아요. 이미 보낸 돈은 취소되지 않아요.',
+    /**
+     * 서버 상태를 다시 읽어 실제로 취소된 주문으로 확인됐을 때만, 사용자가 방금 취소한 것이 아닌 경우의 안내 (서정 확정 2026-11-04, 기준 문서 반영 전).
+     * 완료 확인이 막힌 경우와 앱으로 돌아와 상태를 읽었더니 취소였던 경우에 쓴다. 완료 확인을 반복하거나 금융앱을 자동으로 열지 않는다.
+     */
+    cancelledFoundTitle: '취소된 주문이에요',
+    cancelledFoundDesc: '이 주문은 취소되어 완료 확인을 할 수 없어요. 이미 송금했다면 사용한 금융앱에서 송금 내역을 확인해 주세요.',
+    cancelledFoundAction: '주문 내역 보기',
     /** ORD-009 제안 문구 그대로. 제품 검수 필요 */
     cancelSheetTitle: 'SaveEats 주문 기록을 취소할까요?',
     cancelSheetDesc: '이미 보낸 돈은 취소되지 않아요.',
@@ -454,6 +534,8 @@ export const draftCopy = {
     noteStoreClosed: '지금은 준비 중이에요',
     /** 디자인 시안 문구. 10/1 결정 문서의 문구는 "한 메뉴는 최대 10개까지 담을 수 있어요." */
     toastOverLimit: '같은 메뉴는 최대 10개까지 담을 수 있어요',
+    /** 서로 다른 메뉴·옵션 조합이 최대 종류 수를 넘을 때. 서정 확정 문구(2026-11-03) */
+    toastOverKinds: (max: number) => `메뉴는 옵션 조합별로 최대 ${max}종까지 담을 수 있어요.`,
     toastAdded: '장바구니에 담았어요',
     toastAddedAction: '보기',
   },
