@@ -177,7 +177,8 @@ export const useHistoryStore = create<HistoryState>((set, get) => {
         persistPending(pending);
         return { pendingReadIds: pending };
       });
-      sendRead(fresh, 0);
+      // 서버는 한 번에 최대 100개까지 받는다
+      for (let i = 0; i < fresh.length; i += 100) sendRead(fresh.slice(i, i + 100), 0);
     },
 
     hydrateLocal: async () => {
