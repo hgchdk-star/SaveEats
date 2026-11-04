@@ -189,7 +189,7 @@ const styles = StyleSheet.create({
   profileSkeleton: { flexDirection: 'row', alignItems: 'center', gap: spacing[4] },
   profileLines: { flex: 1, gap: spacing[2] },
   zero: { borderWidth: 1, borderColor: colors.line, borderRadius: radius.lg, backgroundColor: colors.surface, paddingBottom: spacing[4] },
-  zeroAction: { alignItems: 'center' },
+  zeroAction: { flexDirection: 'row', justifyContent: 'center' },
   life: { minHeight: 56, justifyContent: 'center', paddingVertical: spacing[3], paddingHorizontal: spacing[4], borderWidth: 1, borderColor: colors.line, borderRadius: radius.lg, backgroundColor: colors.surface },
   lifeRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing[3] },
   lifeText: { ...text.title, color: colors.ink },
