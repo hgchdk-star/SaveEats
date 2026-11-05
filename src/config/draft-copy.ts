@@ -168,10 +168,6 @@ export const draftCopy = {
     toastLoggedOut: '로그아웃했어요',
     /** 로그아웃은 됐지만 이 기기의 계좌정보를 지우지 못했을 때. 지웠다고 알리지 않는다 */
     toastLoggedOutAccountKept: '로그아웃했어요. 이 기기의 계좌정보를 삭제하지 못했어요. 다시 로그인한 뒤 계좌 관리에서 삭제해 주세요.',
-    withdrawTitle: '회원 탈퇴할까요?',
-    withdrawDescs: ['탈퇴하면 이 계정으로 다시 로그인할 수 없어요.', '진행 중인 주문이 있다면 먼저 내역에서 확인해주세요.'],
-    withdrawConfirm: '탈퇴하기',
-    withdrawCancel: '취소',
   },
   notifications: {
     title: '알림 설정',

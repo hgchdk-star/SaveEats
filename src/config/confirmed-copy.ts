@@ -7,6 +7,10 @@ export const confirmedCopy = {
   disclosureTitle: '음식은 주문되지 않아요.',
   disclosureBody: (amountLabel: string) => `주문금액 ${amountLabel}이 등록한 계좌로 이동합니다.`,
 
+  /** 기획서 v1.3 60장 · 54장: 회원 탈퇴·비밀번호 재설정은 MVP에서 준비 중 안내만 제공한다 (2026-10-29). 삭제·재설정 요청은 보내지 않는다 */
+  withdrawNotReady: '회원 탈퇴 기능은 준비 중이에요.',
+  passwordResetNotReady: '비밀번호 재설정 기능은 준비 중이에요.',
+
   /** 기획서 v1.3 10.3.1 계좌정보 저장 안내 (2026-10-29). 계좌 등록·관리 화면에 보여준다 */
   accountStorageNotice: '계좌정보는 이 기기에 안전하게 저장되며 SaveEats 서버에는 저장되지 않아요. 다른 기기에서는 다시 등록해 주세요.',
 
