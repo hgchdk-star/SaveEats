@@ -150,7 +150,10 @@ export interface TransferService {
    * input의 은행이 이 플랫폼에서 사전입력이 검증된 조합이 아니면 tossDeepLinkEnabled는 false다.
    */
   getTransferConfig(input?: { bankName: string }): Promise<{ tossDeepLinkEnabled: boolean }>;
-  /** 사용자가 버튼을 눌렀을 때만 호출한다. 실행만 하며 송금 성공을 뜻하지 않는다 (TRF-006) */
+  /**
+   * 사용자가 버튼을 눌렀을 때만 호출한다. 실행만 하며 송금 성공을 뜻하지 않는다 (TRF-006).
+   * 실제 실행은 호출마다 최신 주문·완료 확인 대기·목적지·검증 조합·원격 스위치를 다시 확인한다(real-transfer-service의 코드 목록 참고).
+   */
   openToss(input: { orderId: string; prefill: boolean }): Promise<void>;
   /** 인증 후 계좌 원문을 확인한다. 실패하면 마스킹 번호로 대신하지 않는다 (TRF-007) */
   resolveDestinationAccountNumber(orderId: string): Promise<string>;

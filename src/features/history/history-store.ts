@@ -4,7 +4,7 @@ import { create } from 'zustand';
 import { LIMITS } from '@/config/limits';
 import { draftCopy } from '@/config/draft-copy';
 import type { MockHistoryRow, MockMonthlySummary, MockUnreadSummary } from '@/mocks/history/types';
-import { loadConfirmQueue } from '@/features/order/order-persistence';
+import { confirmQueueOwner, listConfirmEntries } from '@/services/order/confirm-queue';
 import { showToast } from '@/features/toast/toast-store';
 import { historyService } from '@/services';
 import { userScopedKey } from '@/services/session';
@@ -39,7 +39,8 @@ type HistoryState = {
   /** 읽음 처리했지만 서버 저장이 끝나지 않은 이벤트 id */
   pendingReadIds: Record<string, true>;
   /** 서버에 아직 저장하지 못한 완료 확인이 있는 주문 */
-  queuedConfirmOrderId: string | null;
+  /** 완료 확인 저장을 기다리는 주문들. 사용자·주문별로 여러 건일 수 있다 */
+  queuedConfirmOrderIds: Readonly<Record<string, true>>;
 
   loadFirst: (opts?: { refresh?: boolean }) => Promise<void>;
   refreshLatest: () => Promise<void>;
@@ -95,7 +96,7 @@ export const useHistoryStore = create<HistoryState>((set, get) => {
     summaryLoad: 'idle',
     unread: null,
     pendingReadIds: {},
-    queuedConfirmOrderId: null,
+    queuedConfirmOrderIds: {},
 
     loadFirst: async ({ refresh = false } = {}) => {
       const gen = ++listGeneration;
@@ -197,15 +198,18 @@ export const useHistoryStore = create<HistoryState>((set, get) => {
     },
 
     refreshQueue: async () => {
-      const queue = await loadConfirmQueue();
-      set({ queuedConfirmOrderId: queue?.orderId ?? null });
+      const owner = confirmQueueOwner();
+      const queue = await listConfirmEntries(owner);
+      // 읽지 못하면 대기가 없어졌다고 보지 않고 알고 있던 표시를 둔다. 기다리는 사이 계정이 바뀌었으면 반영하지 않는다
+      if (queue.status !== 'OK' || confirmQueueOwner() !== owner) return;
+      set({ queuedConfirmOrderIds: Object.fromEntries(queue.entries.map((entry) => [entry.orderId, true as const])) });
     },
 
     replaceRow: (row) => set((s) => ({ rows: s.rows.map((r) => (r.orderId === row.orderId && row.statusRevision >= r.statusRevision ? row : r)) })),
 
     reset: () => {
       listGeneration += 1;
-      set({ load: 'idle', rows: [], nextCursor: null, hasMore: false, pageLoad: 'idle', summary: null, summaryLoad: 'idle', unread: null, pendingReadIds: {}, queuedConfirmOrderId: null });
+      set({ load: 'idle', rows: [], nextCursor: null, hasMore: false, pageLoad: 'idle', summary: null, summaryLoad: 'idle', unread: null, pendingReadIds: {}, queuedConfirmOrderIds: {} });
     },
   };
 });
