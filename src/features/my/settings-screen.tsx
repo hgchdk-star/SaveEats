@@ -1,5 +1,6 @@
 import Constants from 'expo-constants';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
+import { useCallback, useRef } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { TextButton } from '@/components/ui/button';
@@ -15,6 +16,7 @@ import { useSession } from '@/services/session';
 import { spacing } from '@/theme';
 
 const copy = draftCopy.settings;
+const nicknameCopy = draftCopy.nickname;
 
 /** 앱 버전은 빌드 정보(app.json의 version)에서 읽는다. 읽지 못하면 줄에 값을 비워 둔다 */
 const APP_VERSION = Constants.expoConfig?.version ?? '';
@@ -31,9 +33,39 @@ export function SettingsScreen() {
   const { isMember, userId } = useSession();
   const profile = useAsync(`settings:profile:${userId}`, () => (isMember ? myService.getProfile() : Promise.resolve(null)));
 
+  // 프로필 설정에서 닉네임을 저장하고 돌아오면 다시 불러온다(처음 한 번은 제외)
+  const first = useRef(true);
+  const reloadProfile = profile.reload;
+  useFocusEffect(
+    useCallback(() => {
+      if (first.current) {
+        first.current = false;
+        return;
+      }
+      reloadProfile();
+    }, [reloadProfile]),
+  );
+
+  // 닉네임 줄: 조회 실패는 닉네임 없음과 구분한다(이메일·실명으로 대신하지 않는다). 없으면 "설정하기"로 프로필 설정에 연결한다
+  const currentNickname = profile.status === 'ok' ? (profile.data?.nickname ?? null) : null;
+  const nicknameRow: ListRowSpec | null =
+    profile.status === 'error'
+      ? // 조회에 실패한 동안에는 설정하기/변경으로 연결하지 않는다. 다시 불러오기만 한다
+        { key: 'nickname', label: nicknameCopy.settingsRow, desc: nicknameCopy.loadFailed, value: nicknameCopy.loadRetry, onPress: profile.reload }
+      : profile.status === 'ok' && profile.data
+        ? {
+            key: 'nickname',
+            label: nicknameCopy.settingsRow,
+            // 닉네임이 있으면 현재 값을 아래에 보여 주고 "변경", 없으면 "설정하기"
+            ...(profile.data.nickname ? { desc: profile.data.nickname } : {}),
+            value: profile.data.nickname ? nicknameCopy.settingsRowChange : nicknameCopy.settingsRowSet,
+            onPress: () => router.push({ pathname: '/profile-setup', params: { mode: currentNickname ? 'change' : 'set' } }),
+          }
+        : null;
+
   const account: ListRowSpec[] = isMember
     ? [
-        ...(profile.status === 'ok' && profile.data?.maskedName ? [{ key: 'name', label: copy.name, value: profile.data.maskedName }] : []),
+        ...(nicknameRow ? [nicknameRow] : []),
         { key: 'email', label: copy.email, value: profile.status === 'ok' ? (profile.data?.maskedEmail ?? '') : '' },
         { key: 'logout', label: copy.logout, onPress: () => void logout() },
       ]

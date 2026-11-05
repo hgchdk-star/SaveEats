@@ -1,0 +1,77 @@
+import { LIMITS } from '@/config/limits';
+import { CATALOG_RPC, type ProfileErrorCode, type SetMyNicknameRpcArgs } from '@/contracts/catalog';
+import type { MockLifetimeRecord, MockProfile, MyService } from '@/mocks/my/types';
+import { ServiceError } from '@/services/service-error';
+import { getSession } from '@/services/session';
+import { getSupabaseClient } from '@/services/supabase/client';
+import { maskEmail } from '@/utils/mask';
+
+/**
+ * 닉네임 저장·프로필 조회 (혜지와 합의 2026-11-03, 같은 날 실서버에서 호출해 확인했다). 모양은 src/contracts/catalog.ts.
+ * - set_my_nickname({ p_nickname }) → { nickname }. 가입 직후 저장과 설정에서 변경에 같이 쓴다. 같은 값을 다시 보내도 같은 결과다.
+ *   오류는 NICKNAME_INVALID와 AUTH_REQUIRED다. 서버는 앞뒤 일반 공백만 지우고 탭·줄바꿈·전각 공백은 거절하지만, 앱은 먼저 trim()한다.
+ * - get_my_profile() → { nickname: null | 문자열 }. profiles 테이블을 select *로 읽지 않는다. name은 받지 않는다.
+ * 서버 오류 원문은 화면에 올리지 않고 코드만 던진다.
+ */
+const SET_MY_NICKNAME = CATALOG_RPC.setMyNickname;
+const GET_MY_PROFILE = CATALOG_RPC.getMyProfile;
+
+async function call(name: string, args?: Record<string, unknown>): Promise<unknown> {
+  const client = getSupabaseClient();
+  if (!client) throw new ServiceError('AUTH_UNAVAILABLE');
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), LIMITS.serverRequestTimeoutMs);
+  try {
+    const { data, error } = await client.rpc(name, args).abortSignal(controller.signal);
+    if (error) {
+      if (error.code === 'P0001' && (error.message as ProfileErrorCode) === 'NICKNAME_INVALID') throw new ServiceError('NICKNAME_INVALID');
+      if (error.code === 'P0001' && (error.message as ProfileErrorCode) === 'AUTH_REQUIRED') throw new ServiceError('AUTH_REQUIRED');
+      if (error.code === '42501') throw new ServiceError('AUTH_REQUIRED');
+      // 서버가 응답한 오류는 code가 있다. 없으면 응답을 받지 못한 것이다
+      throw new ServiceError(error.code ? 'PROFILE_FAILED' : 'NETWORK_UNAVAILABLE');
+    }
+    return data;
+  } catch (e) {
+    if (e instanceof ServiceError) throw e;
+    // AbortError(시간 초과)나 연결 실패
+    throw new ServiceError('NETWORK_UNAVAILABLE');
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+function parseNickname(data: unknown): string | null {
+  if (typeof data !== 'object' || data === null || Array.isArray(data) || !('nickname' in data)) throw new ServiceError('PROFILE_FAILED');
+  const value = (data as { nickname: unknown }).nickname;
+  if (value === null || typeof value === 'string') return value;
+  throw new ServiceError('PROFILE_FAILED');
+}
+
+/**
+ * get_my_cumulative_summary() → { orderCount, deliveredAmount, hasAnyOrder } (혜지, 2026-11-05). 인자 없음, 로그인 상태에서만 부른다.
+ * 마이의 누적 한 줄에 쓴다. 주문 완료(USER_CONFIRMED)만 센다.
+ */
+function parseCumulative(data: unknown): MockLifetimeRecord {
+  const isCount = (v: unknown): v is number => typeof v === 'number' && Number.isInteger(v) && v >= 0;
+  if (typeof data !== 'object' || data === null || Array.isArray(data)) throw new ServiceError('PROFILE_FAILED');
+  const d = data as Record<string, unknown>;
+  if (!isCount(d.orderCount) || !isCount(d.deliveredAmount) || typeof d.hasAnyOrder !== 'boolean') throw new ServiceError('PROFILE_FAILED');
+  return { orderCount: d.orderCount, deliveredAmount: d.deliveredAmount, hasAnyOrder: d.hasAnyOrder };
+}
+
+/** 닉네임 · 프로필 · 누적 기록을 서버로 바꾼다. 알림 설정은 base(Mock) 그대로다 */
+export function createSupabaseMyService(base: MyService): MyService {
+  return {
+    ...base,
+    async getProfile(): Promise<MockProfile> {
+      const nickname = parseNickname(await call(GET_MY_PROFILE));
+      return { nickname, maskedEmail: maskEmail(getSession().email ?? '') };
+    },
+    async getLifetimeRecord() {
+      return parseCumulative(await call('get_my_cumulative_summary'));
+    },
+    async saveNickname(nickname) {
+      parseNickname(await call(SET_MY_NICKNAME, { p_nickname: nickname } satisfies SetMyNicknameRpcArgs));
+    },
+  };
+}

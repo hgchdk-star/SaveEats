@@ -29,7 +29,12 @@ export type MockReviewEligibility = {
 /** 내역 한 줄 = 주문 + 읽지 않은 업데이트 + 리뷰 자격 + 지금도 볼 수 있는 메뉴 (HIST-002) */
 export type MockHistoryRow = MockOrder & {
   unreadUpdates: MockStatusUpdate[];
-  reviewEligibility: MockReviewEligibility;
+  /**
+   * 서버가 주지 않으면 null이다. 이 값 누락은 "리뷰 서버 연결 전"이지 "작성 자격 없음"이 아니다. null이면 리뷰 작성 버튼을 숨긴다.
+   * 리뷰 서버 PR에서 자격 응답과 버튼을 함께 연결하고, 전체 MVP 완료 전에는 포함한다 (서정·혜지 정리 2026-11-04).
+   */
+  reviewEligibility: MockReviewEligibility | null;
+  /** 메뉴와 가게가 활성이면 포함(품절 · 영업 종료도 포함), 비활성 · 사라진 것만 제외 */
   validCurrentMenuRefs: Uuid[];
 };
 
@@ -48,7 +53,8 @@ export type MockMonthlySummary = {
   orderCount: number;
   deliveredAmount: Won;
   topCategoryName: string | null;
-  largestOrderAmount: Won;
+  /** 해당 월 주문 완료 중 최대 금액. 대상 주문이 없으면 null(0원으로 대신하지 않는다) */
+  largestOrderAmount: Won | null;
 };
 
 /** 내역 조회 실패는 첫 페이지면 전체 오류, 다음 페이지면 기존 목록 유지 + 다시 시도 */
@@ -69,13 +75,14 @@ export type ReviewSort = 'LATEST' | 'HELPFUL' | 'RATING_DESC' | 'RATING_ASC';
 
 export type ReviewScope = { type: 'store' | 'menu'; id: Uuid };
 
-/** 공개 리뷰 (REV-008). 이름은 마스킹된 표시명만, 계좌·내부 ID는 없다 */
+/** 공개 리뷰 (REV-008). 작성자는 공개 닉네임만 보여 주고, 계좌·내부 ID는 없다 */
 export type MockReview = {
   reviewId: string;
   orderId: string;
   storeId: Uuid;
   menuIds: Uuid[];
-  maskedAuthorName: string;
+  /** 공개 닉네임. 닉네임이 없는 작성자는 서버가 null을 주고, 앱이 "SaveEats 이용자"로 표시한다 (혜지 확인 2026-11-04) */
+  authorNickname: string | null;
   /** 로그인한 사용자 본인의 리뷰인지. Guest에게는 항상 false */
   isMine: boolean;
   /** 땡김도 1~5 (맛 평가가 아니다) */

@@ -14,7 +14,7 @@ import { TopNavigation } from '@/components/ui/top-navigation';
 import { confirmedCopy } from '@/config/confirmed-copy';
 import { draftCopy } from '@/config/draft-copy';
 import { useHistoryStore } from '@/features/history/history-store';
-import { goAccount, goLogin, goMonthly, goMyReviews, goNotificationSettings, goSettings } from '@/features/order/flow-routes';
+import { goAccount, goContentGuide, goLogin, goMonthly, goMyReviews, goNotificationSettings, goSettings } from '@/features/order/flow-routes';
 import { useAsync } from '@/hooks/use-async';
 import { myService } from '@/services';
 import { getSession, useSession } from '@/services/session';
@@ -45,6 +45,7 @@ export function MyScreen() {
   // 마이 탭으로 돌아올 때 기록을 다시 맞춘다(처음 한 번은 제외)
   const first = useRef(true);
   const reloadLifetime = lifetime.reload;
+  const reloadProfile = profile.reload;
   useFocusEffect(
     useCallback(() => {
       if (first.current) {
@@ -52,13 +53,16 @@ export function MyScreen() {
         return;
       }
       reloadLifetime();
+      reloadProfile(); // 설정에서 닉네임을 바꾸고 돌아왔을 수 있다
       if (getSession().isMember) void useHistoryStore.getState().loadSummary();
-    }, [reloadLifetime]),
+    }, [reloadLifetime, reloadProfile]),
   );
 
   const top = <TopNavigation title={copy.title} divider />;
 
   const settingsRow: ListRowSpec = { key: 'settings', label: copy.rowSettings, icon: 'user', onPress: goSettings };
+  // 알림 설정 아래 · 설정 위. Guest도 열 수 있고 개인 데이터는 보여주지 않는다 (FR-CONTENT-001)
+  const contentGuideRow: ListRowSpec = { key: 'content-guide', label: confirmedCopy.contentGuide.title, icon: 'receipt', onPress: goContentGuide };
 
   if (!isMember) {
     return (
@@ -67,8 +71,8 @@ export function MyScreen() {
           <View style={styles.guest}>
             <EmptyState icon="user" title={copy.guestTitle} description={copy.guestDesc} action={<PrimaryButton onPress={() => goLogin({ action: 'TAB', tab: 'my' })}>{copy.guestAction}</PrimaryButton>} />
           </View>
-          {/* 설정(이용 방법 · 약관)은 Guest도 쓴다 */}
-          <ListGroup rows={[settingsRow]} />
+          {/* 이용 안내와 설정(이용 방법 · 약관)은 Guest도 쓴다 */}
+          <ListGroup rows={[contentGuideRow, settingsRow]} />
         </ScrollView>
       </Screen>
     );
@@ -80,7 +84,11 @@ export function MyScreen() {
     <Screen top={top}>
       <ScrollView contentContainerStyle={styles.content}>
         {profile.status === 'ok' ? (
-          <ProfileHeader maskedName={profile.data.maskedName} maskedEmail={profile.data.maskedEmail} initial={avatarInitial(profile.data.maskedName, profile.data.maskedEmail)} />
+          <ProfileHeader
+            name={profile.data.nickname ?? draftCopy.nickname.fallbackName}
+            maskedEmail={profile.data.maskedEmail}
+            initial={avatarInitial(profile.data.nickname ?? draftCopy.nickname.fallbackName)}
+          />
         ) : profile.status === 'loading' ? (
           <View accessibilityLabel="불러오는 중" style={styles.profileSkeleton}>
             <Skeleton width={56} height={56} radius={28} />
@@ -90,7 +98,8 @@ export function MyScreen() {
             </View>
           </View>
         ) : (
-          <SectionRetry message={draftCopy.my.lifetimeError} onRetry={profile.reload} />
+          // 닉네임이 없는 것과 구분한다. 이메일·실명으로 대신 채우지 않는다
+          <SectionRetry message={draftCopy.nickname.loadFailed} retryLabel={draftCopy.nickname.loadRetry} onRetry={profile.reload} />
         )}
 
         <Section title={copy.accountTitle}>
@@ -125,7 +134,10 @@ export function MyScreen() {
                   </TextButton>
                 </View>
               ) : (
-                <Text style={[styles.life, styles.lifeText]}>{copy.lifetimeLine(lifetime.data.orderCount, formatWon(lifetime.data.deliveredAmount))}</Text>
+                <View style={styles.life}>
+                  <Text style={styles.lifeText}>{copy.lifetimeLine(lifetime.data.orderCount, formatWon(lifetime.data.deliveredAmount))}</Text>
+                  <Text style={styles.lifeHelp}>{copy.deliveredHelp}</Text>
+                </View>
               )}
             </Section>
           </>
@@ -135,6 +147,7 @@ export function MyScreen() {
           rows={[
             { key: 'reviews', label: copy.rowReviews, icon: 'review', onPress: () => goMyReviews() },
             { key: 'notifications', label: copy.rowNotifications, icon: 'clock', onPress: goNotificationSettings },
+            contentGuideRow,
             settingsRow,
           ]}
         />
@@ -154,7 +167,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
-function SectionRetry({ message, onRetry }: { message: string; onRetry: () => void }) {
+function SectionRetry({ message, retryLabel = copy.lifetimeRetry, onRetry }: { message: string; retryLabel?: string; onRetry: () => void }) {
   return (
     <View accessibilityRole="alert" style={[styles.life, styles.lifeRow]}>
       <View style={styles.lifeError}>
@@ -162,7 +175,7 @@ function SectionRetry({ message, onRetry }: { message: string; onRetry: () => vo
         <Text style={styles.lifeErrorText}>{message}</Text>
       </View>
       <TextButton size="sm" onPress={onRetry}>
-        {copy.lifetimeRetry}
+        {retryLabel}
       </TextButton>
     </View>
   );
@@ -176,10 +189,11 @@ const styles = StyleSheet.create({
   profileSkeleton: { flexDirection: 'row', alignItems: 'center', gap: spacing[4] },
   profileLines: { flex: 1, gap: spacing[2] },
   zero: { borderWidth: 1, borderColor: colors.line, borderRadius: radius.lg, backgroundColor: colors.surface, paddingBottom: spacing[4] },
-  zeroAction: { alignItems: 'center' },
+  zeroAction: { flexDirection: 'row', justifyContent: 'center' },
   life: { minHeight: 56, justifyContent: 'center', paddingVertical: spacing[3], paddingHorizontal: spacing[4], borderWidth: 1, borderColor: colors.line, borderRadius: radius.lg, backgroundColor: colors.surface },
   lifeRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing[3] },
   lifeText: { ...text.title, color: colors.ink },
+  lifeHelp: { ...text.label, color: colors.inkSecondary },
   lifeError: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 4 },
   lifeErrorText: { ...text.label, color: colors.ink, flexShrink: 1 },
 });

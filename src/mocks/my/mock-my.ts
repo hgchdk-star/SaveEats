@@ -3,11 +3,12 @@ import { getDb } from '@/mocks/server/db';
 import { useMockSession } from '@/mocks/session/mock-session';
 import { ServiceError } from '@/services/service-error';
 import { maskEmail } from '@/utils/mask';
+import { checkNickname } from '@/utils/nickname';
 
 import type { MockNotificationSettings, MyService } from './types';
 
-/** 가상 사용자의 마스킹된 이름. 실제 서버는 이름을 수집하지 않으면 null을 준다 (OPEN-DB-004) */
-const MASKED_NAME = '김*수';
+/** 가상 사용자의 닉네임. profileNoNickname 시나리오는 닉네임이 없는 기존 계정이다. 새로 가입하면 가입 때 저장한 값으로 바뀐다 */
+let nickname: string | null = mockScenario.profile === 'noNickname' ? null : '세이브이츠';
 
 async function request(): Promise<void> {
   await mockDelay();
@@ -26,8 +27,20 @@ export function createMockMyService(): MyService {
     async getProfile() {
       await request();
       requireMember();
+      // 마이와 설정이 각자 조회하므로 앞의 두 번을 실패시켜야 두 화면의 실패 표시를 모두 볼 수 있다
+      if (mockScenario.profile === 'loadFailOnce' && (failOnce('profile:load:1') || failOnce('profile:load:2'))) throw new ServiceError('NETWORK_UNAVAILABLE');
       const email = useMockSession.getState().email ?? '';
-      return { maskedName: MASKED_NAME, maskedEmail: maskEmail(email) };
+      return { nickname, maskedEmail: maskEmail(email) };
+    },
+
+    async saveNickname(next) {
+      await request();
+      requireMember();
+      if (mockScenario.profile === 'saveFailOnce' && failOnce('profile:save')) throw new ServiceError('NETWORK_UNAVAILABLE');
+      // 서버도 같은 규칙으로 검증한다
+      const checked = checkNickname(next);
+      if (!checked.ok) throw new ServiceError('NICKNAME_INVALID');
+      nickname = checked.value;
     },
 
     async getLifetimeRecord() {

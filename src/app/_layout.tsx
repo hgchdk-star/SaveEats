@@ -2,11 +2,12 @@ import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { useCartStore } from '@/features/cart/cart-store';
 import { useRecentViewedStore } from '@/features/home/recent-viewed-store';
+import { startAuth } from '@/features/auth/session-lifecycle';
 import { recoverOnStart } from '@/features/order/recovery';
 import { ReturnCoordinator } from '@/features/order/return-coordinator';
 import { LaunchGate } from '@/features/start/launch-gate';
@@ -24,16 +25,19 @@ export const unstable_settings = { anchor: '(tabs)' };
 export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts(fontAssets);
   const cartStatus = useCartStore((s) => s.status);
+  const [authReady, setAuthReady] = useState(false);
 
   useEffect(() => {
     void useCartStore.getState().hydrate();
     void useRecentViewedStore.getState().hydrate();
+    // 저장된 로그인 세션을 먼저 복원한다. 복원 전에는 Guest로 보여서 아래 복구가 건너뛰어지기 때문이다
+    void startAuth().finally(() => setAuthReady(true));
   }, []);
 
-  // 장바구니를 읽은 뒤에 한 번: 기기에 남은 완료 확인 큐·결과를 모르는 주문 생성 시도를 정리하고 내역 점을 맞춘다
+  // 장바구니를 읽고 로그인 세션을 복원한 뒤에 한 번: 기기에 남은 완료 확인 큐·결과를 모르는 주문 생성 시도를 정리하고 내역 점을 맞춘다
   useEffect(() => {
-    if (cartStatus !== 'HYDRATING') void recoverOnStart();
-  }, [cartStatus]);
+    if (cartStatus !== 'HYDRATING' && authReady) void recoverOnStart();
+  }, [cartStatus, authReady]);
 
   // 글꼴을 못 불러와도 앱은 시스템 글꼴로 열린다
   const ready = (fontsLoaded || fontError) && cartStatus !== 'HYDRATING';

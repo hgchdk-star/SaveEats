@@ -41,15 +41,15 @@ export type MockScenario = {
    * unknownCreated: 응답을 못 받았지만 서버에는 주문이 만들어져 있다 → 같은 키로 조회하면 찾는다
    * priceChanged / itemUnavailable: 서버가 명확히 거절
    */
-  order: 'ok' | 'localSaveFailOnce' | 'unknownLost' | 'unknownCreated' | 'priceChangedOnce' | 'itemUnavailableOnce';
+  order: 'ok' | 'localSaveFailOnce' | 'unknownLost' | 'unknownCreated' | 'priceChangedOnce' | 'itemUnavailableOnce' | 'idempotencyConflictOnce' | 'disclosureUnsupportedOnce' | 'invalidInputOnce';
   /** 송금 이어가기 (TRF-005 · 006) */
   transfer: 'tossOn' | 'killSwitch' | 'configTimeout' | 'tossLaunchFailOnce';
   /** 외부 앱에서 돌아온 뒤 서버 상태 조회 (TRF-008) */
   statusQuery: 'ok' | 'failOnce' | 'alreadyConfirmed' | 'alreadyCancelled';
   /** '주문 완료했어요' 저장 (ORD-008 · 010) */
-  confirm: 'ok' | 'failOnce';
+  confirm: 'ok' | 'failOnce' | 'operationConflictOnce';
   /** 주문 취소 (ORD-009): unknownOnce는 취소는 적용됐는데 응답을 못 받는 경우 */
-  cancel: 'ok' | 'unknownOnce';
+  cancel: 'ok' | 'unknownOnce' | 'alreadyConfirmedOnce' | 'operationConflictOnce';
   /** 클립보드 쓰기 실패 (TRF-007) */
   clipboardFails: boolean;
 
@@ -58,7 +58,7 @@ export type MockScenario = {
    * empty: 주문 0개 / firstPageFailOnce: 첫 페이지 실패 → 전체 오류 / nextPageFailOnce: 다음 페이지 실패 → 기존 목록 유지 + 다시 시도
    * long: 주문 40개를 더해 여러 페이지로 나눈다
    */
-  history: 'ok' | 'empty' | 'firstPageFailOnce' | 'nextPageFailOnce' | 'long';
+  history: 'ok' | 'empty' | 'firstPageFailOnce' | 'nextPageFailOnce' | 'long' | 'noReviewEligibility';
   /** 읽음 저장 (HIST-007): 실패해도 화면에는 알리지 않고 조용히 다시 시도한다 */
   readSave: 'ok' | 'failOnce';
   /** 이번 달 요약 조회 */
@@ -94,10 +94,14 @@ export type MockScenario = {
   myRecord: 'ok' | 'newUser' | 'failOnce';
   /** 알림 설정: loadFailOnce는 첫 조회 실패 / saveFailOnce는 첫 저장 실패 → 스위치를 되돌리고 토스트 */
   notif: 'ok' | 'loadFailOnce' | 'saveFailOnce';
+  /** 프로필(닉네임): noNickname은 조회는 되지만 닉네임이 없는 기존 계정 / loadFailOnce는 앞의 조회 두 번 실패(마이 · 설정) / saveFailOnce는 첫 저장 실패 */
+  profile: 'ok' | 'noNickname' | 'loadFailOnce' | 'saveFailOnce';
   /** 앱 실행 절차: firstRun은 매번 처음 실행처럼 온보딩부터 / readFails는 완료 여부를 읽지 못함(처음으로 본다) */
   launch: 'normal' | 'firstRun' | 'readFails';
   /** 최근 검색어: seeded는 기기에 저장된 것이 없을 때 예시 10개를 보여준다 */
   recentSearches: 'none' | 'seeded';
+  /** 가게 상세의 콘텐츠 출처 (SRC-004): none은 출처 없음/미확인 → 버튼 숨김, one · many · long은 출처 1개 · 3개 · 14개(긴 이름 포함) */
+  storeSources: 'none' | 'one' | 'many' | 'long' | 'failOnce';
   /** 응답 지연(ms). 로딩 상태를 보기 위한 값 */
   delayMs: number;
 };
@@ -133,8 +137,10 @@ const BASE: MockScenario = {
   favoriteSave: 'ok',
   myRecord: 'ok',
   notif: 'ok',
+  profile: 'ok',
   launch: 'normal',
   recentSearches: 'none',
+  storeSources: 'none',
   delayMs: 400,
 };
 
@@ -168,6 +174,9 @@ const SCENARIOS = {
   orderUnknownCreated: { ...BASE, auth: 'member', order: 'unknownCreated' },
   orderPriceChanged: { ...BASE, auth: 'member', order: 'priceChangedOnce' },
   orderItemUnavailable: { ...BASE, auth: 'member', order: 'itemUnavailableOnce' },
+  orderIdempotencyConflict: { ...BASE, auth: 'member', order: 'idempotencyConflictOnce' },
+  orderDisclosureUnsupported: { ...BASE, auth: 'member', order: 'disclosureUnsupportedOnce' },
+  orderInvalidInput: { ...BASE, auth: 'member', order: 'invalidInputOnce' },
   killSwitch: { ...BASE, auth: 'member', transfer: 'killSwitch' },
   configTimeout: { ...BASE, auth: 'member', transfer: 'configTimeout' },
   tossLaunchFails: { ...BASE, auth: 'member', transfer: 'tossLaunchFailOnce' },
@@ -176,10 +185,14 @@ const SCENARIOS = {
   returnAlreadyCancelled: { ...BASE, auth: 'member', statusQuery: 'alreadyCancelled' },
   confirmSaveFails: { ...BASE, auth: 'member', confirm: 'failOnce' },
   cancelUnknown: { ...BASE, auth: 'member', cancel: 'unknownOnce' },
+  cancelAlreadyConfirmed: { ...BASE, auth: 'member', cancel: 'alreadyConfirmedOnce' },
+  cancelOperationConflict: { ...BASE, auth: 'member', cancel: 'operationConflictOnce' },
+  confirmOperationConflict: { ...BASE, auth: 'member', confirm: 'operationConflictOnce' },
   clipboardFails: { ...BASE, auth: 'member', clipboardFails: true },
 
   // ---- 묶음 3: 내역·리뷰 (Guest로 시작하면 내역·리뷰 쓰기의 로그인 유도를 볼 수 있다) ----
   historyEmpty: { ...BASE, auth: 'member', history: 'empty' },
+  historyNoReviewEligibility: { ...BASE, auth: 'member', history: 'noReviewEligibility' },
   historyFirstPageFails: { ...BASE, auth: 'member', history: 'firstPageFailOnce' },
   historyNextPageFails: { ...BASE, auth: 'member', history: 'nextPageFailOnce' },
   historyLong: { ...BASE, auth: 'member', history: 'long' },
@@ -212,8 +225,17 @@ const SCENARIOS = {
   myRecordFails: { ...BASE, auth: 'member', myRecord: 'failOnce' },
   notifLoadFails: { ...BASE, auth: 'member', notif: 'loadFailOnce' },
   notifSaveFails: { ...BASE, auth: 'member', notif: 'saveFailOnce' },
+  profileNoNickname: { ...BASE, auth: 'member', profile: 'noNickname' },
+  profileLoadFails: { ...BASE, auth: 'member', profile: 'loadFailOnce' },
+  profileSaveFails: { ...BASE, profile: 'saveFailOnce' },
   firstRun: { ...BASE, launch: 'firstRun' },
   launchReadFails: { ...BASE, launch: 'readFails' },
+
+  // ---- 콘텐츠 출처 (가게 상세 › 출처 확인하기) ----
+  sourcesOne: { ...BASE, storeSources: 'one' },
+  sourcesMany: { ...BASE, storeSources: 'many' },
+  sourcesLong: { ...BASE, storeSources: 'long' },
+  sourcesFails: { ...BASE, storeSources: 'failOnce' },
 } satisfies Record<string, MockScenario>;
 
 export type MockScenarioName = keyof typeof SCENARIOS;

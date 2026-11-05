@@ -11,18 +11,23 @@ import { TopNavigation } from '@/components/ui/top-navigation';
 import { LIMITS } from '@/config/limits';
 import { draftCopy } from '@/config/draft-copy';
 import { showToast } from '@/features/toast/toast-store';
-import { authService } from '@/services';
+import { authService, myService } from '@/services';
 import { errorCode } from '@/services/service-error';
 import { colors, spacing, text } from '@/theme';
+import { checkNickname } from '@/utils/nickname';
+
+import { nicknameProblemText } from './nickname-copy';
+import { loadProfileSetupPending, markProfileSetupPending } from './profile-setup-pending';
 
 import { useLoginIntentStore, type LoginIntent } from './login-intent-store';
 import { afterLogin } from './session-lifecycle';
 import { resumeAfterLogin } from './resume-intent';
 
 type Mode = 'login' | 'signup';
-type FormError = { email?: string; password?: string };
+type FormError = { email?: string; password?: string; nickname?: string };
 
 const copy = draftCopy.login;
+const nicknameCopy = draftCopy.nickname;
 
 function reasonFor(intent: LoginIntent | null): string {
   switch (intent?.action) {
@@ -44,12 +49,17 @@ function reasonFor(intent: LoginIntent | null): string {
 }
 
 /** 형식만 본다. 이메일이 실제로 있는지, 비밀번호가 맞는지는 서버가 판단한다 */
-function validate(mode: Mode, email: string, password: string): FormError {
+function validate(mode: Mode, email: string, password: string, nickname: string): FormError {
   const errors: FormError = {};
   const trimmed = email.trim();
   if (trimmed.indexOf('@') < 1 || trimmed.indexOf('.') < 0) errors.email = copy.emailError;
   if (!password) errors.password = copy.passwordError;
   else if (mode === 'signup' && password.length < LIMITS.passwordMinLength) errors.password = copy.passwordTooShort;
+  // 닉네임은 가입에서만 받는다. 로그인 화면에는 없다
+  if (mode === 'signup') {
+    const checked = checkNickname(nickname);
+    if (!checked.ok) errors.nickname = nicknameProblemText(checked.problem);
+  }
   return errors;
 }
 
@@ -59,8 +69,9 @@ export function LoginScreen() {
   const [mode, setMode] = useState<Mode>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [nickname, setNickname] = useState('');
   const [errors, setErrors] = useState<FormError>({});
-  const [failure, setFailure] = useState<'credentials' | 'network' | null>(null);
+  const [failure, setFailure] = useState<'credentials' | 'network' | 'duplicate' | 'unexpected' | null>(null);
   const [busy, setBusy] = useState(false);
 
   const signup = mode === 'signup';
@@ -74,9 +85,9 @@ export function LoginScreen() {
 
   const submit = async () => {
     if (busy) return;
-    const found = validate(mode, email, password);
+    const found = validate(mode, email, password, nickname);
     setErrors(found);
-    if (found.email || found.password) return;
+    if (found.email || found.password || found.nickname) return;
 
     setBusy(true);
     setFailure(null);
@@ -85,11 +96,42 @@ export function LoginScreen() {
     } catch (error) {
       setBusy(false);
       // 인증 오류와 네트워크 오류를 다른 문구로 구분한다 (AUTH-002)
-      setFailure(errorCode(error) === 'NETWORK_UNAVAILABLE' ? 'network' : 'credentials');
+      const code = errorCode(error);
+      setFailure(
+        code === 'NETWORK_UNAVAILABLE' ? 'network' : code === 'EMAIL_ALREADY_REGISTERED' ? 'duplicate' : code === 'INVALID_CREDENTIALS' ? 'credentials' : 'unexpected',
+      );
+      return;
+    }
+    setPassword(''); // 비밀번호는 성공하는 즉시 지운다
+
+    if (signup) {
+      // 계정은 이미 만들어졌다. 닉네임 저장이 실패해도 가입을 다시 부르지 않고 같은 계정의 프로필 저장만 다시 시도한다.
+      // 이어가려던 행동(intent)은 프로필 설정이 끝난 뒤에 이어간다.
+      const checked = checkNickname(nickname);
+      let saved = false;
+      try {
+        if (checked.ok) {
+          await myService.saveNickname(checked.value);
+          saved = true;
+        }
+      } catch {
+        // 아래에서 실패로 다룬다
+      }
+      if (!saved) {
+        setBusy(false);
+        await markProfileSetupPending(nickname.trim());
+        afterLogin();
+        router.replace({ pathname: '/profile-setup', params: { mode: 'recover' } });
+        return;
+      }
+    } else if (await loadProfileSetupPending()) {
+      // 이전에 가입만 되고 닉네임 저장이 끝나지 않은 계정으로 다시 로그인했다. 프로필 설정을 먼저 마치게 한다
+      setBusy(false);
+      afterLogin();
+      router.replace({ pathname: '/profile-setup', params: { mode: 'recover' } });
       return;
     }
     setBusy(false);
-    setPassword(''); // 비밀번호는 성공하는 즉시 지운다
     setIntent(null);
     afterLogin();
     resumeAfterLogin(intent);
@@ -126,6 +168,10 @@ export function LoginScreen() {
           <Notice flush tone="danger" title={copy.failedTitle} description={copy.failedDesc} />
         ) : failure === 'network' ? (
           <Notice flush tone="danger" title={copy.networkFailedTitle} description={copy.failedDesc} />
+        ) : failure === 'duplicate' ? (
+          <Notice flush tone="danger" title={copy.duplicateEmailTitle} description={copy.duplicateEmailDesc} />
+        ) : failure === 'unexpected' ? (
+          <Notice flush tone="danger" title={copy.unexpectedFailedTitle} description={copy.failedDesc} />
         ) : null}
 
         <View style={styles.fields}>
@@ -153,12 +199,30 @@ export function LoginScreen() {
             placeholder={copy.passwordPlaceholder}
             secure
             autoComplete={signup ? 'new-password' : 'password'}
-            returnKeyType="go"
-            onSubmitEditing={() => void submit()}
+            returnKeyType={signup ? 'next' : 'go'}
+            onSubmitEditing={signup ? undefined : () => void submit()}
             helper={signup ? copy.passwordHelpSignup : undefined}
             error={errors.password}
             disabled={busy}
           />
+          {signup ? (
+            <TextInput
+              label={nicknameCopy.label}
+              value={nickname}
+              onChangeText={(v) => {
+                setNickname(v);
+                setErrors((e) => ({ ...e, nickname: undefined }));
+              }}
+              placeholder={nicknameCopy.placeholder}
+              autoComplete="off"
+              maxLength={LIMITS.nicknameMaxLength + 4}
+              returnKeyType="go"
+              onSubmitEditing={() => void submit()}
+              helper={nicknameCopy.help}
+              error={errors.nickname}
+              disabled={busy}
+            />
+          ) : null}
         </View>
 
         {!signup ? (
