@@ -1,8 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { TextButton } from '@/components/ui/button';
-import { ConfirmSheet } from '@/components/ui/bottom-sheet';
 import { ActionStack, QuestionBar } from '@/components/ui/cta-bar';
 import { DeliveryStatus } from '@/components/ui/delivery-status';
 import { ErrorState, Spinner } from '@/components/ui/feedback-states';
@@ -16,6 +15,7 @@ import { LIMITS } from '@/config/limits';
 import { UNDECIDED } from '@/config/undecided';
 import { colors, font, spacing, text } from '@/theme';
 
+import { CancelOrderEntry } from './cancel-order-entry';
 import { cancelOrder, confirmOrder, notYet, resumeCurrentOrder, runStatusQuery, startReturnCheck } from './order-actions';
 import { displayOf } from './order-display';
 import { goHistory, goHome, goReviewWrite } from './flow-routes';
@@ -52,15 +52,14 @@ export function ReturnCheckScreen() {
 export function QuestionScreen() {
   const order = useCurrentOrder();
   const work = useOrderFlowStore((s) => s.work);
-  const [cancelSheet, setCancelSheet] = useState(false);
   if (!order) return null;
   const d = displayOf(order);
 
   const busy = work === 'CONFIRM_SYNCING';
   const saveFailed = work === 'CONFIRM_SAVE_FAILED';
   const cancelUnknown = work === 'CANCEL_UNKNOWN';
-  // 미결정 묶음2 #6: 취소는 이 화면의 보조 텍스트 버튼에서 시작한다. 완료 확인 저장이 걸려 있을 때는 취소를 제안하지 않는다
-  const canCancel = UNDECIDED.orderCancelEntry === 'confirmQuestionTextButton' && !saveFailed && !cancelUnknown;
+  // 미결정 묶음2 #6: 취소는 이 화면과 직접 이어가기 화면의 보조 텍스트 버튼에서 시작한다. 완료 확인 저장이 걸려 있을 때는 취소를 제안하지 않는다
+  const canCancel = UNDECIDED.orderCancelEntry === 'questionAndDirectTextButton' && !saveFailed && !cancelUnknown;
 
   return (
     <Screen
@@ -113,30 +112,8 @@ export function QuestionScreen() {
           ]}
         />
 
-        {canCancel ? (
-          <View style={styles.centered}>
-            <TextButton size="sm" disabled={busy} onPress={() => setCancelSheet(true)}>
-              {copy.cancelOrder}
-            </TextButton>
-          </View>
-        ) : null}
+        {canCancel ? <CancelOrderEntry disabled={busy} /> : null}
       </ScrollView>
-
-      {/* ORD-009 제안 문구 그대로. 취소는 SaveEats 주문 기록을 취소하는 것이지 송금 취소가 아니다 */}
-      <ConfirmSheet
-        visible={cancelSheet}
-        onClose={() => setCancelSheet(false)}
-        title={copy.cancelSheetTitle}
-        descriptions={[copy.cancelSheetDesc]}
-        secondary={{ label: copy.cancelSheetBack, onPress: () => setCancelSheet(false) }}
-        primary={{
-          label: copy.cancelSheetConfirm,
-          onPress: () => {
-            setCancelSheet(false);
-            void cancelOrder();
-          },
-        }}
-      />
     </Screen>
   );
 }

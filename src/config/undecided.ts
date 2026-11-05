@@ -59,8 +59,8 @@ export const UNDECIDED = {
    */
   accountOnLogout: 'deleteFromDevice',
   accountStorageOptions: 'libraryDefault',
-  /** 묶음2 #6 · 주문 취소는 완료 확인 질문 화면의 보조 텍스트 버튼에서 시작한다 */
-  orderCancelEntry: 'confirmQuestionTextButton',
+  /** 묶음2 #6 · 주문 취소는 완료 확인 질문 화면과 직접 이어가기 화면의 '주문 취소' 보조 텍스트 버튼에서 시작한다(서정 확정 2026-11-05). 완료 확인 저장 중 · 저장 실패일 때는 숨긴다 */
+  orderCancelEntry: 'questionAndDirectTextButton',
   /** 묶음2 #7 · PENDING 주문은 자동으로 만료되지 않고, 만료 표시도 하지 않는다 */
   pendingAutoExpiry: null,
   /**
