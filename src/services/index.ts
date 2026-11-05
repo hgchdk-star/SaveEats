@@ -27,7 +27,8 @@ import { createSupabaseOrderService } from './order/supabase-order-service';
 import { createSupabaseMyService } from './profile/supabase-profile';
 import { createVaultAccountService, loadAccountFromVault } from './account/vault-account-service';
 import type { CatalogRepository } from './catalog/catalog-repository';
-import { createUnconfirmedStoreSourceProvider, type StoreSourceProvider } from './store-source/store-source-provider';
+import { createSupabaseStoreSourceProvider } from './store-source/supabase-store-source-provider';
+import type { StoreSourceProvider } from './store-source/store-source-provider';
 import { createSupabaseCatalogRepository, searchStoresFromServer } from './supabase/supabase-catalog-repository';
 
 /**
@@ -37,8 +38,8 @@ import { createSupabaseCatalogRepository, searchStoresFromServer } from './supab
  */
 const mockCatalog = createMockCatalogRepository();
 export const catalogRepository: CatalogRepository = dataSource === 'supabase' ? createSupabaseCatalogRepository(mockCatalog) : mockCatalog;
-// 가게별 콘텐츠 출처. 공급 계약(OPEN-SRC-001)이 없어 서버 모드에서는 출처를 확인하지 못한 것으로 답하고, Mock 모드에서만 개발용 시나리오 목록이 나온다.
-export const storeSourceProvider: StoreSourceProvider = dataSource === 'supabase' ? createUnconfirmedStoreSourceProvider() : createMockStoreSourceProvider();
+// 가게별 콘텐츠 출처. 서버 모드는 list_store_sources(실서버), Mock 모드는 개발용 시나리오 목록이 나온다.
+export const storeSourceProvider: StoreSourceProvider = dataSource === 'supabase' ? createSupabaseStoreSourceProvider() : createMockStoreSourceProvider();
 // 로그인: supabase 모드에서는 실제 Supabase Auth(이메일+비밀번호), mock 모드에서는 Mock. 주문·내역 등 나머지는 각자의 데이터 소스를 따른다.
 export const authService: AuthService = dataSource === 'supabase' ? createSupabaseAuthService() : createMockAuthService();
 // 계좌는 서버에 저장하지 않는다. 데이터 소스와 상관없이 항상 이 기기의 보안 저장소(AccountVault)를 쓴다.
