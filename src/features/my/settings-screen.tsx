@@ -123,5 +123,5 @@ export function SettingsScreen() {
 
 const styles = StyleSheet.create({
   content: { padding: spacing[5], gap: spacing[6] },
-  foot: { flexDirection: 'row', justifyContent: 'center' },
+  foot: { alignItems: 'center' },
 });
