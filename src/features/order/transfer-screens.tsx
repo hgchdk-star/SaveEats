@@ -13,10 +13,12 @@ import { Screen } from '@/components/ui/screen';
 import { TopNavigation } from '@/components/ui/top-navigation';
 import { confirmedCopy } from '@/config/confirmed-copy';
 import { TOSS_CAPABILITY } from '@/config/toss-capability';
+import { UNDECIDED } from '@/config/undecided';
 import { draftCopy } from '@/config/draft-copy';
 import { colors, spacing, text } from '@/theme';
 
-import { confirmOrder, copyAccountNumber, copyAmount, notYet, openTossFromContinue, openTossPlain } from './order-actions';
+import { CancelOrderEntry } from './cancel-order-entry';
+import { cancelOrder, confirmOrder, copyAccountNumber, copyAmount, notYet, openTossFromContinue, openTossPlain } from './order-actions';
 import { displayOf } from './order-display';
 import { goHistory } from './flow-routes';
 import { useOrderFlowStore } from './order-flow-store';
@@ -85,9 +87,15 @@ export function ContinueScreen() {
 export function DirectScreen() {
   const order = useCurrentOrder();
   const transfer = useOrderFlowStore((s) => s.transfer);
-  const busy = useOrderFlowStore((s) => s.work === 'CONFIRM_SYNCING');
+  const work = useOrderFlowStore((s) => s.work);
   if (!order) return null;
   const d = displayOf(order);
+
+  const busy = work === 'CONFIRM_SYNCING';
+  const saveFailed = work === 'CONFIRM_SAVE_FAILED';
+  const cancelUnknown = work === 'CANCEL_UNKNOWN';
+  // 질문 화면과 같은 규칙: 완료 확인 저장 중이거나 저장 실패일 때는 취소를 제안하지 않는다 (서정 확정 2026-11-05)
+  const canCancel = UNDECIDED.orderCancelEntry === 'questionAndDirectTextButton' && !busy && !saveFailed && !cancelUnknown;
 
   // 토스 이어가기를 거쳐 온 경우에만 뒤로 갈 수 있다. 원격 설정이 꺼져서 바로 온 경우에는 닫기(내역)만 있다
   const cameFromContinue = transfer.tossConfigEnabled;
@@ -107,6 +115,15 @@ export function DirectScreen() {
       }>
       <ScrollView contentContainerStyle={styles.content}>
         {transfer.tossFailed ? <Notice flush title={confirmedCopy.tossLaunchFailed} /> : null}
+        {cancelUnknown ? (
+          <Notice
+            flush
+            tone="danger"
+            title={draftCopy.result.cancelUnknownTitle}
+            description={draftCopy.result.cancelUnknownDesc}
+            action={{ label: draftCopy.result.cancelUnknownAction, onPress: () => void cancelOrder() }}
+          />
+        ) : null}
 
         <Text style={styles.guideDirect}>{confirmedCopy.directGuide}</Text>
 
@@ -130,6 +147,8 @@ export function DirectScreen() {
           {copy.openToss}
         </SecondaryButton>
         {TOSS_CAPABILITY.openOnlyValidated ? null : <Text style={styles.guideDirect}>{copy.openTossUnavailable}</Text>}
+
+        {canCancel ? <CancelOrderEntry /> : null}
       </ScrollView>
     </Screen>
   );
