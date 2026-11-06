@@ -35,7 +35,7 @@ const VIEWABILITY = { itemVisiblePercentThreshold: LIMITS.statusReadVisiblePerce
  */
 export function HistoryScreen() {
   const { isMember } = useSession();
-  const { load, rows, hasMore, pageLoad, summary, summaryLoad, pendingReadIds, queuedConfirmOrderId } = useHistoryStore();
+  const { load, rows, hasMore, pageLoad, summary, summaryLoad, pendingReadIds, queuedConfirmOrderIds } = useHistoryStore();
   const [refreshing, setRefreshing] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
 
@@ -198,7 +198,7 @@ export function HistoryScreen() {
         onViewableItemsChanged={onViewableItemsChanged}
         viewabilityConfig={VIEWABILITY}
         renderItem={({ item: row }) => {
-          const status = rowStatus(row, queuedConfirmOrderId);
+          const status = rowStatus(row, queuedConfirmOrderIds);
           const review = status === 'delivered' ? reviewButtonOf(row.reviewEligibility) : null;
           const sameMenuId = status === 'delivered' ? row.validCurrentMenuRefs[0] : undefined; // 지금 볼 수 없는 메뉴는 링크를 숨긴다
           return (

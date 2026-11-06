@@ -26,11 +26,28 @@ async function readAll(): Promise<Record<string, OrderDestinationLink>> {
   }
 }
 
-export async function saveOrderDestinationLink(orderId: string, link: OrderDestinationLink): Promise<void> {
-  const all = await readAll();
+async function write(storageKey: string, orderId: string, link: OrderDestinationLink): Promise<void> {
+  // 읽기 오류는 던진다. 빈 목록으로 보고 쓰면 다른 주문의 연결이 모두 지워진다. 내용이 깨진 값은 어차피 쓸 수 없어 새로 시작한다
+  const raw = await AsyncStorage.getItem(storageKey);
+  let all: Record<string, OrderDestinationLink> = {};
+  try {
+    const parsed: unknown = raw ? JSON.parse(raw) : {};
+    if (parsed && typeof parsed === 'object') all = parsed as Record<string, OrderDestinationLink>;
+  } catch {
+    // 위 주석과 같다
+  }
   delete all[orderId];
   const entries = [...Object.entries(all), [orderId, link] as const].slice(-MAX);
-  await AsyncStorage.setItem(key(), JSON.stringify(Object.fromEntries(entries)));
+  await AsyncStorage.setItem(storageKey, JSON.stringify(Object.fromEntries(entries)));
+}
+
+/** 한 목록을 읽고 고쳐 쓰므로 순서대로 처리한다. 사용자 키는 호출하는 순간에 정한다. 실패하면 던진다 */
+let writes: Promise<void> = Promise.resolve();
+export function saveOrderDestinationLink(orderId: string, link: OrderDestinationLink): Promise<void> {
+  const storageKey = key();
+  const run = writes.then(() => write(storageKey, orderId, link));
+  writes = run.catch(() => undefined);
+  return run;
 }
 
 export async function loadOrderDestinationLink(orderId: string): Promise<OrderDestinationLink | null> {

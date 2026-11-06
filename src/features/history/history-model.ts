@@ -21,10 +21,10 @@ export type RowStatus = 'pending' | 'saveFailed' | 'delivered' | 'cancelled';
  * 내역 행의 상태 표시 (HIST-004).
  * PENDING인데 이 주문의 완료 확인이 기기에 저장돼 있으면 "완료 확인 저장" 문제를 먼저 보여준다.
  */
-export function rowStatus(row: Pick<MockOrder, 'status' | 'orderId'>, queuedConfirmOrderId: string | null): RowStatus {
+export function rowStatus(row: Pick<MockOrder, 'status' | 'orderId'>, queuedConfirmOrderIds: Readonly<Record<string, true>>): RowStatus {
   if (row.status === 'USER_CONFIRMED') return 'delivered';
   if (row.status === 'CANCELLED') return 'cancelled';
-  return queuedConfirmOrderId === row.orderId ? 'saveFailed' : 'pending';
+  return queuedConfirmOrderIds[row.orderId] ? 'saveFailed' : 'pending';
 }
 
 /**

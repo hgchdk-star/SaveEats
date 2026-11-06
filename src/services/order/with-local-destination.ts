@@ -1,6 +1,6 @@
 import type { HistoryService, MockHistoryRow } from '@/mocks/history/types';
-import type { MockOrder, OrderService } from '@/mocks/order/types';
-import { loadOrderDestinationLink } from '@/services/transfer/order-destination-link';
+import type { CreateOrderRequest, MockOrder, OrderService } from '@/mocks/order/types';
+import { loadOrderDestinationLink, saveOrderDestinationLink } from '@/services/transfer/order-destination-link';
 
 import { loadMaskedDestination } from './masked-destination-store';
 
@@ -16,9 +16,24 @@ async function attach<T extends MockOrder>(order: T): Promise<T> {
   return { ...order, snapshot: { ...order.snapshot, destination } };
 }
 
-export function withLocalDestination(service: OrderService): OrderService {
+/**
+ * 이 요청으로 만들어진 주문에 목적지 참조를 잇고 표시값을 합친다. 연결을 먼저 저장해야 첫 응답부터 그때의 계좌가 보인다 (FR-ORD-013).
+ * 저장에 실패하면 목적지를 모르는 주문으로 남는다(표시 없음, 복사·사전입력 차단). 현재 계좌로 대신 채우지 않는다.
+ * 같은 키로 찾은 주문이라도 가게·금액이 요청과 다르면 이번 요청의 주문이 아니므로 잇지 않는다.
+ * IDEMPOTENCY_CONFLICT로 찾은 주문은 이 함수를 거치지 않는다.
+ */
+async function bindCreatedOrder(order: MockOrder, request: CreateOrderRequest): Promise<MockOrder> {
+  const sameRequest = order.snapshot.storeId === request.storeId && order.approvedTotalAmount === request.approvedTotalAmount;
+  if (sameRequest) await saveOrderDestinationLink(order.orderId, { destinationRef: request.destinationRef }).catch(() => undefined);
+  return attach(order);
+}
+
+export type LocalOrderService = OrderService & { bindCreatedOrder: typeof bindCreatedOrder };
+
+export function withLocalDestination(service: OrderService): LocalOrderService {
   return {
-    createOrder: async (request) => attach(await service.createOrder(request)),
+    bindCreatedOrder,
+    createOrder: async (request) => bindCreatedOrder(await service.createOrder(request), request),
     getOrderByRequestKey: async (key) => {
       const order = await service.getOrderByRequestKey(key);
       return order ? attach(order) : null; // 없으면 성공 응답의 null (혜지 합의 2026-11)

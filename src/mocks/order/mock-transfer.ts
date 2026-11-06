@@ -6,10 +6,10 @@ import type { TransferService } from './types';
 /**
  * 송금 이어가기 Mock.
  *
- * - 토스 실행 방법(scheme)은 실기기 PoC 증거 전에는 정하지 않는다 (TRF-009). 그래서 Mock의 openToss는
- *   어떤 앱도 열지 않고 "열었다"고만 답한다. 복귀 흐름은 사용자가 앱을 직접 나갔다가 돌아오면 이어진다.
- * - 계좌번호 원문은 Mock에도 두지 않는다. resolveDestinationAccountNumber는 항상 실패한다.
- *   원문 제공 방식(DestinationResolver)이 OPEN-DB-001/002 결정 전이라 만들 수 없다.
+ * - Mock의 openToss는 어떤 앱도 열지 않고 "열었다"고만 답한다. 복귀 흐름은 사용자가 앱을 직접 나갔다가 돌아오면 이어진다.
+ *   실제 실행은 real-transfer-service의 실행 경계가 맡고, Mock 모드에서는 검증 조합이 설정된 빌드에서만 그 경계를 쓴다.
+ * - 계좌번호 원문은 Mock에도 두지 않는다. 여기의 resolveDestinationAccountNumber는 항상 실패하고,
+ *   앱은 services/index.ts에서 기기 저장소를 읽는 실제 resolver로 바꿔 끼운다.
  */
 export function createMockTransferService(): TransferService {
   return {

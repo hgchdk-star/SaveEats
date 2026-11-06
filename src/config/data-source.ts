@@ -7,7 +7,8 @@
  * 값이 없거나 알 수 없는 값이면 mock이다.
  *
  * 지금 서버로 바뀌는 것: 카테고리 목록 · 가게 목록 · 가게 상세 · 메뉴 상세(catalogRepository), 홈 추천 가게(list_recommended_stores), 홈 인기 메뉴(list_popular_menus), 가게 검색(search_stores), 홈 최근 본 가게·메뉴(list_stores_by_ids · list_menu_cards_by_ids).
- * 나머지(찜 저장·찜 목록, 인기 검색어, 장바구니 확인, 주문·내역·리뷰·마이)는 모두 Mock이다. 서버 모드에서 인기 검색어는 숨긴다.
+ * 로그인 · 주문 · 내역 · 리뷰 · 프로필 · 누적 기록 · 원격 설정도 서버를 쓴다(자세한 범위는 services/index.ts). 장바구니 가격 확인은 서버 카탈로그로 다시 읽는다.
+ * 알림 설정 · 인기 검색어는 서버 함수가 없다. 서버 모드에서 인기 검색어는 숨긴다.
  * 홈 배너는 서버 함수가 아직 없어서 supabase 모드에서는 숨긴다(Mock id가 서버 id와 섞이지 않게).
  * 그 밖에 Mock이 만든 가게·메뉴 id와 서버 id가 섞이는 화면은 서버 쪽 함수가 생기는 대로 하나씩 바꾼다.
  * 앱 환경변수는 `process.env.EXPO_PUBLIC_*` 점 표기법으로만 읽는다.

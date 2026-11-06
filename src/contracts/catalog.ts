@@ -251,7 +251,7 @@ export interface GetMyProfileDto {
 /**
  * 공개 원격 설정 (Guest도 호출 가능, 인자 없음). 실서버에서 확인한 응답 (2026-11-03).
  * 앱은 flags.tossDeepLinkEnabled가 true일 때만 켜고, 시간 초과 · 실패 · 값 없음 · boolean이 아닌 값은 false로 본다(fail-closed).
- * 서버 초기값은 false이고 켜는 것은 서버 운영자가 한다. configRevision은 값이 바뀔 때마다 오르며 앱은 아직 쓰지 않는다.
+ * 서버 초기값은 false이고 켜는 것은 서버 운영자가 한다. configRevision은 값이 바뀔 때마다 오르며 앱은 응답 유효성 검사에만 쓴다.
  */
 export interface GetPublicFeatureConfigDto {
   configRevision: number;
