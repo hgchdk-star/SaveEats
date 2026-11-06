@@ -8,7 +8,7 @@ import { ServiceError } from '@/services/service-error';
  * - replayed는 같은 키로 이미 만들어진 주문을 돌려받았다는 표시다.
  * - snapshot에는 목적지(은행·마스킹)가 없다. 목적지는 앱이 기기 보안 저장소에서 합친다(with-local-destination).
  * 모양이 맞지 않으면 ServiceError('INVALID_RESPONSE')를 던진다. 응답 내용은 오류에 담지 않는다.
- * TODO(혜지 서버 구현 후): 주문 API가 만들어지면 실제 주문 서비스가 이 함수를 쓴다. 지금은 서버가 없어 연결하지 않았다.
+ * 실서버 주문 서비스(supabase-order-service)가 이 함수를 쓴다.
  */
 const STATUSES: readonly string[] = ['PENDING', 'USER_CONFIRMED', 'CANCELLED'];
 

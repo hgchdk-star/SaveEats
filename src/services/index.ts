@@ -14,9 +14,10 @@ import { createMockMyService } from '@/mocks/my/mock-my';
 import type { MyService } from '@/mocks/my/types';
 import { createMockOrderService } from '@/mocks/order/mock-order';
 import { createMockTransferService } from '@/mocks/order/mock-transfer';
-import type { AccountService, AuthService, OrderService, TransferService } from '@/mocks/order/types';
+import type { AccountService, AuthService, TransferService } from '@/mocks/order/types';
 
 import { withLocalDestination, withLocalDestinationHistory } from './order/with-local-destination';
+import { readConfirmEntry } from './order/confirm-queue';
 import { createDestinationResolver } from './transfer/destination-resolver';
 import { createRealTransferService, createTossLauncher } from './transfer/real-transfer-service';
 import { createCatalogCartValidator } from './cart/validate-cart';
@@ -33,7 +34,7 @@ import { createSupabaseCatalogRepository, searchStoresFromServer } from './supab
 
 /**
  * 화면이 쓰는 서비스. 기본은 Mock이다.
- * EXPO_PUBLIC_DATA_SOURCE=supabase 이면 서버로 연결된 부분(카테고리·가게 목록·가게 상세·메뉴 상세·가게 검색. 홈 추천 가게는 features/home/home-data.ts에서 쓴다)만 Supabase를 쓰고 나머지는 Mock이다.
+ * EXPO_PUBLIC_DATA_SOURCE=supabase 이면 아래 각 줄의 주석에 적힌 부분이 Supabase를 쓰고, 나머지는 Mock이다. 무엇이 서버인지는 이 파일의 분기를 기준으로 본다.
  * 화면 코드는 어느 쪽이 붙었는지 모른다.
  */
 const mockCatalog = createMockCatalogRepository();
@@ -49,13 +50,13 @@ export const accountService: AccountService = createVaultAccountService(accountV
 export const loadDeviceAccountIntoSession = (): Promise<void> => loadAccountFromVault(accountVault);
 // 주문: supabase 모드에서는 실서버(create_order · get_order_by_request_key · get_my_order · confirm_order · cancel_order), mock 모드에서는 Mock.
 // 서버는 계좌를 몰라서 응답에 목적지가 없다. 어느 쪽이든 기기에 저장한 은행명·끝 4자리를 서비스 경계에서 합친다(withLocalDestination).
-export const orderService: OrderService = withLocalDestination(dataSource === 'supabase' ? createSupabaseOrderService() : createMockOrderService());
+export const orderService = withLocalDestination(dataSource === 'supabase' ? createSupabaseOrderService() : createMockOrderService());
 // 장바구니 가격·품절 확인: supabase 모드에서는 서버 카탈로그(get_menu)로 다시 읽어 판단하고, mock 모드에서는 시나리오가 있는 Mock이다.
 export const validateCart = dataSource === 'supabase' ? createCatalogCartValidator(catalogRepository) : mockValidateCart;
 // 계좌 원문은 데이터 소스와 상관없이 기기 보안 저장소에서 꺼낸다. 토스 실행·원격 설정은 supabase 모드에서만 실제 구현(현재 fail-closed)이다.
 const resolveDestination = createDestinationResolver(accountVault);
-const transferDeps = { resolveDestinationAccountNumber: resolveDestination, getOrder: (orderId: string) => orderService.getOrderStatus(orderId) };
-// [미연결] 주문 API는 아직 Mock이다. 서버가 정해지면 orderService를 실제 구현으로 바꾼다. supabase 모드의 원격 설정은 get_public_feature_config를 부른다(실패하면 꺼짐).
+const transferDeps = { resolveDestinationAccountNumber: resolveDestination, getOrder: (orderId: string) => orderService.getOrderStatus(orderId), readConfirmState: (orderId: string) => readConfirmEntry(orderId) };
+// supabase 모드의 주문 조회는 실서버(get_my_order)이고 원격 설정은 get_public_feature_config를 부른다(실패하면 꺼짐). 기능 스위치는 서버 초기값 OFF다.
 // mock 모드: 원격 설정과 시나리오는 Mock 그대로. 검증된 조합(EXPO_PUBLIC_TOSS_PREFILL_VERIFIED)이 설정된 빌드에서만 토스를 실제로 연다.
 // 이때도 Mock 원격 설정이 ON이고 주문의 은행이 검증된 조합일 때만 토스 이어가기가 보인다. 사용자가 토스에서 승인하기 전에는 송금되지 않는다.
 export const transferService: TransferService =
@@ -66,7 +67,10 @@ export const transferService: TransferService =
         resolveDestinationAccountNumber: resolveDestination,
         ...(TOSS_CAPABILITY.prefillValidated
           ? {
-              openToss: createTossLauncher(transferDeps),
+              openToss: createTossLauncher({
+                ...transferDeps,
+                isRemoteEnabled: async () => (await createMockTransferService().getTransferConfig()).tossDeepLinkEnabled,
+              }),
               getTransferConfig: async (input?: { bankName: string }) => {
                 const mock = await createMockTransferService().getTransferConfig();
                 return { tossDeepLinkEnabled: mock.tossDeepLinkEnabled && !!input && isPrefillVerified(input.bankName) };
@@ -74,13 +78,13 @@ export const transferService: TransferService =
             }
           : {}),
       };
-// 내역: supabase 모드에서는 목록 · 한 건 · 안 읽은 요약 · 읽음 표시가 실서버이고, 월간 요약은 서버 함수가 아직 없어 Mock이다.
+// 내역: supabase 모드에서는 목록 · 한 건 · 안 읽은 요약 · 읽음 표시 · 월간 요약이 실서버다.
 const mockHistory = createMockHistoryService();
 export const historyService: HistoryService = withLocalDestinationHistory(dataSource === 'supabase' ? createSupabaseHistoryService(mockHistory) : mockHistory);
 // 리뷰: supabase 모드에서는 실서버다. 사진은 서버가 받지 않아 이 모드에서는 사진 선택 · 사진 필터를 숨긴다.
 export const reviewService: ReviewService = dataSource === 'supabase' ? createSupabaseReviewService() : createMockReviewService();
 export const reviewPhotosEnabled = dataSource !== 'supabase';
-// 프로필(닉네임)만 supabase 모드에서 서버(get_my_profile · set_my_nickname)를 쓴다. 알림 설정·누적 기록은 아직 Mock이다.
+// 프로필(닉네임)·누적 기록은 supabase 모드에서 서버를 쓴다. 알림 설정은 아직 Mock이다.
 export const myService: MyService = dataSource === 'supabase' ? createSupabaseMyService(createMockMyService()) : createMockMyService();
 // 검색: 서버 모드에서는 가게 검색만 서버(search_stores)다. 인기 검색어는 서버 함수가 아직 없고 Mock 목록은 서버 데이터에서
 // 결과가 나오지 않을 수 있어서, 서버 모드에서는 비워 섹션을 숨긴다.

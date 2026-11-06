@@ -141,7 +141,7 @@ export function NotYetScreen() {
   return (
     <Screen
       top={<TopNavigation onClose={goHome} />}
-      bottom={<ActionStack primary={{ label: copy.notYetResume, onPress: resumeCurrentOrder }} sub={{ label: copy.toHistory, onPress: goHistory }} />}>
+      bottom={<ActionStack primary={{ label: copy.notYetResume, onPress: () => void resumeCurrentOrder() }} sub={{ label: copy.toHistory, onPress: goHistory }} />}>
       <ScrollView contentContainerStyle={styles.content}>
         <View>
           <Text accessibilityRole="header" style={styles.title}>

@@ -15,14 +15,15 @@ import { orderService, transferService } from '@/services';
 import { copyToClipboard } from '@/services/clipboard';
 import { ServiceError, errorCode } from '@/services/service-error';
 import { getSession } from '@/services/session';
-import { saveOrderDestinationLink } from '@/services/transfer/order-destination-link';
+import { confirmQueueOwner, readConfirmEntry, removeConfirmEntry, saveConfirmEntry } from '@/services/order/confirm-queue';
 import { saveMaskedDestination } from '@/services/order/masked-destination-store';
 import { createLocalId } from '@/utils/id';
 
 import { isValidCatalogRevision, type CartEnvelope } from '@/features/cart/cart-model';
 
 import { confirmOnServer } from './confirm-on-server';
-import { clearAttempt, clearConfirmQueue, loadConfirmQueue, saveAttempt, saveConfirmQueue } from './order-persistence';
+import { devInjectConfirmFailure } from './dev-failure-injection';
+import { clearAttempt, saveAttempt } from './order-persistence';
 import { useOrderFlowStore, type RejectedReason } from './order-flow-store';
 
 /**
@@ -137,7 +138,7 @@ export async function recheckCreate(): Promise<void> {
   flow().set({ work: 'CREATE_SAVING' });
   try {
     const found = await orderService.getOrderByRequestKey(attempt.request.idempotencyKey);
-    if (found) await onCreated(found, attempt.via, attempt.request, attempt.cartRevision);
+    if (found) await onCreated(await orderService.bindCreatedOrder(found, attempt.request), attempt.via, attempt.cartRevision);
     else await send(attempt);
   } catch {
     flow().set({ work: 'CREATE_UNKNOWN' });
@@ -153,7 +154,7 @@ const REJECTIONS: readonly string[] = ['PRICE_CHANGED', 'ITEM_UNAVAILABLE', 'STO
 async function send(attempt: NonNullable<ReturnType<typeof flow>['attempt']>): Promise<void> {
   try {
     const order = await orderService.createOrder(attempt.request);
-    await onCreated(order, attempt.via, attempt.request, attempt.cartRevision);
+    await onCreated(order, attempt.via, attempt.cartRevision);
   } catch (error) {
     const code = errorCode(error);
     if (code === 'IDEMPOTENCY_CONFLICT') {
@@ -178,7 +179,7 @@ async function send(attempt: NonNullable<ReturnType<typeof flow>['attempt']>): P
       try {
         const found = await orderService.getOrderByRequestKey(attempt.request.idempotencyKey);
         if (found) {
-          await onCreated(found, attempt.via, attempt.request, attempt.cartRevision);
+          await onCreated(await orderService.bindCreatedOrder(found, attempt.request), attempt.via, attempt.cartRevision);
           return;
         }
       } catch {
@@ -200,17 +201,13 @@ async function send(attempt: NonNullable<ReturnType<typeof flow>['attempt']>): P
   }
 }
 
-/** 주문(PENDING) 저장에 성공했다 → 장바구니 정리 → 원격 설정 조회 → 이어가기 화면 */
-async function onCreated(
-  order: MockOrder,
-  via: 'TOSS' | 'DIRECT',
-  request: CreateOrderRequest,
-  cartRevision: number,
-): Promise<void> {
+/**
+ * 주문(PENDING) 저장에 성공했다 → 장바구니 정리 → 원격 설정 조회 → 이어가기 화면.
+ * order는 목적지 연결을 마치고 표시값을 합친 주문이다(orderService.createOrder · bindCreatedOrder). 연결을 저장하지 못했으면 목적지가 null이고,
+ * 그 경우 복사·사전입력은 막히고 목적지 확인 안내가 나온다.
+ */
+async function onCreated(order: MockOrder, via: 'TOSS' | 'DIRECT', cartRevision: number): Promise<void> {
   flow().set({ order, work: 'PENDING_READY', attempt: null, rejectedReason: null, confirmOperationId: null, cancelOperationId: null });
-  // 이 주문을 만들 때 쓴 목적지의 참조를 기기에 남긴다. 나중에 계좌번호 복사·사전입력이 바로 그 목적지인지 확인하는 데 쓴다.
-  // 남기지 못해도 주문은 이미 만들어졌다. 그 경우 복사·사전입력은 막히고 목적지 확인 안내가 나온다.
-  await saveOrderDestinationLink(order.orderId, { destinationRef: request.destinationRef }).catch(() => undefined);
   void clearAttempt();
   // 미결정 묶음2 #5(= 묶음1 #10): 주문 생성에 성공했을 때 비운다. 생성에 쓴 버전만 비우고 그사이 더 담은 것은 둔다 (ORD-013)
   if (UNDECIDED.cartClearTiming === 'onPendingCreated') await useCartStore.getState().clearIfRevision(cartRevision);
@@ -226,7 +223,8 @@ export async function openTransfer(via: 'TOSS' | 'DIRECT', how: 'replace' | 'pus
     setTimeout(() => resolve({ tossDeepLinkEnabled: false }), LIMITS.tossConfigTimeoutMs),
   );
   // 이 주문의 은행·이 플랫폼에서 사전입력이 검증된 조합이 아니면 처음부터 직접 이어가기로 간다
-  const bankName = flow().order?.snapshot.destination?.bankName;
+  const destination = flow().order?.snapshot.destination;
+  const bankName = destination?.bankName;
   const config = await Promise.race([transferService.getTransferConfig(bankName ? { bankName } : undefined), timeout]).catch(() => ({ tossDeepLinkEnabled: false }));
   const direct = via === 'DIRECT' || !config.tossDeepLinkEnabled;
   flow().setTransfer({
@@ -234,7 +232,7 @@ export async function openTransfer(via: 'TOSS' | 'DIRECT', how: 'replace' | 'pus
     tossConfigEnabled: config.tossDeepLinkEnabled,
     tossBusy: false,
     tossFailed: false,
-    rawAvailable: true,
+    rawAvailable: !!destination, // 주문 당시 목적지를 이 기기에서 찾지 못했으면 복사를 열지 않는다
     awaitingReturn: false,
   });
   const target = direct ? '/order/direct' : '/order/continue';
@@ -243,7 +241,12 @@ export async function openTransfer(via: 'TOSS' | 'DIRECT', how: 'replace' | 'pus
   else router.replace(target);
 }
 
-/** '토스로 주문 이어가기'. 실패하면 같은 주문의 직접 이어가기로 간다 (송금 실패라고 말하지 않는다) */
+/**
+ * '토스로 주문 이어가기'. 확인은 실행 경계(transferService.openToss)가 한다. 어긋나면 열지 않고 상황에 맞는 화면으로 보낸다.
+ * - 완료·취소됐거나 상태·대기 기록을 확인하지 못함: 서버 상태 확인 화면 (완료·취소 화면 또는 질문 화면으로 이어진다)
+ * - 완료 확인 대기가 있음: 같은 주문의 상태 저장 복구
+ * - 원격 OFF·조회 실패·실행 실패: 같은 주문의 직접 이어가기 (송금 실패라고 말하지 않는다)
+ */
 export async function openTossFromContinue(): Promise<void> {
   const { order, transfer } = flow();
   if (!order || transfer.tossBusy) return;
@@ -252,9 +255,28 @@ export async function openTossFromContinue(): Promise<void> {
     await transferService.openToss({ orderId: order.orderId, prefill: UNDECIDED.tossPrefill });
     flow().setTransfer({ tossBusy: false, awaitingReturn: true });
   } catch (error) {
+    const code = errorCode(error);
+    if (code === 'CONFIRM_PENDING') {
+      flow().setTransfer({ tossBusy: false });
+      const confirm = await readConfirmEntry(order.orderId);
+      openConfirmRecovery(confirm.status === 'QUEUED' ? confirm.entry.operationId : null, 'replace');
+      return;
+    }
+    if (code === 'ORDER_NOT_PENDING' || code === 'ORDER_STATUS_UNKNOWN' || code === 'CONFIRM_STATE_UNREADABLE' || code === 'AUTH_REQUIRED') {
+      flow().setTransfer({ tossBusy: false });
+      startReturnCheck('replace');
+      return;
+    }
     // 목적지를 확인하지 못한 경우: 토스 실패가 아니라 목적지 확인 안내를 보여준다. 계좌 복사도 같은 이유로 막힌다
-    const destinationProblem = errorCode(error) === 'DESTINATION_UNAVAILABLE';
-    flow().setTransfer({ tossBusy: false, tossFailed: !destinationProblem, rawAvailable: !destinationProblem, mode: 'DIRECT' });
+    const destinationProblem = code === 'DESTINATION_UNAVAILABLE';
+    flow().setTransfer({
+      tossBusy: false,
+      tossFailed: !destinationProblem,
+      rawAvailable: !destinationProblem,
+      mode: 'DIRECT',
+      // 원격이 꺼졌으면 이어가기 화면으로 돌아가는 길도 닫는다
+      tossConfigEnabled: code === 'TOSS_DISABLED' ? false : flow().transfer.tossConfigEnabled,
+    });
     router.replace('/order/direct');
   }
 }
@@ -386,49 +408,62 @@ export async function confirmOrder(opts: { navigateToQuestion: boolean }): Promi
   const state = flow();
   const order = state.order;
   if (!order || state.work === 'CONFIRM_SYNCING') return;
-  const operationId = state.confirmOperationId ?? createLocalId();
+  const owner = confirmQueueOwner();
+  // 기다리는 사이 다른 주문 화면으로 바뀌었거나 계정이 바뀌었으면 화면은 건드리지 않는다. 큐는 잡아 둔 owner의 이 주문 것만 다룬다
+  const isCurrent = () => confirmQueueOwner() === owner && flow().order?.orderId === order.orderId;
   if (opts.navigateToQuestion) router.replace('/order/question');
-  flow().set({ work: 'CONFIRM_SYNCING', confirmOperationId: operationId });
+  flow().set({ work: 'CONFIRM_SYNCING' });
+
+  // 같은 주문의 재시도는 기존 operationId를 그대로 쓴다
+  const saved = await readConfirmEntry(order.orderId, owner);
+  const previous = saved.status === 'QUEUED' ? saved.entry : null;
+  const operationId = state.confirmOperationId ?? previous?.operationId ?? createLocalId();
+  if (isCurrent()) flow().set({ confirmOperationId: operationId });
 
   try {
-    await saveConfirmQueue({
-      version: 1,
-      orderId: order.orderId,
-      operationId,
-      kind: 'CONFIRM',
-      phase: 'QUEUED',
-      createdLocallyAt: new Date().toISOString(),
-      attemptCount: 1,
-      lastErrorCode: null,
-    });
+    await saveConfirmEntry(
+      {
+        orderId: order.orderId,
+        operationId,
+        phase: 'QUEUED',
+        createdLocallyAt: previous?.createdLocallyAt || new Date().toISOString(),
+        attemptCount: (previous?.attemptCount ?? 0) + 1,
+        lastErrorCode: null,
+      },
+      owner,
+    );
   } catch {
     // 기기에 저장하지 못했다. 저장이 끝난 것처럼 보여주지 않는다
-    flow().set({ work: 'CONFIRM_SAVE_FAILED' });
+    if (isCurrent()) flow().set({ work: 'CONFIRM_SAVE_FAILED' });
     return;
   }
 
   try {
+    devInjectConfirmFailure(); // 개발 전용: 기본은 아무 일도 하지 않는다 (dev-failure-injection.ts)
     const confirmed = await confirmOnServer(order.orderId, operationId);
-    void clearConfirmQueue();
+    await removeConfirmEntry(order.orderId, owner);
+    if (confirmQueueOwner() === owner) syncHistory();
+    if (!isCurrent()) return;
     flow().set({ order: confirmed, work: 'SERVER_CONFIRMED' });
-    syncHistory();
     router.replace('/order/done');
   } catch (error) {
+    if (!isCurrent()) return; // 큐는 남아 있다. 원래 계정의 복구가 이어서 처리한다
     if (errorCode(error) === 'INVALID_ORDER_TRANSITION') {
       // 지금 상태에서는 완료할 수 없다고 서버가 답했다. 서버 상태를 다시 읽어 실제 상태에 맞게 처리한다.
       // 취소된 주문이라고 단정하지 않는다: 읽은 상태가 취소일 때만 취소 안내를 보이고, 완료로 읽히면 완료 화면으로 간다.
-      // 어느 쪽이든 완료 확인을 다시 보내지 않으므로 기기에 남긴 완료 확인 큐는 지운다.
+      // 어느 쪽이든 완료 확인을 다시 보내지 않으므로 이 주문의 큐만 지운다.
       try {
         const latest = await orderService.getOrderStatus(order.orderId);
+        if (!isCurrent()) return;
         if (latest.status === 'CANCELLED') {
-          await clearConfirmQueue().catch(() => undefined);
+          await removeConfirmEntry(order.orderId, owner);
           flow().set({ order: latest, work: 'READY', cancelledByUser: false, confirmOperationId: null });
           syncHistory();
           router.replace('/order/cancelled');
           return;
         }
         if (latest.status === 'USER_CONFIRMED') {
-          await clearConfirmQueue().catch(() => undefined);
+          await removeConfirmEntry(order.orderId, owner);
           flow().set({ order: latest, work: 'SERVER_CONFIRMED', confirmOperationId: null });
           syncHistory();
           router.replace('/order/done');
@@ -437,7 +472,7 @@ export async function confirmOrder(opts: { navigateToQuestion: boolean }): Promi
       } catch {
         // 상태를 읽지 못했다. 취소됐다고 단정하지 않고 저장 실패로 두어 사용자가 내역에서 확인하게 한다
       }
-      flow().set({ work: 'CONFIRM_SAVE_FAILED' });
+      if (isCurrent()) flow().set({ work: 'CONFIRM_SAVE_FAILED' });
       return;
     }
     flow().set({ work: 'CONFIRM_SAVE_FAILED' });
@@ -488,9 +523,30 @@ export function notYet(): void {
   router.replace('/order/not-yet');
 }
 
-/** 안내 화면의 '주문 이어가기': 같은 주문으로 이어가기 화면을 다시 연다 (새 주문을 만들지 않는다) */
-export function resumeCurrentOrder(): void {
-  const { transfer } = flow();
+/** 이미 완료를 확인한 주문: 이어가기 대신 같은 주문의 상태 저장 복구 화면으로 보낸다. 새 주문·재송금 안내를 하지 않는다 */
+function openConfirmRecovery(operationId: string | null, how: 'replace' | 'push'): void {
+  flow().set({ work: 'CONFIRM_SAVE_FAILED', confirmOperationId: operationId });
+  if (how === 'push') router.push('/order/question');
+  else router.replace('/order/question');
+}
+
+/**
+ * 안내 화면의 '주문 이어가기': 같은 주문으로 이어가기 화면을 다시 연다 (새 주문을 만들지 않는다).
+ * 완료 확인 대기가 있으면 상태 저장 복구가 먼저이고, 읽지 못하면 이어가기를 열지 않는다.
+ * 원격 설정은 여기서 믿지 않는다. 토스 버튼을 누를 때 다시 확인한다.
+ */
+export async function resumeCurrentOrder(): Promise<void> {
+  const { order, transfer } = flow();
+  if (!order) return;
+  const confirm = await readConfirmEntry(order.orderId);
+  if (confirm.status === 'UNREADABLE') {
+    showToast({ message: draftCopy.history.resumeFailed, tone: 'error' });
+    return;
+  }
+  if (confirm.status === 'QUEUED') {
+    openConfirmRecovery(confirm.entry.operationId, 'replace');
+    return;
+  }
   flow().setTransfer({ tossFailed: false });
   router.replace(transfer.tossConfigEnabled ? '/order/continue' : '/order/direct');
 }
@@ -523,12 +579,16 @@ export async function resumeOrderFromHistory(row: MockHistoryRow): Promise<boole
     void useHistoryStore.getState().loadFirst({ refresh: true });
     return false;
   }
-  const queue = await loadConfirmQueue();
-  const queued = queue?.orderId === latest.orderId;
-  flow().set({ order: latest, attempt: null, rejectedReason: null, cancelOperationId: null, confirmOperationId: queued && queue ? queue.operationId : null });
+  const confirm = await readConfirmEntry(latest.orderId);
+  if (confirm.status === 'UNREADABLE') {
+    // 완료 확인 기록을 읽지 못했다. 대기가 없다고 단정해 이어가기(송금 흐름)를 열지 않는다
+    showToast({ message: draftCopy.history.resumeFailed, tone: 'error' });
+    return false;
+  }
+  const queued = confirm.status === 'QUEUED';
+  flow().set({ order: latest, attempt: null, rejectedReason: null, cancelOperationId: null, confirmOperationId: queued ? confirm.entry.operationId : null });
   if (queued) {
-    flow().set({ work: 'CONFIRM_SAVE_FAILED' });
-    router.push('/order/question');
+    openConfirmRecovery(confirm.entry.operationId, 'push');
     return true;
   }
   flow().set({ work: 'PENDING_READY' });
@@ -538,12 +598,21 @@ export async function resumeOrderFromHistory(row: MockHistoryRow): Promise<boole
 
 /** 내역의 '상태 저장 다시 시도': 기기에 저장된 같은 operationId로 완료 확인을 다시 보낸다 */
 export async function retryQueuedConfirm(row: MockHistoryRow): Promise<void> {
-  const queue = await loadConfirmQueue();
-  if (!queue || queue.orderId !== row.orderId) {
+  // 다른 주문의 저장이 진행 중이면 그 결과가 이 주문 화면을 덮지 않게 기다리게 한다
+  if (flow().work === 'CONFIRM_SYNCING') {
+    showToast({ message: draftCopy.history.resumeBusy });
+    return;
+  }
+  const confirm = await readConfirmEntry(row.orderId);
+  if (confirm.status === 'UNREADABLE') {
+    showToast({ message: draftCopy.history.resumeFailed, tone: 'error' });
+    return;
+  }
+  if (confirm.status === 'NONE') {
     void useHistoryStore.getState().refreshQueue();
     return;
   }
-  flow().set({ order: toOrder(row), attempt: null, confirmOperationId: queue.operationId, work: 'CONFIRM_SAVE_FAILED' });
+  flow().set({ order: toOrder(row), attempt: null, confirmOperationId: confirm.entry.operationId, work: 'CONFIRM_SAVE_FAILED' });
   router.push('/order/question');
   await confirmOrder({ navigateToQuestion: false });
 }

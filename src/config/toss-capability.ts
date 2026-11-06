@@ -3,8 +3,9 @@ import { Platform } from 'react-native';
 /**
  * 토스 실행 방법 중 SaveEats 빌드에서 검증된 범위 (개발 명세 TRF-003 · 004).
  *
- * 비공식 후보 URL `supertoss://send?amount=&bank=&accountNo=&origin=qr`은 Expo Go에서 진입·사전입력이 되는 것만 확인됐다
- * (실제 송금은 하지 않음). 이 기록은 SaveEats 빌드에서 실제 사용을 허용하는 근거가 아니다.
+ * 비공식 후보 URL `supertoss://send?amount=&bank=&accountNo=&origin=qr`은 독립 Expo Go 앱의 iPhone·Android에서 진입·사전입력 성공이 사용자 보고로
+ * 기록돼 있다 (POC-EXPOGO-20261014-USERREPORT, 개발 명세 TRF-011, 실제 송금은 하지 않음). 기기·OS·토스 버전·은행명이 미기록이고
+ * SaveEats 빌드가 아니므로 이 기록만으로는 어떤 조합도 허용하지 않는다. 그래서 evidenceId는 null이고 목록도 기본으로 비어 있다.
  * 사전입력은 "플랫폼 + 은행명" 조합이 SaveEats 빌드에서 검증됐다고 서정이 기록한 것만 켠다. 전체 은행에 시도하지 않는다.
  * 목록에 없는 은행·플랫폼은 처음부터 직접 이어가기로 간다. 목록이 비어 있으면(기본) 사전입력은 어디에서도 쓰이지 않는다.
  *
