@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { StyleSheet, Text, TextInput as RNTextInput, View, type KeyboardTypeOptions } from 'react-native';
+import { Pressable, StyleSheet, Text, TextInput as RNTextInput, View, type KeyboardTypeOptions } from 'react-native';
 
 import { colors, font, radius, size, spacing, text } from '@/theme';
 
@@ -22,6 +22,9 @@ type TextInputProps = {
   maxLength?: number;
   onSubmitEditing?: () => void;
   returnKeyType?: 'next' | 'done' | 'go';
+  /** 주면 값이 있을 때 오른쪽에 지우기(X) 버튼을 보인다. 누르면 이 함수를 부른다 */
+  onClear?: () => void;
+  clearLabel?: string;
 };
 
 /** 라벨이 있는 한 줄 입력. 포커스일 때 테두리가 ink 색으로 바뀐다 */
@@ -40,6 +43,8 @@ export function TextInput({
   maxLength,
   onSubmitEditing,
   returnKeyType,
+  onClear,
+  clearLabel = '지우기',
 }: TextInputProps) {
   const [focused, setFocused] = useState(false);
   return (
@@ -65,6 +70,11 @@ export function TextInput({
           onBlur={() => setFocused(false)}
           style={[styles.input, disabled && styles.inputDisabled]}
         />
+        {onClear && value.length > 0 && !disabled ? (
+          <Pressable accessibilityRole="button" accessibilityLabel={clearLabel} hitSlop={12} onPress={onClear} style={styles.clear}>
+            <Icon name="close" size={20} color={colors.inkTertiary} />
+          </Pressable>
+        ) : null}
       </View>
       {error ? (
         <View accessibilityRole="alert" style={styles.message}>
@@ -93,7 +103,9 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: colors.lineStrong,
     backgroundColor: colors.surface,
-    justifyContent: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing[2],
   },
   boxFocus: {
     borderColor: colors.ink,
@@ -107,8 +119,13 @@ const styles = StyleSheet.create({
   },
   input: {
     ...text.body1,
+    flex: 1,
     padding: 0,
     color: colors.ink,
+  },
+  clear: {
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   inputDisabled: {
     color: colors.inkDisabled,
