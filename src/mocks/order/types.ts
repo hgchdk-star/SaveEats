@@ -1,3 +1,4 @@
+import type { BankItem } from '@/components/ui/bank-list';
 import type { Uuid, Won } from '@/contracts/common';
 
 /**
@@ -28,7 +29,9 @@ export interface AuthService {
 
 /* ---------- 계좌 (DB-003) ---------- */
 
-export type MockBank = { bankCode: string; bankName: string };
+
+/** 계좌 등록에서 고르는 기관 한 곳 (목록은 src/services/account/banks.ts) */
+export type MockBank = BankItem;
 
 /** 화면에 보여주는 값만 담는다. 전체 번호·잔액은 없다 */
 export type MockDestinationAccount = {

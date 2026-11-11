@@ -13,6 +13,7 @@ import { draftCopy } from '@/config/draft-copy';
 import { LIMITS } from '@/config/limits';
 import { showToast } from '@/features/toast/toast-store';
 import { accountService } from '@/services';
+import { normalizeBankCode } from '@/services/account/banks';
 import { useSession } from '@/services/session';
 import { colors, spacing, text } from '@/theme';
 
@@ -31,7 +32,7 @@ export function AccountFormScreen({ mode, from }: AccountFormParams) {
   const change = mode === 'change';
   const banks = accountService.listBanks();
 
-  const [bankCode, setBankCode] = useState<string | null>(change ? (destinationAccount?.bankCode ?? null) : null);
+  const [bankCode, setBankCode] = useState<string | null>(change ? normalizeBankCode(destinationAccount?.bankCode) : null);
   const [bankName, setBankName] = useState<string | null>(change ? (destinationAccount?.bankName ?? null) : null);
   const [accountNumber, setAccountNumber] = useState('');
   const [showErrors, setShowErrors] = useState(false);
