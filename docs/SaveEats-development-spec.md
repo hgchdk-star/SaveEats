@@ -4,6 +4,8 @@
 
 **수정 이력**
 
+- **2026-11-11 서정 확정 반영:** 취소 주문을 사용자가 내 내역에서 지울 수 있게 하고(숨김, 서버 기록 보존, PRD FR-HIST-026), 잘못 누른 완료는 시간 제한 없이 정정해 CANCELLED로 바꿀 수 있게 한다(리뷰 작성 주문 불가, 확인 2단계, 이력 보존, PRD FR-ORD-055·056, FR-HIST-027). 완료 주문을 바로 지우는 것은 허용하지 않는다. 서버 함수·앱 구현은 아직 없다(혜지·지우 작업).
+
 - **2026-11-11 토스 검증 결과 반영:** 서정이 SaveEats 앱에서 토스 사전입력 검증을 완료했다고 보고했다(사용자 보고, 2026-11-11). 은행·플랫폼·기기·OS·토스 버전·세부 결과는 기록하지 않았다(미기록). 이 보고만으로 허용 목록을 `KB국민은행` 밖으로 넓히지 않으며, 세부 기록은 `docs/evidence/toss-saveeats-verification-20261111.md`에 지우·서정이 채운다. 실제 송금은 하지 않았다.
 
 - **2026-11-06 서정 확정 반영:** ① 토스 딥링크를 주문 이어가기의 기본 경로로 켠다. SaveEats 빌드에서 국민은행 사전입력을 검증하기 전에 켜기로 한 PM 결정이며(TRF-004, OPEN-ARCH-004), 공유 개발 DB의 tossDeepLinkEnabled는 2026-11-06 혜지가 켰다(configRevision 2 확인). 허용 목록은 `ios:KB국민은행,android:KB국민은행`만이고 빌드에 넣기 전에는 토스가 보이지 않는다. 문제가 생기면 flag를 즉시 OFF로 되돌린다. ② 직접 이어가기 화면에도 `주문 취소` 보조 텍스트 버튼을 둔다(ORD-009, PR #71). ③ 예전 형식(v2) 완료 확인 기록이 깨졌을 때의 막힘은 지금은 바꾸지 않고 알려진 제한으로 둔다. 정식 배포 전에 다시 본다.
@@ -763,6 +765,8 @@ GRANT EXECUTE ON FUNCTION public.confirm_order(uuid, uuid)
 | create_order | 로그인 | uid, 멱등키, 비민감 destinationRef 형식, 가격/품절/옵션, 고지 계약 | 임의 금액/상태/Snapshot |
 | confirm_order | 로그인 | 본인 Order, 유효 전이, operation_id | VERIFIED/완료시각 직접 설정 |
 | cancel_order | 로그인 | 본인 PENDING, 경합 검사 | 완료 주문 취소/물리삭제 |
+| 완료 정정 (신규, 이름 혜지 설계) | 로그인 | 본인 USER_CONFIRMED, 리뷰 없음, operation_id | 타인 주문, 리뷰 작성 주문, PENDING 복원, 이력 삭제 |
+| 내역 숨기기 (신규, 이름 혜지 설계) | 로그인 | 본인 CANCELLED만, 멱등 | 완료/PENDING 숨김, 물리삭제, 타인 주문 |
 | mark_status_updates_viewed | 로그인 | event ID마다 본인 Order 연결 | 타인/나중 이벤트 일괄 read |
 | create_review | 로그인 | 본인 완료 Order, 720h 기한, 활성 unique | 타인 주문/기한/작성자 변조 |
 | update_review | 로그인 | 본인 활성 Review, 허용 필드만 | order/store/menu/created_at 변조 |
@@ -1118,6 +1122,7 @@ OPEN-ARCH-006 / OPEN-DB-006은 이 통합 명세로 **설계안 작성 완료, �
 | USER_CONFIRMED | confirm_order 재시도 | 동일 | 기존 완료 결과; 시각/이력 불변 |
 | CANCELLED | cancel_order 재시도 | 동일 | 기존 취소 결과; 시각/이력 불변 |
 | USER_CONFIRMED | cancel_order | 불허 | INVALID_ORDER_TRANSITION |
+| USER_CONFIRMED | 완료 정정(함수 이름·시그니처는 혜지 설계, 서정 확정 2026-11-11, PRD FR-ORD-055) | CANCELLED | 본인 Order, 리뷰 작성 주문 불허, 시간 제한 없음, operation_id로 멱등, 상태이력에 정정 사유 기록(완료 이력 보존), 집계·리뷰 대상 제외 |
 | CANCELLED | confirm_order | 불허 | INVALID_ORDER_TRANSITION |
 | 완료/취소 | PENDING으로 되돌리기 | 불허 | 복원/새 송금 자동 유도 없음 |
 
