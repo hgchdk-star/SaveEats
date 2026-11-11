@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { BankSelectField } from '@/components/ui/bank-select-field';
@@ -35,16 +35,41 @@ export function AccountFormScreen({ mode, from }: AccountFormParams) {
   const [bankCode, setBankCode] = useState<string | null>(change ? normalizeBankCode(destinationAccount?.bankCode) : null);
   const [bankName, setBankName] = useState<string | null>(change ? (destinationAccount?.bankName ?? null) : null);
   const [accountNumber, setAccountNumber] = useState('');
+  // 변경 화면에서 입력칸에 채운 현재 번호. 은행·번호가 모두 그대로면 저장하지 않고 돌아간다
+  const [currentNumber, setCurrentNumber] = useState<string | null>(null);
+  const edited = useRef(false);
   const [showErrors, setShowErrors] = useState(false);
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(false);
 
   const numberTooShort = accountNumber.length < LIMITS.accountNumberMinLength;
 
+  // 변경: 이 기기에 저장된 현재 계좌번호를 입력칸에 채운다(서버 호출 없음). 읽지 못하면 빈 칸으로 둔다. 사용자가 이미 입력했으면 덮어쓰지 않는다
+  useEffect(() => {
+    if (!change) return;
+    let alive = true;
+    accountService
+      .readCurrentAccountNumber()
+      .then((value) => {
+        if (!alive || !value || edited.current) return;
+        setCurrentNumber(value);
+        setAccountNumber(value);
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, [change]);
+
   const save = async () => {
     if (busy) return;
     if (!bankCode || !bankName || numberTooShort) {
       setShowErrors(true);
+      return;
+    }
+    if (change && currentNumber !== null && accountNumber === currentNumber && bankCode === normalizeBankCode(destinationAccount?.bankCode)) {
+      router.back();
+      showToast({ message: copy.toastNoChange });
       return;
     }
     setBusy(true);
@@ -97,7 +122,15 @@ export function AccountFormScreen({ mode, from }: AccountFormParams) {
           <TextInput
             label={copy.numberLabel}
             value={accountNumber}
-            onChangeText={(v) => setAccountNumber(v.replace(/[^0-9]/g, ''))}
+            onChangeText={(v) => {
+              edited.current = true;
+              setAccountNumber(v.replace(/[^0-9]/g, ''));
+            }}
+            onClear={() => {
+              edited.current = true;
+              setAccountNumber('');
+            }}
+            clearLabel={copy.numberClear}
             placeholder={copy.numberPlaceholder}
             helper={copy.numberHelp}
             keyboardType="number-pad"

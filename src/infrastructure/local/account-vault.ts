@@ -61,7 +61,7 @@ export interface AccountVault {
   replace(ownerUid: string, input: AccountInput): Promise<VaultAccountView>;
   /** 삭제하고 지워졌는지 다시 확인한다. 이미 없으면 그대로 성공 */
   delete(ownerUid: string): Promise<void>;
-  /** 계좌번호 원문. 사용자가 복사하는 순간에만 부른다. 없으면 null */
+  /** 계좌번호 원문. 사용자가 복사하는 순간과 계좌 변경 화면에서 입력칸에 채울 때만 부른다. 없으면 null */
   readCurrentAccountNumber(ownerUid: string): Promise<string | null>;
 }
 

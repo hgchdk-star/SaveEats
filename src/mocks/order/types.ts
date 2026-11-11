@@ -54,6 +54,8 @@ export interface AccountService {
   listBanks(): MockBank[];
   registerDestinationAccount(input: RegisterAccountInput): Promise<MockDestinationAccount>;
   deleteDestinationAccount(accountId: string): Promise<void>;
+  /** 이 기기에 저장된 현재 계좌번호 원문. 계좌 변경 화면이 입력칸에 채울 때만 부른다. 없으면 null, 읽지 못하면 던진다 */
+  readCurrentAccountNumber(): Promise<string | null>;
 }
 
 /* ---------- 주문 (ORD-004 · 007 · 011) ---------- */

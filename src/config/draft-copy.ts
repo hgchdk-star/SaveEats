@@ -357,6 +357,9 @@ export const draftCopy = {
     /** 삭제하지 못했을 때. 지워진 것처럼 보이지 않게 실패를 알린다 */
     deleteFailed: '계좌를 삭제하지 못했어요. 다시 시도해주세요.',
     toastChanged: '계좌를 변경했어요',
+    /** 계좌 변경 화면에서 은행·번호를 바꾸지 않고 저장했을 때 */
+    toastNoChange: '변경된 내용이 없어요',
+    numberClear: '계좌번호 지우기',
     formTitleRegister: '계좌 등록',
     formTitleChange: '계좌 변경',
     formHeadingRegister: '주문금액이 도착할 계좌를 등록해주세요.',

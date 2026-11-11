@@ -53,6 +53,11 @@ export function createVaultAccountService(vault: AccountVault): AccountService {
       return account;
     },
 
+    async readCurrentAccountNumber() {
+      const uid = requireUid();
+      return guard(() => vault.readCurrentAccountNumber(uid));
+    },
+
     async deleteDestinationAccount(accountId) {
       const uid = requireUid();
       await guard(() => vault.delete(uid));
