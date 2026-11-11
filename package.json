@@ -47,7 +47,7 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "lint": "expo lint",
-    "test": "node --test tests/order/*.test.cjs"
+    "test": "node --test tests/order/*.test.cjs tests/account/*.test.cjs"
   },
   "private": true
 }
