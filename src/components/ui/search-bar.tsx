@@ -4,6 +4,7 @@ import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { colors, radius, size, spacing, text } from '@/theme';
 
 import { Icon } from './icon';
+import { singleLineInputText } from './input-text-style';
 
 type SearchBarButtonProps = {
   /** 기획서 11.4 확정 문구: "오늘은 뭐가 먹고 싶으세요?" */
@@ -43,7 +44,7 @@ const styles = StyleSheet.create({
     color: colors.inkTertiary,
   },
   input: {
-    ...text.body1,
+    ...singleLineInputText,
     flex: 1,
     height: size.control,
     padding: 0,
