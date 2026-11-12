@@ -456,7 +456,7 @@ export const draftCopy = {
   result: {
     returnChecking: '주문 상태를 확인하고 있어요',
     questionGuide: '토스나 사용 중인 금융앱에서 주문금액을 보냈다면 주문 완료를 눌러주세요.',
-    notYet: '아직이에요',
+    notYet: '아니요',
     confirmDone: '주문 완료했어요',
     cancelOrder: '주문 취소',
     confirmSaveFailedTitle: '완료 확인을 저장하지 못했어요',

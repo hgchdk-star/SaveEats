@@ -83,7 +83,7 @@ type QuestionBarProps = {
   sub?: { label: string; onPress: () => void };
 };
 
-/** "주문을 완료하셨나요?" + 두 버튼(아직이에요 / 주문 완료했어요) */
+/** "주문을 완료하셨나요?" + 두 버튼(아니요 / 주문 완료했어요) */
 export function QuestionBar({ question, left, right, sub }: QuestionBarProps) {
   return (
     <CtaFrame
