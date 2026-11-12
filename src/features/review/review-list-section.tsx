@@ -179,7 +179,7 @@ export function ReviewListSection({ scope, reportEnabled, errorDescription }: Pr
               hasPhoto={review.images.length > 0}
               body={review.body}
               amount={review.orderAmount}
-              helpful={{ count: helpful.count, active: helpful.active, readOnly: review.isMine, onToggle: (next) => void useReviewStore.getState().toggleHelpful(review, next) }}
+              helpful={{ count: helpful.count, active: helpful.active, readOnly: false, onToggle: (next) => void useReviewStore.getState().toggleHelpful(review, next) }}
               more={review.isMine ? { label: copy.moreOpen, onPress: () => openManage(review) } : showReport ? { label: copy.reportOpen, onPress: () => setReportTarget(review) } : undefined}
             />
           );

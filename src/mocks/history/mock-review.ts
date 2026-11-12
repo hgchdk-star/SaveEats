@@ -250,7 +250,6 @@ export function createMockReviewService(): ReviewService {
       const state = await getDb();
       const rec = state.reviews.find((r) => r.reviewId === reviewId && !r.deletedAt);
       if (!rec) throw new ServiceError('RESOURCE_NOT_FOUND');
-      if (rec.authorId === CURRENT_USER_ID) throw new ServiceError('SELF_HELPFUL_NOT_ALLOWED');
       // 목표값 명령: 두 번 보내도 결과가 같다. 토글 반전을 쓰지 않는다 (REV-007)
       const has = rec.helpfulVoters.includes(CURRENT_USER_ID);
       if (desired && !has) rec.helpfulVoters.push(CURRENT_USER_ID);
