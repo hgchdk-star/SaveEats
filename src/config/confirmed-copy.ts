@@ -57,7 +57,7 @@ export const confirmedCopy = {
   reviewSortHelpful: '리뷰 도움순',
   reviewSortRatingDesc: '땡김도 높은 순',
   reviewSortRatingAsc: '땡김도 낮은 순',
-  reviewHelpful: '도움돼요',
+  reviewHelpful: '함께해요',
   reviewMine: '내 리뷰',
   reviewWrite: '리뷰 쓰기',
   reviewWritten: '리뷰 작성 완료 · 보기',
