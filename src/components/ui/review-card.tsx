@@ -16,7 +16,7 @@ const copy = draftCopy.review;
 type Helpful = {
   count: number;
   active: boolean;
-  /** 내 리뷰는 받은 수만 보여준다. 스스로 누를 수 없다 */
+  /** true면 누를 수 없고 숫자만 보여준다 */
   readOnly: boolean;
   onToggle: (next: boolean) => void;
 };
@@ -79,7 +79,7 @@ type MyReviewCardProps = {
   hasPhoto: boolean;
   body: string;
   amount: number;
-  helpfulCount: number;
+  helpful: Helpful;
   /** 방금 등록·수정한 리뷰를 살짝 강조한다 */
   focused?: boolean;
   onStorePress: () => void;
@@ -88,7 +88,7 @@ type MyReviewCardProps = {
 };
 
 /** 마이 › 내가 쓴 리뷰 카드. 수정·삭제를 바로 보여준다. 30일이 지나도 카드는 평소 모양 그대로다 */
-export function MyReviewCard({ storeName, storeImageUri, rating, date, edited, menus, photoUri, hasPhoto, body, amount, helpfulCount, focused = false, onStorePress, onEdit, onDelete }: MyReviewCardProps) {
+export function MyReviewCard({ storeName, storeImageUri, rating, date, edited, menus, photoUri, hasPhoto, body, amount, helpful, focused = false, onStorePress, onEdit, onDelete }: MyReviewCardProps) {
   return (
     <View style={[styles.card, focused && styles.focused]}>
       <Pressable accessibilityRole="button" accessibilityLabel={`${storeName} 가게로 이동`} onPress={onStorePress} style={styles.store}>
@@ -113,7 +113,7 @@ export function MyReviewCard({ storeName, storeImageUri, rating, date, edited, m
         </View>
       </View>
       <Body menus={menus} photoUri={photoUri} hasPhoto={hasPhoto} body={body} />
-      <Foot amount={amount} helpful={{ count: helpfulCount, active: false, readOnly: true, onToggle: () => undefined }} />
+      <Foot amount={amount} helpful={helpful} />
     </View>
   );
 }
