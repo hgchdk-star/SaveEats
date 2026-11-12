@@ -4,6 +4,7 @@ import { Pressable, StyleSheet, Text, TextInput as RNTextInput, View, type Keybo
 import { colors, font, radius, size, spacing, text } from '@/theme';
 
 import { Icon } from './icon';
+import { singleLineInputText } from './input-text-style';
 
 type TextInputProps = {
   label: string;
@@ -118,7 +119,7 @@ const styles = StyleSheet.create({
     borderColor: colors.line,
   },
   input: {
-    ...text.body1,
+    ...singleLineInputText,
     flex: 1,
     padding: 0,
     color: colors.ink,

@@ -6,6 +6,7 @@ import { colors, font, radius, shadow, size, spacing, text } from '@/theme';
 
 import { buildSections, normalizeQuery, searchBanks, type BankItem, type BankKind } from './bank-list';
 import { Icon } from './icon';
+import { singleLineInputText } from './input-text-style';
 
 type Bank = BankItem;
 
@@ -244,7 +245,7 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     flex: 1,
-    ...text.body1,
+    ...singleLineInputText,
     color: colors.ink,
     paddingVertical: 0,
   },
