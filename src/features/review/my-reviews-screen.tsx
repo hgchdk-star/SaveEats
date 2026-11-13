@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { useCallback, useEffect, useReducer, useState } from 'react';
+import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
 import { ActivityIndicator, FlatList, StyleSheet, Text, View } from 'react-native';
 
 import { SecondaryButton } from '@/components/ui/button';
@@ -11,7 +11,8 @@ import { confirmedCopy } from '@/config/confirmed-copy';
 import { draftCopy } from '@/config/draft-copy';
 import { LIMITS } from '@/config/limits';
 import { goReviewEdit } from '@/features/order/flow-routes';
-import { reviewService } from '@/services';
+import { catalogRepository, reviewService } from '@/services';
+import { resolveImageUrl } from '@/services/image';
 import { colors, spacing, text } from '@/theme';
 import { formatReviewDate } from '@/utils/date';
 
@@ -70,6 +71,8 @@ export function MyReviewsScreen({ focusReviewId }: { focusReviewId?: string }) {
   const [state, dispatch] = useReducer(reduce, { key: '', load: 'loading', ids: [], nextCursor: null, hasMore: false, more: 'idle' });
   const deletion = useReviewDelete((id) => dispatch({ type: 'remove', id }));
   const [retry, setRetry] = useState(0);
+  const [storeImages, setStoreImages] = useState<Record<string, string | null>>({});
+  const storeImagesRef = useRef<Record<string, string | null>>({});
   const [now] = useState(() => Date.now());
   const key = `${mutationVersion}:${retry}`;
 
@@ -91,6 +94,21 @@ export function MyReviewsScreen({ focusReviewId }: { focusReviewId?: string }) {
   }, [key]);
 
   useEffect(() => loadFirst(), [loadFirst]);
+
+  // 리뷰 응답에는 가게 이미지가 없어서 가게 정보에서 따로 가져온다. 못 가져오면 기본 이미지로 둔다
+  const storeIdsKey = [...new Set(state.ids.map((id) => byId[id]?.storeId).filter((v): v is string => !!v))].sort().join(',');
+  useEffect(() => {
+    for (const storeId of storeIdsKey ? storeIdsKey.split(',') : []) {
+      if (storeId in storeImagesRef.current) continue;
+      storeImagesRef.current[storeId] = null;
+      catalogRepository.getStore(storeId).then(
+        (store) => {
+          setStoreImages((prev) => ({ ...prev, [storeId]: resolveImageUrl(store.imageRef) }));
+        },
+        () => undefined,
+      );
+    }
+  }, [storeIdsKey]);
 
   const loadMore = async () => {
     if (state.load !== 'ok' || !state.hasMore || state.more === 'loading') return;
@@ -157,7 +175,7 @@ export function MyReviewsScreen({ focusReviewId }: { focusReviewId?: string }) {
         renderItem={({ item: r }) => (
           <MyReviewCard
             storeName={r.storeNameSnapshot}
-            storeImageUri={null}
+            storeImageUri={storeImages[r.storeId] ?? null}
             rating={r.rating}
             date={formatReviewDate(r.createdAt, now)}
             edited={!!r.editedAt}
