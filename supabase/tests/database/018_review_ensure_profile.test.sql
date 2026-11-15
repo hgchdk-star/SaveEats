@@ -127,7 +127,8 @@ select is((select count(*)::int from private.review_command_receipts where user_
 select public.zjwt('aaaaaaaa-0000-4000-8000-0000000000a1');
 set local role authenticated;
 select set_config('zz.ra2', (public.create_review(public.zo('oa2'), public.zid('A-create-2'), 5, '지울 리뷰입니다') ->> 'reviewId'), true);
-select is(public.zesh(public.zo('ra1'), 'A-self', true), 'P0001:SELF_HELPFUL_NOT_ALLOWED', '[작성자 A] 자기 리뷰 → SELF_HELPFUL_NOT_ALLOWED (그대로)');
+select is(public.zesh(public.zo('ra1'), 'A-self', true), 'OK', '[작성자 A] 자기 리뷰에도 도움돼요가 된다 (20261115000000_helpful_allow_self: 더 이상 SELF_HELPFUL_NOT_ALLOWED가 아니다)');
+select is(public.zesh(public.zo('ra1'), 'A-self-off', false), 'OK', '[작성자 A] 자기 리뷰 도움돼요 해제도 된다 (이후 시험을 위해 원상태로)');
 select ok((public.delete_review(public.zo('ra2'), public.zid('A-del-2'), 1) ->> 'reviewId') is not null, '(준비) ra2 삭제');
 reset role;
 select public.zjwt('cccccccc-0000-4000-8000-0000000000c3');
