@@ -1,8 +1,11 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 
 import { draftCopy } from '@/config/draft-copy';
+import { useCartStore } from '@/features/cart/cart-store';
 import { useFavoritesStore } from '@/features/favorites/favorites-store';
 import { useHistoryStore } from '@/features/history/history-store';
+import { useRecentViewedStore } from '@/features/home/recent-viewed-store';
 import { useOrderFlowStore } from '@/features/order/order-flow-store';
 import { recoverOnStart } from '@/features/order/recovery';
 import { useReviewStore } from '@/features/review/review-store';
@@ -53,6 +56,40 @@ export async function logout(): Promise<void> {
   router.dismissAll();
   router.navigate('/');
   showToast(accountCleared ? { message: draftCopy.settings.toastLoggedOut } : { message: draftCopy.settings.toastLoggedOutAccountKept, tone: 'error' });
+}
+
+/** 기기 전체에 남기는 값(처음 안내를 봤는지)과 개발용 Mock 서버 저장은 탈퇴해도 지우지 않는다 */
+const KEEP_ON_WITHDRAW = ['saveeats.onboardingSeen.v1', 'saveeats.mock.server.v1'];
+
+/**
+ * 탈퇴가 서버에서 끝난 뒤 이 기기의 개인 기록을 지운다: 계좌 원문(보안 저장소), 장바구니, 최근 본 항목·검색어, 완료 확인 큐,
+ * 주문-계좌 연결, 읽음 대기, 프로필 설정 대기 같은 이 앱의 저장 값 전부. 로그아웃과 달리 되살릴 기록을 남기지 않는다.
+ * 지우지 못한 것이 있으면 false를 돌려준다. 지운 것처럼 알리지 않는다.
+ */
+export async function clearDeviceDataAfterWithdrawal(userId: string | null): Promise<boolean> {
+  let ok = true;
+  if (userId) {
+    try {
+      await accountVault.delete(userId);
+    } catch {
+      ok = false;
+    }
+  }
+  try {
+    const keys = (await AsyncStorage.getAllKeys()).filter((k) => k.startsWith('saveeats.') && !KEEP_ON_WITHDRAW.includes(k));
+    if (keys.length > 0) await AsyncStorage.multiRemove(keys);
+  } catch {
+    ok = false;
+  }
+  clearPersonalData();
+  useRecentViewedStore.setState({ items: [] });
+  await useCartStore
+    .getState()
+    .resetStorage()
+    .catch(() => {
+      ok = false;
+    });
+  return ok;
 }
 
 /**

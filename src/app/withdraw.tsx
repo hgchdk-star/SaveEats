@@ -1,7 +1,6 @@
-import { confirmedCopy } from '@/config/confirmed-copy';
-import { UnbuiltScreen } from '@/features/unbuilt/unbuilt-screen';
+import { WithdrawScreen } from '@/features/my/withdraw-screen';
 
-/** 회원 탈퇴 — MVP에서는 준비 중 안내만 보여준다. 삭제 요청은 보내지 않는다 (기획서 v1.3 60장, OPEN-DB-005) */
+/** 회원 탈퇴 (서정 확정 2026-11-15: 정식 탈퇴, 전부 삭제). 서버 delete_my_account() 한 번으로 지운다 */
 export default function WithdrawRoute() {
-  return <UnbuiltScreen message={confirmedCopy.withdrawNotReady} />;
+  return <WithdrawScreen />;
 }

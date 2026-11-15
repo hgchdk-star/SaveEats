@@ -21,6 +21,14 @@ export interface AuthService {
   signIn(input: SignInInput): Promise<{ userId: string }>;
   signUp(input: SignInInput): Promise<{ userId: string }>;
   signOut(): Promise<void>;
+  /** 탈퇴 전 비밀번호 재확인. 지금 로그인한 계정의 비밀번호가 맞는지만 본다. 틀리면 INVALID_CREDENTIALS이고 로그인 상태는 그대로다 */
+  verifyPassword(password: string): Promise<void>;
+  /**
+   * 계정 삭제(delete_my_account). 성공하면 이 기기의 세션도 닫는다. 이미 지워진 계정(AUTH_REQUIRED)은 성공으로 본다.
+   * 서버가 실패하면 전체 롤백이라 아무것도 지워지지 않는다(WITHDRAW_FAILED). 응답을 받지 못하면 결과를 모르는 오류이고, 다시 부르면 된다.
+   * 성공 뒤에는 프로필 생성(ensure_my_profile) 같은 서버 호출을 더 하지 않는다.
+   */
+  deleteAccount(): Promise<void>;
   /** 앱을 켤 때 저장된 세션을 복원한다. 세션이 없거나 복원하지 못하면 Guest로 둔다(던지지 않는다) */
   restore(): Promise<void>;
   /** 사용자가 로그아웃하지 않았는데 세션을 잃었을 때(토큰 만료·무효) 알린다. 해제 함수를 돌려준다 */
