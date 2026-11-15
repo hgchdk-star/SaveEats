@@ -136,3 +136,10 @@ export function parseViewedDto(data: unknown): { acknowledgedEventIds: string[] 
   if (!isObj(data) || !Array.isArray(data.acknowledgedEventIds) || !data.acknowledgedEventIds.every(isStr)) throw new ServiceError('INVALID_RESPONSE');
   return { acknowledgedEventIds: data.acknowledgedEventIds as string[] };
 }
+
+/** hide_cancelled_order 응답: { orderId, hidden: true, replayed } */
+export function parseHideOrderDto(data: unknown, orderId: string): { orderId: string; hidden: true; replayed: boolean } {
+  const d = data as { orderId?: unknown; hidden?: unknown; replayed?: unknown } | null;
+  if (!d || typeof d !== 'object' || d.orderId !== orderId || d.hidden !== true || typeof d.replayed !== 'boolean') throw new ServiceError('INVALID_RESPONSE', true);
+  return { orderId, hidden: true, replayed: d.replayed };
+}

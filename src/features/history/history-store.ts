@@ -52,6 +52,8 @@ type HistoryState = {
   hydrateLocal: () => Promise<void>;
   refreshQueue: () => Promise<void>;
   replaceRow: (row: MockHistoryRow) => void;
+  /** 내역에서 지운 주문을 목록과 읽지 않음 상태에서 뺀다 */
+  removeRow: (orderId: string) => void;
   reset: () => void;
 };
 
@@ -206,6 +208,12 @@ export const useHistoryStore = create<HistoryState>((set, get) => {
     },
 
     replaceRow: (row) => set((s) => ({ rows: s.rows.map((r) => (r.orderId === row.orderId && row.statusRevision >= r.statusRevision ? row : r)) })),
+
+    removeRow: (orderId) =>
+      set((s) => {
+        const removedEvents = new Set((s.rows.find((r) => r.orderId === orderId)?.unreadUpdates ?? []).map((u) => u.eventId));
+        return { rows: s.rows.filter((r) => r.orderId !== orderId), unread: s.unread ? s.unread.filter((e) => e.orderId !== orderId && !removedEvents.has(e.eventId)) : s.unread };
+      }),
 
     reset: () => {
       listGeneration += 1;

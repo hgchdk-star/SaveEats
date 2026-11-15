@@ -41,6 +41,9 @@ const SERVER_CODES: readonly string[] = [
   'ACTIVE_REVIEW_EXISTS',
   'REVIEW_REVISION_CONFLICT',
   'SELF_HELPFUL_NOT_ALLOWED',
+  // 내역 정리 (혜지, 2026-11-15)
+  'ORDER_NOT_HIDEABLE',
+  'ORDER_HAS_REVIEW',
 ];
 
 export async function callOrderRpc(name: string, args: Record<string, unknown>): Promise<unknown> {

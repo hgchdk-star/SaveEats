@@ -67,6 +67,11 @@ export interface HistoryService {
   /** 읽은 이벤트만 정확히 보낸다. 주문 전체나 탭 전체를 읽음 처리하지 않는다 (HIST-007) */
   markStatusUpdatesViewed(eventIds: string[]): Promise<{ acknowledgedEventIds: string[] }>;
   getMonthlySummary(monthKey: string): Promise<MockMonthlySummary>;
+  /**
+   * 취소된 주문을 내 내역에서 안 보이게 한다 (FR-HIST-026). 서버 기록은 보존된다. 진행 중(PENDING) 주문은 앱이 먼저 취소한 뒤 부른다.
+   * CANCELLED가 아니면 ORDER_NOT_HIDEABLE. 같은 주문을 다시 부르면 replayed=true로 성공한다.
+   */
+  hideCancelledOrder(orderId: string): Promise<{ orderId: string; hidden: true; replayed: boolean }>;
 }
 
 /* ---------- 리뷰 ---------- */
