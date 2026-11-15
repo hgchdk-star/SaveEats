@@ -72,6 +72,11 @@ export interface HistoryService {
    * CANCELLED가 아니면 ORDER_NOT_HIDEABLE. 같은 주문을 다시 부르면 replayed=true로 성공한다.
    */
   hideCancelledOrder(orderId: string): Promise<{ orderId: string; hidden: true; replayed: boolean }>;
+  /**
+   * 잘못 누른 완료를 정정한다 (FR-ORD-055). USER_CONFIRMED → CANCELLED, completedAt은 null이 된다. 송금 취소·환불이 아니라 SaveEats 기록의 정정이다.
+   * operationId는 새 UUID를 만들고 재시도에는 같은 값을 쓴다. 수령 확인 상태가 아니면 INVALID_ORDER_TRANSITION, 활성 리뷰가 있으면 ORDER_HAS_REVIEW.
+   */
+  correctOrderCompletion(orderId: string, operationId: string): Promise<{ order: MockOrder; replayed: boolean }>;
 }
 
 /* ---------- 리뷰 ---------- */
