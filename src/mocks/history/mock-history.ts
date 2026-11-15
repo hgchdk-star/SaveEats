@@ -1,6 +1,6 @@
 import { mockCatalog } from '@/mocks/catalog/mock-catalog-repository';
 import { failOnce, mockDelay, mockScenario } from '@/mocks/scenario';
-import { getDb, persistDb, type ServerDb } from '@/mocks/server/db';
+import { getDb, persistDb, recordEvent, type ServerDb } from '@/mocks/server/db';
 import { eligibilityOf } from '@/mocks/server/eligibility';
 import { buildSnapshot } from '@/mocks/server/snapshot';
 import type { MockOrder } from '@/mocks/order/types';
@@ -118,6 +118,26 @@ export function createMockHistoryService(): HistoryService {
       hiddenIds.push(orderId);
       persistDb();
       return { orderId, hidden: true, replayed: false };
+    },
+
+    async correctOrderCompletion(orderId, operationId) {
+      await request();
+      const state = await getDb();
+      const index = state.orders.findIndex((o) => o.orderId === orderId);
+      if (index < 0) throw new ServiceError('RESOURCE_NOT_FOUND');
+      const order = state.orders[index];
+      const done = state.operations[operationId];
+      if (done === `CORRECT:${orderId}`) return { order, replayed: true };
+      if (done) throw new ServiceError('OPERATION_CONFLICT');
+      if (order.status !== 'USER_CONFIRMED') throw new ServiceError('INVALID_ORDER_TRANSITION');
+      if (state.reviews.some((r) => r.orderId === orderId && !r.deletedAt)) throw new ServiceError('ORDER_HAS_REVIEW');
+      const at = new Date().toISOString();
+      const next = { ...order, status: 'CANCELLED' as const, statusRevision: order.statusRevision + 1, completedAt: null, cancelledAt: at };
+      state.orders[index] = next;
+      state.operations[operationId] = `CORRECT:${orderId}`;
+      recordEvent(state, next, 'USER_CONFIRMED', at);
+      persistDb();
+      return { order: next, replayed: false };
     },
 
     async getHistoryUnreadSummary() {
