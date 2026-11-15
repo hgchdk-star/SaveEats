@@ -4,7 +4,7 @@ import { LIMITS } from '@/config/limits';
 import { RepositoryError, type CatalogRepository } from '@/services/catalog/catalog-repository';
 
 import { getSupabaseClient } from './client';
-import { parseCategories, parseMenuCardList, parseMenuDetail, parseSearchStoreCardPage, parseStoreCardList, parseStoreCardPage, parseStoreDetail, toRepositoryError } from './rpc-result';
+import { parseCategories, parseFavoriteStoreCardPage, parseMenuCardList, parseMenuDetail, parseSearchStoreCardPage, parseSetFavoriteResult, parseStoreCardList, parseStoreCardPage, parseStoreDetail, toRepositoryError } from './rpc-result';
 
 /**
  * RPC 하나를 부르고 계약 모양으로 바꿔 돌려준다. 오류는 모두 RepositoryError로 정규화한다.
@@ -92,8 +92,8 @@ export function searchStoresFromServer(args: { query: string; cursor?: string | 
 /**
  * Supabase 카탈로그 저장소 (계약 catalog@0.1).
  *
- * 서버로 연결된 것: 카테고리 목록 · 가게 목록 · 가게 상세 · 메뉴 상세. 조회는 Guest(anon)도 부를 수 있어 로그인 없이 동작한다.
- * 아직 연결하지 않은 것(찜 저장·찜 목록)은 `fallback`(Mock)에 맡긴다. 로그인(Supabase Auth)을 연결할 때 이어서 바꾼다.
+ * 서버로 연결된 것: 카테고리 목록 · 가게 목록 · 가게 상세 · 메뉴 상세 · 찜 저장 · 내 찜 목록. 조회는 Guest(anon)도 부를 수 있어 로그인 없이 동작한다.
+ * 찜 저장·내 찜 목록은 로그인이 필요하다. 나머지는 `fallback`(Mock)에 맡긴다.
  * 영업 종료 가게는 목록에서 빠지지 않고 isOpen=false로 온다. "준비 중" 배지는 화면이 그린다.
  */
 export function createSupabaseCatalogRepository(fallback: CatalogRepository): CatalogRepository {
@@ -108,5 +108,10 @@ export function createSupabaseCatalogRepository(fallback: CatalogRepository): Ca
     getStore: (storeId) => call(CATALOG_RPC.getStore, { p_store_id: storeId }, parseStoreDetail),
 
     getMenu: (menuId) => call(CATALOG_RPC.getMenu, { p_menu_id: menuId }, parseMenuDetail),
+
+    // 목표값을 보낸다. 같은 값을 두 번 보내도 결과가 같다. 로그인(authenticated)이 필요하고, 아니면 AUTH_REQUIRED다
+    setFavorite: (storeId, desired) => call(CATALOG_RPC.setFavorite, { p_store_id: storeId, p_desired: desired }, parseSetFavoriteResult),
+
+    listMyFavorites: ({ cursor, pageSize }) => call(CATALOG_RPC.listMyFavorites, { p_cursor: cursor ?? null, p_page_size: pageSize ?? 20 }, parseFavoriteStoreCardPage),
   };
 }

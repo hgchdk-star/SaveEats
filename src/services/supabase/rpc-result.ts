@@ -1,4 +1,4 @@
-import type { CategoryDto, FavoriteStoreCardDto, MenuCardDto, MenuDetailDto, MenuSummaryDto, SearchStoreCardDto, StoreCardDto, StoreDetailDto } from '@/contracts/catalog';
+import type { CategoryDto, FavoriteStoreCardDto, MenuCardDto, MenuDetailDto, MenuSummaryDto, SearchStoreCardDto, SetFavoriteResultDto, StoreCardDto, StoreDetailDto } from '@/contracts/catalog';
 import type { Page } from '@/contracts/common';
 import { RepositoryError, type CatalogFailureCode } from '@/services/catalog/catalog-repository';
 
@@ -137,6 +137,13 @@ export function parseFavoriteStoreCardPage(data: unknown): Page<FavoriteStoreCar
   need(isObj(data) && Array.isArray(data.items) && isBool(data.hasMore) && isStrOrNull(data.nextCursor));
   const d = data as Obj;
   return { items: (d.items as unknown[]).map(checkFavoriteStoreCard), nextCursor: d.nextCursor as string | null, hasMore: d.hasMore as boolean };
+}
+
+/** set_favorite 응답: { storeId, isFavorite }. 요청한 목표값과 같은지는 호출하는 쪽이 본다 */
+export function parseSetFavoriteResult(data: unknown): SetFavoriteResultDto {
+  need(isObj(data) && isStr(data.storeId) && isBool(data.isFavorite));
+  const d = data as Obj;
+  return { storeId: d.storeId as string, isFavorite: d.isFavorite as boolean };
 }
 
 function checkMenuSummary(v: unknown): MenuSummaryDto {
