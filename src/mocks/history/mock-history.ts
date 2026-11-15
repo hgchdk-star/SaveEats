@@ -41,7 +41,8 @@ function generatedOrders(state: ServerDb): MockOrder[] {
 /** 이 사용자에게 보이는 주문 전부. `empty` 시나리오에서는 하나도 없다 */
 function visibleOrders(state: ServerDb): MockOrder[] {
   if (mockScenario.history === 'empty') return [];
-  return [...state.orders, ...generatedOrders(state)];
+  const hidden = new Set(state.hiddenOrderIds ?? []);
+  return [...state.orders, ...generatedOrders(state)].filter((o) => !hidden.has(o.orderId));
 }
 
 const byNewest = (a: MockOrder, b: MockOrder) => (a.createdAt === b.createdAt ? (a.orderId < b.orderId ? 1 : -1) : a.createdAt < b.createdAt ? 1 : -1);
@@ -104,6 +105,19 @@ export function createMockHistoryService(): HistoryService {
       const order = visibleOrders(state).find((o) => o.orderId === orderId);
       if (!order) throw new ServiceError('RESOURCE_NOT_FOUND');
       return toRow(state, order, Date.now());
+    },
+
+    async hideCancelledOrder(orderId) {
+      await request();
+      const state = await getDb();
+      const order = [...state.orders, ...generatedOrders(state)].find((o) => o.orderId === orderId);
+      if (!order) throw new ServiceError('RESOURCE_NOT_FOUND');
+      const hiddenIds = (state.hiddenOrderIds ??= []);
+      if (hiddenIds.includes(orderId)) return { orderId, hidden: true, replayed: true };
+      if (order.status !== 'CANCELLED') throw new ServiceError('ORDER_NOT_HIDEABLE');
+      hiddenIds.push(orderId);
+      persistDb();
+      return { orderId, hidden: true, replayed: false };
     },
 
     async getHistoryUnreadSummary() {

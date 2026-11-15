@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { ConfirmSheet } from '@/components/ui/bottom-sheet';
+import { TextButton } from '@/components/ui/button';
 import { CtaBar } from '@/components/ui/cta-bar';
 import { ErrorState, Skeleton } from '@/components/ui/feedback-states';
 import { KeyValueCard } from '@/components/ui/order-info';
@@ -10,14 +12,17 @@ import { TopNavigation } from '@/components/ui/top-navigation';
 import { draftCopy } from '@/config/draft-copy';
 import { goMyReviews, goReviewWrite } from '@/features/order/flow-routes';
 import { resumeOrderFromHistory } from '@/features/order/order-actions';
+import { showToast } from '@/features/toast/toast-store';
 import { useAsync } from '@/hooks/use-async';
 import { historyService } from '@/services';
+import { errorCode } from '@/services/service-error';
 import { colors, spacing, text } from '@/theme';
 import { formatDateTime } from '@/utils/date';
 import { formatWon } from '@/utils/format';
 import { router } from 'expo-router';
 
 import { orderMenuLabel, reviewButtonOf } from './history-model';
+import { useHistoryStore } from './history-store';
 
 const copy = draftCopy.history;
 
@@ -28,6 +33,7 @@ const copy = draftCopy.history;
 export function OrderDetailScreen({ orderId }: { orderId: string }) {
   const state = useAsync(`order:${orderId}`, () => historyService.getMyOrder(orderId));
   const [busy, setBusy] = useState(false);
+  const [hideSheet, setHideSheet] = useState(false);
   const top = <TopNavigation title={copy.detailTitle} onBack={() => router.back()} />;
 
   if (state.status === 'loading') {
@@ -76,6 +82,26 @@ export function OrderDetailScreen({ orderId }: { orderId: string }) {
     }
   };
 
+  // 취소된 주문만 지울 수 있다. 이미 지워진 주문(RESOURCE_NOT_FOUND)은 지운 것으로 본다. 진행 중 주문은 먼저 취소한 뒤에 지운다
+  const hide = async () => {
+    if (busy) return;
+    setBusy(true);
+    try {
+      await historyService.hideCancelledOrder(row.orderId);
+    } catch (error) {
+      if (errorCode(error) !== 'RESOURCE_NOT_FOUND') {
+        setBusy(false);
+        showToast({ message: errorCode(error) === 'ORDER_NOT_HIDEABLE' ? copy.hideNotHideable : copy.hideFailed, tone: 'error' });
+        return;
+      }
+    }
+    useHistoryStore.getState().removeRow(row.orderId);
+    void useHistoryStore.getState().refreshUnread();
+    setBusy(false);
+    showToast({ message: copy.hideDone });
+    router.back();
+  };
+
   return (
     <Screen top={top} bottom={row.status === 'PENDING' ? <CtaBar label={copy.resume} loading={busy} onPress={() => void resume()} /> : undefined}>
       <ScrollView contentContainerStyle={styles.content}>
@@ -93,7 +119,29 @@ export function OrderDetailScreen({ orderId }: { orderId: string }) {
             />
           </View>
         ) : null}
+
+        {cancelled ? (
+          <View style={styles.hide}>
+            <TextButton size="sm" disabled={busy} onPress={() => setHideSheet(true)}>
+              {copy.hideEntry}
+            </TextButton>
+          </View>
+        ) : null}
       </ScrollView>
+      <ConfirmSheet
+        visible={hideSheet}
+        onClose={() => setHideSheet(false)}
+        title={copy.hideSheetTitle}
+        descriptions={[copy.hideSheetDesc]}
+        secondary={{ label: copy.hideSheetBack, onPress: () => setHideSheet(false) }}
+        primary={{
+          label: copy.hideSheetConfirm,
+          onPress: () => {
+            setHideSheet(false);
+            void hide();
+          },
+        }}
+      />
     </Screen>
   );
 }
@@ -106,6 +154,9 @@ const styles = StyleSheet.create({
   review: {
     gap: spacing[2],
     alignItems: 'flex-start',
+  },
+  hide: {
+    alignItems: 'center',
   },
   reviewHeading: {
     ...text.h2,

@@ -49,6 +49,8 @@ export type ServerDb = {
   operations: Record<string, string>;
   events: ServerEvent[];
   reviews: ReviewRecord[];
+  /** 사용자가 내역에서 지운 주문 id. 기록은 남고 내 내역에서만 안 보인다. 예전 저장본에는 없을 수 있다 */
+  hiddenOrderIds?: string[];
   /** 검증이 끝난 업로드 */
   uploads: Record<string, { imageRef: string; used: boolean }>;
 };

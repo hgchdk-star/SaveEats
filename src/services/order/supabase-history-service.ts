@@ -1,6 +1,6 @@
 import type { HistoryService } from '@/mocks/history/types';
 
-import { parseHistoryPageDto, parseHistoryRowDto, parseMonthlySummaryDto, parseUnreadSummaryDto, parseViewedDto } from './order-dto';
+import { parseHideOrderDto, parseHistoryPageDto, parseHistoryRowDto, parseMonthlySummaryDto, parseUnreadSummaryDto, parseViewedDto } from './order-dto';
 import { callOrderRpc } from './supabase-order-service';
 
 /**
@@ -9,6 +9,7 @@ import { callOrderRpc } from './supabase-order-service';
  * - get_my_history_order({ p_order_id }): 목록의 한 줄과 같은 모양. 없으면 RESOURCE_NOT_FOUND
  * - get_my_history_unread_summary(): { unreadEvents, unreadOrderCount, asOf }
  * - mark_status_updates_viewed({ p_event_ids }): 한 번에 최대 100개(앱이 100개씩 나눠 보낸다). 읽은 이벤트만 보내고 주문 · 탭 전체를 읽음 처리하지 않는다
+ * - hide_cancelled_order({ p_order_id }): { orderId, hidden: true, replayed }. CANCELLED가 아니면 ORDER_NOT_HIDEABLE. 숨긴 주문은 목록 · 안 읽음 점에서 빠지고, 상세를 열면 RESOURCE_NOT_FOUND (혜지, 2026-11-15)
  * - get_monthly_summary({ p_month_key }): 'YYYY-MM'. 형식이 틀리거나 미래 월이면 INVALID_INPUT. 로그인 상태에서만 부른다. 월 경계는 서버가 KST로 계산한다
  * 이 서비스는 base(Mock)를 받아 나머지를 그대로 둔다.
  * 오류 처리와 응답 파싱은 주문 서비스와 같다(서버 업무 오류는 코드로, 응답을 받지 못하면 결과를 모르는 오류로).
@@ -28,6 +29,10 @@ export function createSupabaseHistoryService(base: HistoryService): HistoryServi
 
     async getMonthlySummary(monthKey) {
       return parseMonthlySummaryDto(await callOrderRpc('get_monthly_summary', { p_month_key: monthKey }), monthKey);
+    },
+
+    async hideCancelledOrder(orderId) {
+      return parseHideOrderDto(await callOrderRpc('hide_cancelled_order', { p_order_id: orderId }), orderId);
     },
 
     async getHistoryUnreadSummary() {
