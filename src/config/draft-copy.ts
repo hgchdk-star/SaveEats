@@ -149,6 +149,36 @@ export const draftCopy = {
     rowSettings: '설정',  },
 
   /** 설정 · 알림 설정 (㉖). 항목 구성은 기획서 60 · FR-SET-001 */
+  /** 회원 탈퇴. 서정 확정 문구 전의 초안. 완료 문구에 "모든 데이터가 삭제됐어요"는 쓰지 않는다(백업이 남을 수 있음) */
+  withdraw: {
+    title: '회원 탈퇴',
+    heading: '정말 탈퇴하시나요?',
+    lead: '탈퇴하면 아래 정보가 지워지고 되돌릴 수 없어요.',
+    items: [
+      '내 주문 기록 (진행 중인 주문과 완료·취소한 주문 모두)',
+      '내가 쓴 리뷰와 사진, 내가 누른 함께해요',
+      '찜한 가게',
+      '프로필(닉네임)과 로그인 계정',
+      '이 기기에 저장한 계좌, 장바구니, 최근 기록',
+    ],
+    transferNote: '이미 보낸 금액은 SaveEats에서 되돌릴 수 없어요. 내가 쓴 리뷰가 지워지면 다른 분이 누른 함께해요 수도 줄어들어요.',
+    passwordLabel: '비밀번호',
+    passwordHelper: '본인 확인을 위해 비밀번호를 다시 입력해 주세요.',
+    passwordEmpty: '비밀번호를 입력해 주세요.',
+    passwordWrong: '비밀번호가 맞지 않아요.',
+    cta: '탈퇴하기',
+    sheetTitle: '정말 탈퇴할까요?',
+    sheetDesc: '탈퇴하면 위 정보가 모두 지워지고 되돌릴 수 없어요.',
+    sheetBack: '돌아가기',
+    sheetConfirm: '탈퇴하기',
+    failedTitle: '탈퇴하지 못했어요',
+    failedDesc: '아무것도 지워지지 않았어요. 잠시 뒤에 다시 시도해 주세요.',
+    unknownTitle: '탈퇴 결과를 확인하지 못했어요',
+    unknownDesc: '네트워크를 확인하고 다시 시도해 주세요.',
+    done: '탈퇴가 완료됐어요',
+    doneKept: '탈퇴는 완료됐지만 이 기기의 일부 기록을 지우지 못했어요',
+  },
+
   settings: {
     title: '설정',
     groupAccount: '계정 정보',

@@ -28,6 +28,15 @@ export function createMockAuthService(): AuthService {
       await mockDelay();
       useMockSession.setState({ isMember: false, userId: null, email: null, destinationAccount: null });
     },
+    async verifyPassword() {
+      await mockDelay();
+      if (mockScenario.login === 'invalidOnce' && failOnce('verify:invalid')) throw new ServiceError('INVALID_CREDENTIALS');
+    },
+    async deleteAccount() {
+      await mockDelay();
+      if (mockScenario.login === 'networkOnce' && failOnce('delete:network')) throw new ServiceError('NETWORK_UNAVAILABLE', true);
+      useMockSession.setState({ isMember: false, userId: null, email: null, destinationAccount: null });
+    },
     async restore() {
       // Mock 세션은 시나리오가 정하므로 복원할 것이 없다
     },

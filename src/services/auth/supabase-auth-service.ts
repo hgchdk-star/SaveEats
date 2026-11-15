@@ -3,7 +3,7 @@ import { AppState } from 'react-native';
 
 import type { AuthService, SignInInput } from '@/mocks/order/types';
 import { ServiceError } from '@/services/service-error';
-import { clearSessionUser, setSessionUser } from '@/services/session';
+import { clearSessionUser, getSession, setSessionUser } from '@/services/session';
 import { getSupabaseClient } from '@/services/supabase/client';
 
 /**
@@ -118,6 +118,36 @@ export function createSupabaseAuthService(): AuthService {
       try {
         // 이 기기의 세션만 지운다. 이미 발급된 토큰이 서버에서 바로 무효가 된다고 가정하지 않는다 (AUTH-004)
         await client().auth.signOut({ scope: 'local' });
+      } finally {
+        explicitSignOut = false;
+        clearSessionUser();
+      }
+    },
+
+    async verifyPassword(password: string) {
+      bind();
+      const email = getSession().email;
+      if (!email) throw new ServiceError('AUTH_REQUIRED');
+      // 같은 계정으로 다시 로그인해 비밀번호만 확인한다. 프로필 생성 같은 후속 호출은 하지 않는다
+      const { error } = await client().auth.signInWithPassword({ email, password });
+      if (error) throw toServiceError(error);
+    },
+
+    async deleteAccount() {
+      bind();
+      const { error } = await client().rpc('delete_my_account');
+      if (error) {
+        const alreadyGone = error.code === '42501' || (error.code === 'P0001' && error.message === 'AUTH_REQUIRED');
+        // 이미 지워진 계정이면 성공으로 보고 기기만 정리한다
+        if (!alreadyGone) throw new ServiceError(error.code ? 'WITHDRAW_FAILED' : 'NETWORK_UNAVAILABLE', !error.code);
+      }
+      // 계정이 없어졌으니 프로필을 다시 만들려는 시도를 멈추고, 이 기기의 세션을 닫는다
+      profilePending = false;
+      explicitSignOut = true;
+      try {
+        await client().auth.signOut({ scope: 'local' });
+      } catch {
+        // 이미 계정이 없어 토큰 정리가 실패해도 기기 세션은 닫는다
       } finally {
         explicitSignOut = false;
         clearSessionUser();
