@@ -16,6 +16,7 @@ import { resolveImageUrl } from '@/services/image';
 import { colors, spacing, text } from '@/theme';
 import { formatReviewDate } from '@/utils/date';
 
+import { helpfulView } from './review-model';
 import { useReviewStore } from './review-store';
 import { useReviewDelete } from './use-review-delete';
 
@@ -68,6 +69,7 @@ function reduce(state: State, action: Action): State {
 export function MyReviewsScreen({ focusReviewId }: { focusReviewId?: string }) {
   const byId = useReviewStore((s) => s.byId);
   const mutationVersion = useReviewStore((s) => s.mutationVersion);
+  const overlay = useReviewStore((s) => s.helpfulOverlay);
   const [state, dispatch] = useReducer(reduce, { key: '', load: 'loading', ids: [], nextCursor: null, hasMore: false, more: 'idle' });
   const deletion = useReviewDelete((id) => dispatch({ type: 'remove', id }));
   const [retry, setRetry] = useState(0);
@@ -172,7 +174,9 @@ export function MyReviewsScreen({ focusReviewId }: { focusReviewId?: string }) {
             </View>
           ) : undefined
         }
-        renderItem={({ item: r }) => (
+        renderItem={({ item: r }) => {
+          const helpful = helpfulView(r, overlay[r.reviewId]);
+          return (
           <MyReviewCard
             storeName={r.storeNameSnapshot}
             storeImageUri={storeImages[r.storeId] ?? null}
@@ -184,13 +188,14 @@ export function MyReviewsScreen({ focusReviewId }: { focusReviewId?: string }) {
             hasPhoto={r.images.length > 0}
             body={r.body}
             amount={r.orderAmount}
-            helpfulCount={r.helpfulCount}
+            helpful={{ count: helpful.count, active: helpful.active, readOnly: false, onToggle: (next) => void useReviewStore.getState().toggleHelpful(r, next) }}
             focused={r.reviewId === focusReviewId}
             onStorePress={() => router.push({ pathname: '/store/[storeId]', params: { storeId: r.storeId } })}
             onEdit={() => goReviewEdit(r.reviewId)}
             onDelete={() => void deletion.request(r)}
           />
-        )}
+          );
+        }}
       />
       {deletion.sheet}
     </Screen>

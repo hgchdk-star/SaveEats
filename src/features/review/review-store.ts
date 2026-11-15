@@ -41,7 +41,7 @@ export const useReviewStore = create<ReviewState>((set, get) => ({
   reset: () => set((s) => ({ byId: {}, helpfulOverlay: {}, inflight: {}, mutationVersion: s.mutationVersion + 1 })),
 
   /**
-   * 도움돼요 (REV-007). 로그인이 필요하고, 리뷰당 한 번이며, 다시 누르면 취소된다. 내 리뷰는 누를 수 없다.
+   * 도움돼요 (REV-007). 로그인이 필요하고, 리뷰당 한 번이며, 다시 누르면 취소된다..
    * 화면을 먼저 바꾸고 서버에 "목표값"을 보낸다. 같은 값을 두 번 보내도 결과가 같다.
    * 실패하면 내가 누르기 전 값으로 되돌리고 알린다. 같은 리뷰에 요청이 진행 중이면 다음 누름은 기다린다.
    */
@@ -50,7 +50,7 @@ export const useReviewStore = create<ReviewState>((set, get) => ({
       goLogin({ action: 'HELPFUL', reviewId: review.reviewId });
       return;
     }
-    if (review.isMine || get().inflight[review.reviewId]) return;
+    if (get().inflight[review.reviewId]) return;
     set((s) => ({ helpfulOverlay: { ...s.helpfulOverlay, [review.reviewId]: next }, inflight: { ...s.inflight, [review.reviewId]: true } }));
     try {
       const result = await reviewService.setHelpful({ reviewId: review.reviewId, operationId: createLocalId(), desired: next });
