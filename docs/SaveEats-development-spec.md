@@ -4,6 +4,8 @@
 
 **수정 이력**
 
+- **2026-11-16 서정 확정 반영(2차):** ① 함께해요 라벨(도움돼요 → 함께해요)과 본인 리뷰 허용, 오류 목록에서 SELF_HELPFUL_NOT_ALLOWED 제거. ② 취소 내역 숨기기는 진행 중 주문을 먼저 취소한 뒤 가능. ③ 회원 탈퇴는 재인증 후 전부 삭제(진행 중 주문 포함, 법무 확인 대기). ④ 설정·온보딩의 탈퇴 준비 중 문구 정리. 앱 구현은 혜지 서버 반영 후 지우.
+
 - **2026-11-16 서정 확정 반영:** ① 정정으로 취소된 주문은 상태를 CANCELLED로 두고 내역에서 `정정됨` 라벨만 붙인다(PRD FR-ORD-057). 대기 중 직접 취소에는 붙이지 않는다. ② 완료 확인 질문 화면의 왼쪽 버튼 표시 문구를 `아니요`로 바꾼다. 동작은 `아직이에요`와 같다(FR-ORD-052). ③ 홈 가게 목록 제목 옆 `전체 보기` 링크(FR-HOME-013). ④ 계좌 등록 은행 목록은 토스 은행 코드 가이드 기준 46곳이다(FR-ACC-020). 탈퇴 관련 문서 수정과 법무 확인은 이번 수정에 포함하지 않았다. 다시 담기 기능은 아직 정하지 않았다.
 
 - **2026-11-11 서정 확정 반영:** 취소 주문을 사용자가 내 내역에서 지울 수 있게 하고(숨김, 서버 기록 보존, PRD FR-HIST-026), 잘못 누른 완료는 시간 제한 없이 정정해 CANCELLED로 바꿀 수 있게 한다(리뷰 작성 주문 불가, 확인 2단계, 이력 보존, PRD FR-ORD-055·056, FR-HIST-027). 완료 주문을 바로 지우는 것은 허용하지 않는다. 서버 함수·앱 구현은 아직 없다(혜지·지우 작업).
@@ -92,7 +94,7 @@ Supabase 공식 문서는 Auth와 RLS의 조합, Data API 권한 제한, React N
 - 주문 생성: 현재 가격·품절·옵션·수량·Single-Store 검증, 비민감 목적지 참조 형식/주문 귀속 확인, Snapshot, 상태 이력 생성.
 - 주문 완료 확인/취소: 기존 상태 검사와 상태 이력 생성을 하나의 트랜잭션으로 처리.
 - 리뷰 작성/재작성: 완료된 본인 주문, 서버 시각 기준 작성 기한, 활성 리뷰 unique 검증.
-- 리뷰 수정/삭제 및 도움돼요: 소유권·금지 필드·자기 리뷰 제한·unique 보장.
+- 리뷰 수정/삭제 및 함께해요: 소유권·금지 필드·unique 보장. 본인 리뷰에도 함께해요를 누를 수 있다(2026-11-16 서정 확정).
 
 RPC의 호출자 인증과 실행 권한을 명시한다. SECURITY DEFINER가 필요한 함수는 고정 search_path, 명시적 소유권 확인, 최소 실행 권한을 검토한다. 함수라는 이유만으로 RLS가 자동 보장된다고 가정하지 않는다. service_role/서버 비밀키는 모바일 앱에 넣지 않는다.
 
@@ -476,7 +478,7 @@ N장 구조를 유지하고 MVP 최대 1장은 review 행 잠금 + 서버 개수
 
 `review_id uuid FK reviews`, `user_id uuid FK profiles`, `created_at timestamptz`; PK(review_id,user_id).
 
-서버가 활성 리뷰 존재와 자기 리뷰가 아님을 확인한다. 재시도 가능한 set_helpful(review_id, desired_boolean) 계약을 권장한다. 단순 toggle 재시도로 결과가 뒤집히지 않게 한다. 수정 시 기존 행 유지, 삭제 후 새 리뷰에는 새 행만 생성된다. 공개 응답은 Helpful count와 현재 사용자 선택 여부이며 도움을 누른 user_id 목록을 노출하지 않는다.
+서버가 활성 리뷰 존재를 확인한다(본인 리뷰 제한 없음, 2026-11-16 확정). 재시도 가능한 set_helpful(review_id, desired_boolean) 계약을 권장한다. 단순 toggle 재시도로 결과가 뒤집히지 않게 한다. 수정 시 기존 행 유지, 삭제 후 새 리뷰에는 새 행만 생성된다. 공개 응답은 Helpful count와 현재 사용자 선택 여부이며 도움을 누른 user_id 목록을 노출하지 않는다.
 
 #### private.review_command_receipts
 
@@ -560,7 +562,7 @@ name 부분검색은 소규모 Seed에서는 단순 쿼리로 시작할 수 있�
 | 메뉴/옵션 관계·필수 선택·가격·품절 | 서버 생성/Cart RPC |
 | 금액 item/option 합, 주문 최소 1개 | 서버 트랜잭션 |
 | 상태 전이/불변 Snapshot | 권한 제한 + RPC/행 잠금; migration에서 trigger 방어 검토 |
-| 리뷰 기한/소유권/자기 Helpful 금지/이미지 1장 | 서버 RPC + 잠금 |
+| 리뷰 기한/소유권/이미지 1장 | 서버 RPC + 잠금 |
 | 본인 개인 데이터/공개 필드 제한 | GRANT/RLS/조회 계약 |
 
 Supabase Data API 노출 테이블에는 RLS를 적용한다. 직접 SELECT 권한과 RPC EXECUTE 권한을 별도로 제한한다. SEC-002~005에서 직접 SELECT/INSERT/UPDATE/DELETE와 RPC 실행 권한을 정의한다. 이 문서의 제약 예시만으로 보안 검증 완료를 주장하지 않는다.
@@ -573,7 +575,7 @@ Supabase Data API 노출 테이블에는 RLS를 적용한다. 직접 SELECT 권�
 | OPEN-DB-002 / OPEN-ARCH-003 | 계좌 변경/삭제 후 PENDING 목적지 제공 | 제품 정책 결정 필요 | 해당 이어가기 계약 |
 | OPEN-DB-003 / OPEN-ARCH-001 | 이메일 인증 제한·재설정 UX | 이메일 인증 불요 확정(2026-10-01), 재설정 MVP 준비 중 확정(2026-10-29); 실제 복구 후속 범위 | 재설정 화면 |
 | OPEN-DB-004 | 실명 미수집·닉네임 공개 | 도입 확정, 세부 규칙/기존 계정 전환 미정 | nickname 검증/전환 |
-| OPEN-DB-005 | 탈퇴 시 주문·공개 리뷰 보존/익명화 | MVP 준비 중 확정, 실제 처리 범위/기간 미정 | 실제 탈퇴 기능/물리삭제(후속) |
+| OPEN-DB-005 | 탈퇴 시 주문·공개 리뷰 보존/익명화 | 2026-11-16 서정 확정: 전부 삭제(재인증 후). 법적 보존 의무 여부는 법무 확인 대기 | 실제 탈퇴 기능/물리삭제(후속) |
 | OPEN-DB-006 / OPEN-ARCH-006 | Cart 승격·빈 상태·revision 충돌 | 설계안 작성 완료, 구현 검증 전 | CART-005~010 |
 | OPEN-DB-007 | 이미지 준비 업로드/삭제/캐시 접근 | 상세 설계안 작성 완료, 구현 검증 전 | IMG-001~005 |
 | OPEN-DB-008 | 여러 메뉴 리뷰 연결 방식 | 기술 설계안 | 구현 전 PRD 정합성 재확인 |
@@ -661,7 +663,7 @@ pendingIntent에 전체 계좌번호·비밀번호·외부 임의 URL을 저장�
 
 가입/Auth 성공과 profile 저장 실패는 분리한다. profile 실패를 가입 실패로 오인해 같은 이메일로 가입을 반복하지 않고 동일 uid에서 profile 설정만 복구한다. nickname을 user_metadata에 전달하더라도 서버 검증을 거친 profiles 공개 필드만 신뢰하고 권한 판단에는 사용하지 않는다.
 
-탈퇴/재설정 버튼은 각각 `회원 탈퇴 기능은 준비 중이에요.` / `비밀번호 재설정 기능은 준비 중이에요.` 안내만 제공한다. 삭제·복구 메일·비밀번호 변경 API/관리자 키 경로는 구현하지 않는다. 실제 탈퇴 데이터 workflow는 SSOT 60.1 추천과 OPEN-DB-005의 최종 결정을 기다린다. 준비 중 UI 테스트는 삭제/변경 요청 0건을 확인한다.
+탈퇴는 정식 기능이다(2026-11-16 서정 확정): 재인증 후 전부 삭제, 완료 문구 `탈퇴가 완료됐어요`. 재설정 버튼은 `비밀번호 재설정 기능은 준비 중이에요.` 안내만 제공한다. 삭제·복구 메일·비밀번호 변경 API/관리자 키 경로는 구현하지 않는다. 실제 탈퇴 데이터 workflow는 SSOT 60.1 추천과 OPEN-DB-005의 최종 결정을 기다린다. 준비 중 UI 테스트는 삭제/변경 요청 0건을 확인한다.
 
 ### SEC-001 권한 계층
 
@@ -768,12 +770,12 @@ GRANT EXECUTE ON FUNCTION public.confirm_order(uuid, uuid)
 | confirm_order | 로그인 | 본인 Order, 유효 전이, operation_id | VERIFIED/완료시각 직접 설정 |
 | cancel_order | 로그인 | 본인 PENDING, 경합 검사 | 완료 주문 취소/물리삭제 |
 | 완료 정정 (신규, 이름 혜지 설계) | 로그인 | 본인 USER_CONFIRMED, 리뷰 없음, operation_id | 타인 주문, 리뷰 작성 주문, PENDING 복원, 이력 삭제 |
-| 내역 숨기기 (신규, 이름 혜지 설계) | 로그인 | 본인 CANCELLED만, 멱등 | 완료/PENDING 숨김, 물리삭제, 타인 주문 |
+| 내역 숨기기 (신규, 이름 혜지 설계) | 로그인 | 본인 CANCELLED만(진행 중 PENDING은 먼저 취소 후 숨김, 2026-11-16 확정), 멱등 | 완료/PENDING 숨김, 물리삭제, 타인 주문 |
 | mark_status_updates_viewed | 로그인 | event ID마다 본인 Order 연결 | 타인/나중 이벤트 일괄 read |
 | create_review | 로그인 | 본인 완료 Order, 720h 기한, 활성 unique | 타인 주문/기한/작성자 변조 |
 | update_review | 로그인 | 본인 활성 Review, 허용 필드만 | order/store/menu/created_at 변조 |
 | delete_review | 로그인 | 본인 활성 Review, soft delete | 물리삭제/이전 ID 복원 |
-| set_helpful | 로그인 | 활성 Review, 자기 리뷰 금지, PK | arbitrary user_id/toggle retry |
+| set_helpful | 로그인 | 활성 Review, PK. 본인 리뷰 허용(2026-11-16) | arbitrary user_id/toggle retry |
 | list_public_reviews / get_review_summary | Guest/로그인 | Scope/활성/필드 whitelist/pagination | 타인 계좌/프로필/원본 Order 노출 |
 | get_my_summary | 로그인 | uid와 완료 상태/KST 기간 | 타인 user_id/임의 전체 조회 |
 | prepare/finalize_review_image | 로그인 | 본인·파일경로·실제 파일·1장·Review 권한 | 타인 Storage 참조/미검증 파일 공개 |
@@ -831,7 +833,7 @@ DB 오류 raw 문자열과 계좌/토큰을 사용자에게 그대로 표시하�
 | OPEN-DB-004 | 실명 미수집·닉네임 공개 | 도입 확정, 세부 검증/전환 정책 미정(AUTH-005) |
 | OPEN-ARCH-002 / OPEN-DB-001 | 계좌 기기 보안 저장/삭제 | 서버 미저장 확정; AccountVault 실기기 검증 전 미완료 |
 | OPEN-ARCH-003 / OPEN-DB-002 | PENDING 중 계좌 교체/삭제 | 본인 권한만으로 해결되지 않는 제품 정책 |
-| OPEN-DB-005 | 탈퇴/주문·리뷰 보존/익명화 | MVP 준비 중 확정, 실제 데이터 처리 범위/기간은 미결정. SSOT 60.1 추천; 관리자 deleteUser 앱 노출 금지 |
+| OPEN-DB-005 | 탈퇴/주문·리뷰 보존/익명화 | 2026-11-16 서정 확정: 전부 삭제. 법무 확인 대기. 실제 데이터 처리 범위/기간은 법무 확인 뒤 정함. SSOT 60.1 추천; 관리자 deleteUser 앱 노출 금지 |
 | OPEN-DB-007 | 업로드/파일 정리/읽기 URL 수명 | Storage 상세 설계·실제 테스트 필요 |
 
 이메일 인증은 요구하지 않는다(2026-10-01 결정). MVP는 재설정도 준비 중이므로 메일 링크 handler를 완료 범위로 추가하지 않는다. 실제 재설정 도입 시 callback·만료·오류·계정 복구 경로를 검증한다.
@@ -855,7 +857,7 @@ DB 오류 raw 문자열과 계좌/토큰을 사용자에게 그대로 표시하�
 | 실행 권한 미부여 함수/overload/내부 helper 호출 | 거절 |
 | 본인 찜 I/D와 타인 user_id 찜 INSERT | 본인만 성공; U는 거절 |
 | 완료 재시도/완료-취소 동시 요청 | 단일 유효 상태/최초 시각/이력 보존 |
-| 720h 경계·동시 리뷰·자기 Helpful | 제2장 제약에 따라 판정 |
+| 720h 경계·동시 리뷰·본인 리뷰 함께해요 | 제2장 제약에 따라 판정 |
 | event 목록에 B 이벤트 또는 신규 미노출 이벤트 포함 | B 변경 불가; 클라이언트는 신규 자동포함 안 함 |
 | 로그아웃/계정전환 직후 이전 응답·캐시·복구 큐 | 다른 계정에 반영/전송 안 됨 |
 | 토큰 만료+완료 저장 실패 | 재인증 후 동일 주문 저장만 재시도 |
@@ -1123,6 +1125,7 @@ OPEN-ARCH-006 / OPEN-DB-006은 이 통합 명세로 **설계안 작성 완료, �
 | PENDING | cancel_order | CANCELLED | 명시 취소시각·상태이력 1회 |
 | USER_CONFIRMED | confirm_order 재시도 | 동일 | 기존 완료 결과; 시각/이력 불변 |
 | CANCELLED | cancel_order 재시도 | 동일 | 기존 취소 결과; 시각/이력 불변 |
+| CANCELLED | 내역 숨기기 | 상태 불변, 사용자 화면에서만 숨김 | 상태·이력 변경 없음 |
 | USER_CONFIRMED | cancel_order | 불허 | INVALID_ORDER_TRANSITION |
 | USER_CONFIRMED | 완료 정정(함수 이름·시그니처는 혜지 설계, 서정 확정 2026-11-11, PRD FR-ORD-055) | CANCELLED | 본인 Order, 리뷰 작성 주문 불허, 시간 제한 없음, operation_id로 멱등, 상태이력에 정정 사유 기록(완료 이력 보존), 집계·리뷰 대상 제외 |
 | CANCELLED | confirm_order | 불허 | INVALID_ORDER_TRANSITION |
@@ -1592,7 +1595,7 @@ Toss 공식 인증/결제 문서는 이 외부 앱 송금 흐름의 지원 근�
 - 수정 허용: 땡김도/본문/사진. Order/Store/Menu/금액/작성자 변경 금지. 수정은 Helpful 유지.
 - 재작성 Helpful은 0부터. 이전 Helpful을 새 ID로 복사하지 않음.
 - 공개 리뷰, MVP 공개/비공개 선택 없음. 공개 닉네임 사용, 실명 미수집·이메일/계좌 공개 금지.
-- Helpful 로그인 필요, 자기 리뷰 금지, user+review UNIQUE, 취소 가능.
+- 함께해요 로그인 필요, 본인 리뷰 허용(2026-11-16), user+review UNIQUE, 취소 가능.
 - Store/Menu 진입 Scope만 다르며 제목은 SaveEats 리뷰. 내 리뷰는 createdAt DESC, 수정으로 재정렬하지 않음.
 
 ### REV-002 작성 자격과 시간 경계
@@ -1663,7 +1666,7 @@ delete_review(reviewId, operationId, expectedRevision)
 
 set_helpful(reviewId, operationId, desiredBoolean)
 
-서버 uid, 활성 Review, 자기 리뷰 아님 확인. Review 행 잠금으로 delete와 Helpful 경합을 조율한다. 같은 operationId receipt는 기존 결과를 반환하며 새 상태 변경을 재실행하지 않는다.
+서버 uid, 활성 Review 확인(본인 리뷰 제한 없음, 2026-11-16). Review 행 잠금으로 delete와 Helpful 경합을 조율한다. 같은 operationId receipt는 기존 결과를 반환하며 새 상태 변경을 재실행하지 않는다.
 
 true → INSERT ON CONFLICT DO NOTHING, false → 본인 행 DELETE. PK(review_id,user_id) 유지. retry에서 toggle 반전을 쓰지 않는다. 클라이언트는 해당 Review Helpful 요청을 직렬화하고 미확정 요청을 먼저 해결한 뒤 후속 intent를 보낸다. 오래된 응답은 최신 선택 UI를 덮어쓰지 않는다.
 
@@ -1755,7 +1758,7 @@ active만 COUNT/AVG, count=0이면 average=null. 삭제를 제외한 Helpful cou
 
 Receipt 재생은 적용 당시 결과와 현재 상태를 구분한다. 같은 operationId로 새 리뷰 생성/이미지 교체/Helpful을 다시 적용하지 않는다. fingerprint에는 명령 종류/대상/허용 입력/revision/upload ID를 포함하되 임시 파일 URI나 signed URL은 제외한다.
 
-오류: AUTH_REQUIRED, RESOURCE_NOT_FOUND, ORDER_NOT_COMPLETED, REVIEW_DEADLINE_EXCEEDED, ACTIVE_REVIEW_EXISTS, REVIEW_REVISION_CONFLICT, REVIEW_OPERATION_CONFLICT, SELF_HELPFUL_NOT_ALLOWED, INVALID_REVIEW_INPUT, UPLOAD_EXPIRED, UPLOAD_NOT_READY, UPLOAD_TARGET_MISMATCH, INVALID_IMAGE, IMAGE_LIMIT_EXCEEDED. 요청 timeout은 성공 여부 미확정이므로 같은 key 확인/재시도한다.
+오류: AUTH_REQUIRED, RESOURCE_NOT_FOUND, ORDER_NOT_COMPLETED, REVIEW_DEADLINE_EXCEEDED, ACTIVE_REVIEW_EXISTS, REVIEW_REVISION_CONFLICT, REVIEW_OPERATION_CONFLICT, INVALID_REVIEW_INPUT, UPLOAD_EXPIRED, UPLOAD_NOT_READY, UPLOAD_TARGET_MISMATCH, INVALID_IMAGE, IMAGE_LIMIT_EXCEEDED. 요청 timeout은 성공 여부 미확정이므로 같은 key 확인/재시도한다.
 
 화면 카피: “리뷰 작성 기간이 지났어요.” / “리뷰가 변경됐어요. 최신 내용을 확인해주세요.” / “사진을 올리지 못했어요. 다시 시도해주세요.” / “리뷰를 저장하지 못했어요. 다시 시도해주세요.” 사진 실패 시 사용자 승인 없이 사진을 빼고 본문만 저장하지 않는다.
 
@@ -1771,7 +1774,7 @@ Receipt 재생은 적용 당시 결과와 현재 상태를 구분한다. 같은 
 | 만료 후 수정/삭제 | 허용, 재작성은 불가 |
 | update/delete/recreate 동시 | revision/잠금 기반 일관성, 이전 ID 복원 없음 |
 | 수정 Helpful 유지·재작성 Helpful | 기존 유지/신규 0 |
-| 자기 Helpful·타인 uid 입력·old retry | 거절/서버 uid만/재실행 안 됨 |
+| 타인 uid 입력·old retry | 거절/서버 uid만/재실행 안 됨. 본인 리뷰 함께해요는 허용 |
 | 이미지 교체 upload/검증/DB 실패 | 기존 사진/본문 유지 |
 | staging overwrite와 검증 경합 | immutable final bytes만 공개 |
 | 타인/다른 대상/소비 upload 재사용 | 거절 |
@@ -1790,7 +1793,7 @@ Receipt 재생은 적용 당시 결과와 현재 상태를 구분한다. 같은 
 | 참조 | 항목 | 상태 |
 |---|---|---|
 | OPEN-DB-007 | 이미지 예약/검증/정리/일시 접근 | 이번 상세 기술안 작성, 구현 검증 전 |
-| OPEN-DB-004/005 | 닉네임 상세·기존 계정/탈퇴·보존 | 닉네임 도입과 탈퇴 준비 중은 확정, 상세 정책 결정 필요 |
+| OPEN-DB-004/005 | 닉네임 상세·기존 계정/탈퇴·보존 | 닉네임 도입과 탈퇴는 2026-11-16 전부 삭제 확정(법무 확인 대기), 상세 정책 결정 필요 |
 | OPEN-DB-008 | 여러 메뉴 리뷰 연결 | 기존 기술안 유지, UI/PRD 검수 필요 |
 | OPEN-REV-001 | 서버 decode/re-encode runtime와 메모리/작업 상한 | 기술 검증 필요 |
 | OPEN-REV-002 | 예약·URL 만료/정리 grace/receipt 보존 | 초기 기술안, 실제 API 수명/비용 검증 |
@@ -2136,7 +2139,7 @@ local db reset은 로컬/테스트 프로젝트 식별 확인 후 사용. stagin
 |---|---|---|---|
 | 초기 | local onboarding state, getPublicConfig | Guest | 온보딩 최초1회/Skip·2페이지 비제휴 고지, OPS-002/SRC-001 |
 | 공통 안내 | 정적 서비스 및 콘텐츠 이용 안내 | Guest | 개인 My 조회와 분리; 신규 서버 API 불필요, PRD 40.10/SRC-001 |
-| Auth | signUp/signIn/signOut, ensureMyProfile | Auth SDK/본인 | 이메일 인증 없음, 실명 미수집·닉네임; resetPassword/탈퇴는 MVP 준비 중, 변경 요청 없음 |
+| Auth | signUp/signIn/signOut, ensureMyProfile | Auth SDK/본인 | 이메일 인증 없음, 실명 미수집·닉네임; resetPassword는 MVP 준비 중, 탈퇴는 재인증 후 전부 삭제(2026-11-16), 변경 요청 없음 |
 | catalog | getHome/listCategories/listStores/getStore/getMenu | Guest | 활성/품절 표시; 안전 DTO. listStores는 이름 → id 오름차순 cursor(2026-10-01 결정), 메뉴 목록 항목에 isPopular 없음(홈 인기 메뉴는 getHome 계약에서 정함) |
 | search | searchStores/getPopularTerms/localRecentSearches | Guest | Store/Menu/Category 검색→StoreCard only |
 | favorite | listMyFavorites/setFavorite | 본인 | 직접 I/D+RLS 또는 목표값 wrapper, Store only |
@@ -2253,7 +2256,7 @@ Analytics schema/Mock/작업 분해는 SaveEats 설계안이다. 실제 라이�
 | 시간 기준 | 서버 UTC, KST 표시/월 경계, 리뷰 720h 경계 포함, 잠금 이후 시각 판정 | 정책·설계 일치 |
 | 공개 리뷰와 개인정보 | 안전 projection·닉네임, Order/profile 원장 공개 금지, private image 접근 | 설계안, 권한 검증 전 |
 | 읽음 원장과 UI | 정확한 event ID, 50%/1초, 로컬 overlay와 서버 summary 교집합 | 설계안, 실기기 검증 전 |
-| 범위·카피 | 닉네임 MUST 반영, 타 사용자 리뷰 모아보기 LATER, 땡김도 정렬 유지, 탈퇴/재설정 준비 중 | 정책·설계 일치 |
+| 범위·카피 | 닉네임 MUST 반영, 타 사용자 리뷰 모아보기 LATER, 땡김도 정렬 유지, 재설정 준비 중, 탈퇴 정식(재인증 후 전부 삭제) | 정책·설계 일치 |
 | 미래 단계 안내 | 작성 예정 표현을 현재 장 참조로 교체, 개발 순서는 T00~T11에 통합 | 문서 반영 완료 |
 | 콘텐츠 출처·이용 안내 | SSOT v1.4/PRD v1.3·v25 참고, SRC-001~004; 예시와 서비스 구현 구분 | UX 반영, 실제 연결·검증 전 |
 
@@ -2283,7 +2286,7 @@ Analytics schema/Mock/작업 분해는 SaveEats 설계안이다. 실제 라이�
 | OPEN-ARCH-001 / OPEN-DB-003 | 이메일 인증 필수·미인증 범위·재설정 UX | 이메일 인증 불요·미인증 구분 없음, 재설정 MVP 준비 중 확정. 실제 복구 후속 범위 | reset 화면 |
 | OPEN-ARCH-003 / OPEN-DB-002 | 계좌 변경/삭제 후 과거 PENDING 목적지 | 주문 당시 원문을 안전하게 제공할지, 교체/삭제를 제한할지 보관 설계와 함께 결정; 현재 계좌 자동 대입 금지 | 목적지 resolver·계좌 교체·수동 이어가기 |
 | OPEN-DB-004 | 닉네임 상세 규칙/기존 계정 전환 | 실명 미수집·닉네임 도입 확정. 길이/중복/변경/금칙어/누락 표시만 미정 | nickname 검증·전환 |
-| OPEN-DB-005 | 탈퇴·주문/리뷰 보존·익명화 | MVP 준비 중 확정. 실제 보존 대상/기간·공개 여부·기기 자료/Auth 삭제 순서 미정, SSOT 60.1 추천; 주문 CASCADE 금지 | 실제 탈퇴·삭제 workflow(후속) |
+| OPEN-DB-005 | 탈퇴·주문/리뷰 보존·익명화 | 2026-11-16 서정 확정: 전부 삭제(법무 확인 대기). 실제 보존 대상/기간·공개 여부·기기 자료/Auth 삭제 순서 미정, SSOT 60.1 추천; 주문 CASCADE 금지 | 실제 탈퇴·삭제 workflow(후속) |
 | OPEN-CART-001 | 같은 옵션 조합의 합산/변경 충돌 UX | **결정됨 (2026-10-01 결정)** — 10 초과 동작 거절, 기존 Cart 유지, 안내 카피 CART-004 | Cart 편집 UX |
 | OPEN-CART-002 | 일반 로그인 이후 기기 간 Cart 충돌 | 로컬 적용/서버 불러오기 제안을 검수; 무조건 merge 금지 | conflict 화면 |
 | OPEN-CART-003 | Cart 비우는 시점 | 추천은 PENDING 성공 시 source revision 조건부 clear; 생성 미확정/실패·후속 편집 보존 | 주문 생성의 Cart 변경 |
