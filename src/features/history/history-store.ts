@@ -22,6 +22,9 @@ import { hasUnreadUpdate, mergeLatest } from './history-model';
 const PENDING_READ_BASE = 'saveeats.history.pendingRead.v2';
 /** 읽음 대기 목록은 사용자별로 나눠 저장한다 (AUTH-004) */
 const PENDING_READ_KEY = () => userScopedKey(PENDING_READ_BASE);
+/** 이 기기에서 정정한 주문 id. 서버가 정정 표시를 주지 않을 때 '정정됨'을 보여 주려고 사용자별로 남긴다 */
+const CORRECTED_BASE = 'saveeats.history.corrected.v1';
+const CORRECTED_KEY = () => userScopedKey(CORRECTED_BASE);
 
 type Load = 'idle' | 'loading' | 'ok' | 'error';
 type UnreadEvents = MockUnreadSummary['unreadEvents'];
@@ -41,6 +44,8 @@ type HistoryState = {
   /** 서버에 아직 저장하지 못한 완료 확인이 있는 주문 */
   /** 완료 확인 저장을 기다리는 주문들. 사용자·주문별로 여러 건일 수 있다 */
   queuedConfirmOrderIds: Readonly<Record<string, true>>;
+  /** 이 기기에서 정정한 주문 */
+  correctedIds: Readonly<Record<string, true>>;
 
   loadFirst: (opts?: { refresh?: boolean }) => Promise<void>;
   refreshLatest: () => Promise<void>;
@@ -54,6 +59,8 @@ type HistoryState = {
   replaceRow: (row: MockHistoryRow) => void;
   /** 내역에서 지운 주문을 목록과 읽지 않음 상태에서 뺀다 */
   removeRow: (orderId: string) => void;
+  /** 정정한 주문을 기록한다. '취소 · 정정됨' 표시에 쓴다 */
+  markCorrected: (orderId: string) => void;
   reset: () => void;
 };
 
@@ -99,6 +106,7 @@ export const useHistoryStore = create<HistoryState>((set, get) => {
     unread: null,
     pendingReadIds: {},
     queuedConfirmOrderIds: {},
+    correctedIds: {},
 
     loadFirst: async ({ refresh = false } = {}) => {
       const gen = ++listGeneration;
@@ -186,6 +194,16 @@ export const useHistoryStore = create<HistoryState>((set, get) => {
 
     hydrateLocal: async () => {
       try {
+        const rawCorrected = await AsyncStorage.getItem(CORRECTED_KEY());
+        const corrected: unknown = rawCorrected ? JSON.parse(rawCorrected) : [];
+        if (Array.isArray(corrected)) {
+          const ids = corrected.filter((x): x is string => typeof x === 'string');
+          set({ correctedIds: Object.fromEntries(ids.map((id) => [id, true as const])) });
+        }
+      } catch {
+        // 읽지 못하면 이 기기의 정정 기록 없이 시작한다
+      }
+      try {
         const raw = await AsyncStorage.getItem(PENDING_READ_KEY());
         const ids = (raw ? (JSON.parse(raw) as unknown) : []) as unknown;
         const list = Array.isArray(ids) ? ids.filter((x): x is string => typeof x === 'string') : [];
@@ -209,6 +227,13 @@ export const useHistoryStore = create<HistoryState>((set, get) => {
 
     replaceRow: (row) => set((s) => ({ rows: s.rows.map((r) => (r.orderId === row.orderId && row.statusRevision >= r.statusRevision ? row : r)) })),
 
+    markCorrected: (orderId) =>
+      set((s) => {
+        const correctedIds = { ...s.correctedIds, [orderId]: true as const };
+        AsyncStorage.setItem(CORRECTED_KEY(), JSON.stringify(Object.keys(correctedIds))).catch(() => undefined);
+        return { correctedIds };
+      }),
+
     removeRow: (orderId) =>
       set((s) => {
         const removedEvents = new Set((s.rows.find((r) => r.orderId === orderId)?.unreadUpdates ?? []).map((u) => u.eventId));
@@ -217,7 +242,7 @@ export const useHistoryStore = create<HistoryState>((set, get) => {
 
     reset: () => {
       listGeneration += 1;
-      set({ load: 'idle', rows: [], nextCursor: null, hasMore: false, pageLoad: 'idle', summary: null, summaryLoad: 'idle', unread: null, pendingReadIds: {}, queuedConfirmOrderIds: {} });
+      set({ load: 'idle', rows: [], nextCursor: null, hasMore: false, pageLoad: 'idle', summary: null, summaryLoad: 'idle', unread: null, pendingReadIds: {}, queuedConfirmOrderIds: {}, correctedIds: {} });
     },
   };
 });

@@ -45,6 +45,8 @@ export function parseOrderDto(data: unknown, idempotencyKey: string): MockOrder 
     completedAt: data.completedAt,
     cancelledAt: data.cancelledAt,
     approvedTotalAmount: data.totalAmount,
+    // 서버가 정정 표시를 주면 받는다(correctedAt 시각, 또는 corrected: true). 주지 않으면 필드를 두지 않는다
+    ...(isStr(data.correctedAt) ? { correctedAt: data.correctedAt } : data.corrected === true ? { correctedAt: isStr(data.cancelledAt) ? data.cancelledAt : '' } : {}),
     replayed: data.replayed === true,
     snapshot: {
       storeId: store.id,

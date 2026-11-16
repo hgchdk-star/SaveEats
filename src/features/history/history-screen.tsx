@@ -18,7 +18,7 @@ import { resolveImageUrl } from '@/services/image';
 import { colors, spacing, text } from '@/theme';
 import { formatOrderDate } from '@/utils/date';
 
-import { orderMenuLabel, reviewButtonOf, rowStatus, unreadEventIdsOf } from './history-model';
+import { isCorrectedOrder, orderMenuLabel, reviewButtonOf, rowStatus, unreadEventIdsOf } from './history-model';
 import { useHistoryStore } from './history-store';
 
 /** SDK 58(RN 0.88)부터 ViewToken이 react-native에서 바로 나오지 않아 FlatList 속성에서 가져온다 */
@@ -35,7 +35,7 @@ const VIEWABILITY = { itemVisiblePercentThreshold: LIMITS.statusReadVisiblePerce
  */
 export function HistoryScreen() {
   const { isMember } = useSession();
-  const { load, rows, hasMore, pageLoad, summary, summaryLoad, pendingReadIds, queuedConfirmOrderIds } = useHistoryStore();
+  const { load, rows, hasMore, pageLoad, summary, summaryLoad, pendingReadIds, queuedConfirmOrderIds, correctedIds } = useHistoryStore();
   const [refreshing, setRefreshing] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
 
@@ -209,6 +209,7 @@ export function HistoryScreen() {
               menuLabel={orderMenuLabel(row.snapshot)}
               amount={row.approvedTotalAmount}
               status={status}
+              corrected={isCorrectedOrder(row, correctedIds)}
               unread={unreadEventIdsOf(row, pendingReadIds).length > 0}
               busy={busyId === row.orderId}
               onDetail={() => goOrderDetail(row.orderId)}

@@ -265,6 +265,8 @@ export const draftCopy = {
     statusPending: '주문 완료가 필요해요',
     statusSaveFailed: '완료 확인을 저장하지 못했어요',
     statusCancelled: '주문이 취소됐어요',
+    /** 정정된 취소 옆에 붙는 작은 회색 글씨 (FR-ORD-057) */
+    correctedTag: '정정됨',
     delivered: (amountLabel: string) => `내 계좌로 ${amountLabel} 배달`,
     /** 취소된 주문 지우기 (FR-HIST-026). 서정 확정 문구 전의 초안 */
     hideEntry: '내역에서 지우기',
@@ -551,6 +553,8 @@ export const draftCopy = {
     recentKindMenu: '메뉴',
     /** 최근 본 메뉴가 품절일 때 스크린리더용. 화면에는 사진 위 "품절"이 나온다. 영업 종료는 store.statusClosed를 쓴다 */
     recentSoldOut: '품절',
+    /** 가게 목록 제목 옆 작은 링크 (FR-HOME-013) */
+    viewAll: '전체 보기',
     recommendedTitle: '추천 가게',
     /** 기획서 11.1 홈 섹션 이름(확정 제목). Seed 인기 값으로 만들고 숫자·순위·주문 수는 보여주지 않는다 (FR-HOME-005). 제목은 여기 한 곳만 고친다 */
     popularTitle: '지금 많이 찾는 메뉴',

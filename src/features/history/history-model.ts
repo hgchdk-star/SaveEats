@@ -93,3 +93,8 @@ export function mergeLatest(current: MockHistoryRow[], latest: MockHistoryRow[])
   const merged = current.map((r) => byId.get(r.orderId) ?? r);
   return [...fresh, ...merged].sort((a, b) => (a.createdAt === b.createdAt ? (a.orderId < b.orderId ? 1 : -1) : a.createdAt < b.createdAt ? 1 : -1));
 }
+
+/** 완료였다가 정정된 주문인가(FR-ORD-057). 대기 중에 직접 취소한 주문은 아니다. 서버 표시가 없으면 이 기기의 정정 기록으로 본다 */
+export function isCorrectedOrder(row: { status: string; correctedAt?: string | null; orderId: string }, correctedIds: Readonly<Record<string, true>>): boolean {
+  return row.status === 'CANCELLED' && (row.correctedAt != null || !!correctedIds[row.orderId]);
+}
