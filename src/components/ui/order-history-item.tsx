@@ -23,6 +23,8 @@ type OrderHistoryItemProps = {
   onDetail: () => void;
   onResume?: () => void;
   onRetrySave?: () => void;
+  /** 정정으로 취소된 주문이면 취소 옆에 '정정됨'을 붙인다 */
+  corrected?: boolean;
   reviewStatus: 'available' | 'written' | 'expired' | null;
   onReview?: () => void;
   onSameMenu?: () => void;
@@ -34,7 +36,7 @@ const copy = draftCopy.history;
  * 내역 한 줄. 주문 당시의 이름·금액을 그대로 보여준다.
  * 상태가 바뀌어도 줄 순서는 그대로다. 줄을 읽음 처리하는 시점은 목록 화면이 정한다.
  */
-export function OrderHistoryItem({ date, storeName, imageUri, menuLabel, amount, status, unread, busy = false, onDetail, onResume, onRetrySave, reviewStatus, onReview, onSameMenu }: OrderHistoryItemProps) {
+export function OrderHistoryItem({ date, storeName, imageUri, menuLabel, amount, status, corrected = false, unread, busy = false, onDetail, onResume, onRetrySave, reviewStatus, onReview, onSameMenu }: OrderHistoryItemProps) {
   const label = status === 'delivered' ? copy.delivered(formatWon(amount)) : status === 'pending' ? copy.statusPending : status === 'saveFailed' ? copy.statusSaveFailed : copy.statusCancelled;
   const tone = status === 'delivered' ? styles.toneDone : status === 'cancelled' ? styles.toneMuted : status === 'saveFailed' ? styles.toneBad : styles.tonePending;
 
@@ -46,7 +48,7 @@ export function OrderHistoryItem({ date, storeName, imageUri, menuLabel, amount,
           {copy.detail}
         </TextButton>
       </View>
-      <View accessibilityLabel={`${storeName}, ${menuLabel}, ${label}${unread ? `, ${copy.unreadLabel}` : ''}`} accessible style={styles.main}>
+      <View accessibilityLabel={`${storeName}, ${menuLabel}, ${label}${corrected ? `, ${copy.correctedTag}` : ''}${unread ? `, ${copy.unreadLabel}` : ''}`} accessible style={styles.main}>
         <FoodImage uri={imageUri} width={64} rounded={radius.sm} />
         <View style={styles.text}>
           <Text style={styles.store}>{storeName}</Text>
@@ -57,7 +59,10 @@ export function OrderHistoryItem({ date, storeName, imageUri, menuLabel, amount,
             {status !== 'delivered' ? <Price amount={amount} size="sm" /> : null}
             <View style={styles.statusRow}>
               {unread ? <View style={styles.dot} /> : null}
-              <Text style={[styles.status, tone]}>{label}</Text>
+              <Text style={[styles.status, tone]}>
+                {label}
+                {corrected && status === 'cancelled' ? <Text style={styles.correctedTag}>{` · ${copy.correctedTag}`}</Text> : null}
+              </Text>
             </View>
           </View>
         </View>
@@ -164,6 +169,10 @@ const styles = StyleSheet.create({
     height: 6,
     borderRadius: 3,
     backgroundColor: colors.notificationDot,
+  },
+  correctedTag: {
+    ...text.caption,
+    color: colors.inkTertiary,
   },
   status: {
     ...font('600'),

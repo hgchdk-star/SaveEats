@@ -114,6 +114,8 @@ export type MockOrder = {
   completedAt: string | null;
   cancelledAt: string | null;
   approvedTotalAmount: Won;
+  /** 완료였다가 "송금하지 않았어요"로 정정된 시각(FR-ORD-057). 서버가 주면 쓴다. 없으면 기기에 남긴 정정 기록으로 보완한다 */
+  correctedAt?: string | null;
   /** 같은 키로 이미 만들어진 주문을 돌려받았다는 서버 표시 */
   replayed?: boolean;
   snapshot: MockOrderSnapshot;

@@ -22,7 +22,7 @@ import { formatDateTime } from '@/utils/date';
 import { formatWon } from '@/utils/format';
 import { router } from 'expo-router';
 
-import { orderMenuLabel, reviewButtonOf } from './history-model';
+import { isCorrectedOrder, orderMenuLabel, reviewButtonOf } from './history-model';
 import { useHistoryStore } from './history-store';
 
 const copy = draftCopy.history;
@@ -34,6 +34,7 @@ const copy = draftCopy.history;
 export function OrderDetailScreen({ orderId }: { orderId: string }) {
   const state = useAsync(`order:${orderId}`, () => historyService.getMyOrder(orderId));
   const [busy, setBusy] = useState(false);
+  const correctedIds = useHistoryStore((s) => s.correctedIds);
   const [hideSheet, setHideSheet] = useState(false);
   const [correctStep, setCorrectStep] = useState<0 | 1 | 2>(0);
   // 정정 요청 번호. 결과를 모르는 실패의 재시도에는 같은 번호를 쓴다
@@ -70,7 +71,7 @@ export function OrderDetailScreen({ orderId }: { orderId: string }) {
     { label: copy.detailItemsLabel, value: snapshot.items.map((i) => `${i.menuName} × ${i.quantity}`).join('\n') || orderMenuLabel(snapshot) },
     { label: copy.detailAmount, value: formatWon(row.approvedTotalAmount) },
     { label: done ? copy.detailDestinationDone : copy.detailDestinationPending, value: snapshot.destination ? `${snapshot.destination.bankName} •••• ${snapshot.destination.last4}` : draftCopy.transfer.rawUnavailable },
-    { label: copy.detailStatus, value: done ? copy.detailStatusDone : cancelled ? copy.detailStatusCancelled : copy.detailStatusPending },
+    { label: copy.detailStatus, value: done ? copy.detailStatusDone : cancelled ? `${copy.detailStatusCancelled}${isCorrectedOrder(row, correctedIds) ? ` · ${copy.correctedTag}` : ''}` : copy.detailStatusPending },
     { label: copy.detailOrderedAt, value: formatDateTime(row.createdAt) },
     ...(row.completedAt ? [{ label: copy.detailDoneAt, value: formatDateTime(row.completedAt) }] : []),
     ...(row.cancelledAt ? [{ label: copy.detailCancelledAt, value: formatDateTime(row.cancelledAt) }] : []),
@@ -114,6 +115,7 @@ export function OrderDetailScreen({ orderId }: { orderId: string }) {
     try {
       const { order } = await historyService.correctOrderCompletion(row.orderId, correctOp.current);
       correctOp.current = null;
+      useHistoryStore.getState().markCorrected(row.orderId);
       useHistoryStore.getState().replaceRow({ ...row, ...order });
       void useHistoryStore.getState().loadFirst({ refresh: true });
       void useHistoryStore.getState().loadSummary();

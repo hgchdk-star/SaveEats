@@ -134,7 +134,7 @@ export function HomeScreen() {
             ) : null}
             {recommended.status === 'ok' && recommended.data.length > 0 ? (
               <View style={styles.section}>
-                <SectionHeader title={draftCopy.home.recommendedTitle} />
+                <SectionHeader title={draftCopy.home.recommendedTitle} action={{ label: draftCopy.home.viewAll, onPress: () => goCategoryStoreList('all') }} />
                 <View style={styles.storeList}>
                   {recommended.data.map((store) => (
                     <StoreCardItem key={store.id} store={store} wrapNames />

@@ -132,7 +132,7 @@ export function createMockHistoryService(): HistoryService {
       if (order.status !== 'USER_CONFIRMED') throw new ServiceError('INVALID_ORDER_TRANSITION');
       if (state.reviews.some((r) => r.orderId === orderId && !r.deletedAt)) throw new ServiceError('ORDER_HAS_REVIEW');
       const at = new Date().toISOString();
-      const next = { ...order, status: 'CANCELLED' as const, statusRevision: order.statusRevision + 1, completedAt: null, cancelledAt: at };
+      const next = { ...order, status: 'CANCELLED' as const, statusRevision: order.statusRevision + 1, completedAt: null, cancelledAt: at, correctedAt: at };
       state.orders[index] = next;
       state.operations[operationId] = `CORRECT:${orderId}`;
       recordEvent(state, next, 'USER_CONFIRMED', at);
