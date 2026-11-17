@@ -47,7 +47,7 @@ export class MockCartValidationError extends Error {
 
 type ValidationInput = {
   storeId: Uuid | null;
-  items: { clientItemId: string; menuId: Uuid; optionIds: Uuid[]; acknowledgedUnitPrice: Won }[];
+  items: { clientItemId: string; menuId: Uuid; optionIds: Uuid[]; optionQuantities?: Record<Uuid, number>; acknowledgedUnitPrice: Won }[];
 };
 
 /** 시나리오가 지정한 상태를 첫 항목에 입힌다. 나머지는 가상 카탈로그의 현재 값으로 판단한다 */
@@ -61,13 +61,14 @@ export async function mockValidateCart(input: ValidationInput): Promise<MockCart
     const menu = mockCatalog.anyMenu(item.menuId);
     const options = (menu?.optionGroups ?? []).flatMap((g) => g.options);
     const selected = item.optionIds.map((optionId) => options.find((o) => o.id === optionId));
-    const currentUnitPrice = (menu?.price ?? 0) + selected.reduce((sum, o) => sum + (o?.additionalPrice ?? 0), 0);
+    const qtyOf = (optionId: Uuid) => item.optionQuantities?.[optionId] ?? 1;
+    const currentUnitPrice = (menu?.price ?? 0) + selected.reduce((sum, o) => sum + (o ? o.additionalPrice * qtyOf(o.id) : 0), 0);
     const base = { currentUnitPrice, currentCatalogRevision: menu?.catalogRevision ?? 0 };
     const soldOutOption = selected.find((o) => o?.isSoldOut);
 
     let result: MockCartItemValidation;
     if (!menu || !menu.isActive) result = { ...base, status: 'INACTIVE_ENTITY' };
-    else if (selected.some((o) => !o)) result = { ...base, status: 'OPTIONS_INVALID' };
+    else if (selected.some((o) => !o) || selected.some((o) => o && qtyOf(o.id) !== 1 && !(o.allowQuantity === true && typeof o.maxQuantity === 'number' && qtyOf(o.id) <= o.maxQuantity))) result = { ...base, status: 'OPTIONS_INVALID' };
     else if (menu.isSoldOut) result = { ...base, status: 'MENU_SOLD_OUT' };
     else if (soldOutOption) result = { ...base, status: 'OPTION_SOLD_OUT', soldOutOptionName: soldOutOption.name };
     else if (currentUnitPrice !== item.acknowledgedUnitPrice) result = { ...base, status: 'PRICE_CHANGED' };

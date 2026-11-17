@@ -181,6 +181,10 @@ export function parseMenuDetail(data: unknown): MenuDetailDto {
     need(isObj(g) && isStr(g.id) && isStr(g.name) && isNum(g.minSelect) && isNum(g.maxSelect) && Array.isArray(g.options));
     for (const o of (g as Obj).options as unknown[]) {
       need(isObj(o) && isStr(o.id) && isStr(o.name) && isNum(o.additionalPrice) && isBool(o.isSoldOut));
+      // 옵션별 수량(없으면 수량 허용 안 함). 있으면 allowQuantity는 boolean, maxQuantity는 숫자 또는 null이어야 한다
+      const opt = o as Obj;
+      need(opt.allowQuantity === undefined || isBool(opt.allowQuantity));
+      need(opt.maxQuantity === undefined || opt.maxQuantity === null || (isNum(opt.maxQuantity) && Number.isInteger(opt.maxQuantity) && opt.maxQuantity >= 1));
     }
   }
   return m as unknown as MenuDetailDto;

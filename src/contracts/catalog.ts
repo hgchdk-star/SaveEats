@@ -129,6 +129,13 @@ export interface MenuOptionDto {
   name: string;
   additionalPrice: Won;
   isSoldOut: boolean;
+  /**
+   * 같은 옵션을 여러 개 고를 수 있는가. 옵션 수량 = 메뉴 한 개에 들어가는 옵션 개수.
+   * 없거나 false이면 기존처럼 한 번만 고른다(서버가 옵션별 수량 도입 전 응답이면 이 필드가 없다).
+   */
+  allowQuantity?: boolean;
+  /** allowQuantity=true일 때 고를 수 있는 최대 수량(1 이상). 옵션마다 데이터로 정한다. 허용하지 않으면 null */
+  maxQuantity?: number | null;
 }
 
 export interface MenuOptionGroupDto {

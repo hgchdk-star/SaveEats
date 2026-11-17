@@ -5,6 +5,7 @@ import { formatWon } from '@/utils/format';
 
 import { Badge } from './badge';
 import { Icon } from './icon';
+import { QuantitySelector } from './quantity-selector';
 
 export type OptionRowData = {
   id: string;
@@ -14,6 +15,13 @@ export type OptionRowData = {
   selected: boolean;
   /** 품절이거나, 최대 개수에 닿아 더 고를 수 없을 때 */
   locked: boolean;
+  /**
+   * 수량을 조절할 수 있는 옵션이면 최대 수량. 없으면 수량 조절이 없는 옵션이다(기존 동작).
+   * 선택한 옵션에만 수량 조절을 보여 준다.
+   */
+  maxQuantity?: number;
+  /** 고른 수량(메뉴 한 개에 들어가는 개수). 기본 1 */
+  quantity?: number;
 };
 
 type OptionGroupProps = {
@@ -27,10 +35,12 @@ type OptionGroupProps = {
   full: boolean;
   options: OptionRowData[];
   onToggle: (optionId: string) => void;
+  /** 수량 조절 옵션의 수량을 바꿨을 때 */
+  onQuantityChange?: (optionId: string, quantity: number) => void;
 };
 
 /** 메뉴 옵션 그룹. 필수 옵션은 "필수" 배지, 그 외는 "선택" 배지 */
-export function OptionGroup({ name, required, single, rule, full, options, onToggle }: OptionGroupProps) {
+export function OptionGroup({ name, required, single, rule, full, options, onToggle, onQuantityChange }: OptionGroupProps) {
   return (
     <View accessibilityLabel={name} style={styles.group}>
       <View style={styles.head}>
@@ -41,21 +51,39 @@ export function OptionGroup({ name, required, single, rule, full, options, onTog
       </View>
       <Text style={[styles.rule, full && styles.ruleFull]}>{rule}</Text>
       <View accessibilityRole={single ? 'radiogroup' : undefined}>
-        {options.map((option, index) => (
-          <Pressable
-            key={option.id}
-            accessibilityRole={single ? 'radio' : 'checkbox'}
-            accessibilityLabel={option.soldOut ? `${option.name}, 품절` : option.name}
-            accessibilityState={{ checked: option.selected, disabled: option.locked }}
-            disabled={option.locked}
-            onPress={() => onToggle(option.id)}
-            style={[styles.row, index > 0 && styles.rowBorder]}>
-            <OptionControl single={single} selected={option.selected} locked={option.locked} />
-            <Text style={[styles.label, option.locked && styles.locked]}>{option.name}</Text>
-            {option.soldOut ? <Badge>품절</Badge> : null}
-            <Text style={[styles.add, option.locked && styles.locked]}>{option.additionalPrice ? `+${formatWon(option.additionalPrice)}` : '+0원'}</Text>
-          </Pressable>
-        ))}
+        {options.map((option, index) => {
+          const quantity = option.quantity ?? 1;
+          const total = option.additionalPrice * quantity;
+          const adjustable = option.maxQuantity !== undefined && option.selected && !option.soldOut;
+          return (
+            <View key={option.id} style={[index > 0 && styles.rowBorder, adjustable && styles.rowWithQuantity]}>
+              <Pressable
+                accessibilityRole={single ? 'radio' : 'checkbox'}
+                accessibilityLabel={option.soldOut ? `${option.name}, 품절` : option.name}
+                accessibilityState={{ checked: option.selected, disabled: option.locked }}
+                disabled={option.locked}
+                onPress={() => onToggle(option.id)}
+                style={[styles.row, adjustable && styles.rowTight]}>
+                <OptionControl single={single} selected={option.selected} locked={option.locked} />
+                <Text style={[styles.label, option.locked && styles.locked]}>{option.name}</Text>
+                {option.soldOut ? <Badge>품절</Badge> : null}
+                <Text style={[styles.add, option.locked && styles.locked]}>{total ? `+${formatWon(total)}` : '+0원'}</Text>
+              </Pressable>
+              {adjustable ? (
+                <View style={styles.quantityLine}>
+                  <QuantitySelector
+                    size="sm"
+                    label={`${option.name} 수량`}
+                    value={quantity}
+                    min={1}
+                    max={option.maxQuantity}
+                    onChange={(next) => onQuantityChange?.(option.id, next)}
+                  />
+                </View>
+              ) : null}
+            </View>
+          );
+        })}
       </View>
     </View>
   );
@@ -116,6 +144,16 @@ const styles = StyleSheet.create({
   rowBorder: {
     borderTopWidth: 1,
     borderTopColor: colors.line,
+  },
+  rowTight: {
+    paddingBottom: spacing[2],
+  },
+  rowWithQuantity: {
+    paddingBottom: spacing[3],
+  },
+  /** 라벨 시작 위치(체크박스 22 + 간격 12)에 맞춘다 */
+  quantityLine: {
+    paddingLeft: 22 + spacing[3],
   },
   control: {
     width: 22,

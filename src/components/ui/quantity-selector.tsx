@@ -12,12 +12,17 @@ type QuantitySelectorProps = {
   onRemove?: () => void;
   size?: 'md' | 'sm';
   disabled?: boolean;
+  /** 기본은 메뉴 수량 범위(LIMITS). 옵션 수량처럼 다른 범위가 필요하면 넘긴다 */
+  min?: number;
+  max?: number;
+  /** 접근성 이름. 기본 "수량" */
+  label?: string;
 };
 
 /** 수량 1~10. 1에서 −, 10에서 +는 비활성 (FR-MENU-002~004 · FR-CART-012) */
-export function QuantitySelector({ value, onChange, onRemove, size = 'md', disabled = false }: QuantitySelectorProps) {
-  const atMin = value <= LIMITS.quantityMin;
-  const atMax = value >= LIMITS.quantityMax;
+export function QuantitySelector({ value, onChange, onRemove, size = 'md', disabled = false, min = LIMITS.quantityMin, max = LIMITS.quantityMax, label = '수량' }: QuantitySelectorProps) {
+  const atMin = value <= min;
+  const atMax = value >= max;
   const removable = atMin && !!onRemove;
   const small = size === 'sm';
 
@@ -35,7 +40,7 @@ export function QuantitySelector({ value, onChange, onRemove, size = 'md', disab
   );
 
   return (
-    <View accessibilityLabel="수량" style={[styles.box, small && styles.boxSmall, disabled && styles.boxDisabled]}>
+    <View accessibilityLabel={label} style={[styles.box, small && styles.boxSmall, disabled && styles.boxDisabled]}>
       {removable
         ? button('trash', '삭제', false, () => onRemove?.())
         : button('minus', '빼기', disabled || atMin, () => onChange(value - 1))}

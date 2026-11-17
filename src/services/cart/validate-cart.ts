@@ -5,7 +5,7 @@ import { isRepositoryError, type CatalogRepository } from '@/services/catalog/ca
 
 export type CartValidationInput = {
   storeId: Uuid | null;
-  items: { clientItemId: string; menuId: Uuid; optionIds: Uuid[]; acknowledgedUnitPrice: Won }[];
+  items: { clientItemId: string; menuId: Uuid; optionIds: Uuid[]; optionQuantities?: Record<Uuid, number>; acknowledgedUnitPrice: Won }[];
 };
 
 /**
@@ -45,7 +45,8 @@ export function createCatalogCartValidator(catalog: Pick<CatalogRepository, 'get
       }
       const allOptions = menu.optionGroups.flatMap((g) => g.options);
       const selected = item.optionIds.map((optionId) => allOptions.find((o) => o.id === optionId));
-      const currentUnitPrice = menu.price + selected.reduce((sum, o) => sum + (o?.additionalPrice ?? 0), 0);
+      const qtyOf = (optionId: Uuid) => item.optionQuantities?.[optionId] ?? 1;
+      const currentUnitPrice = menu.price + selected.reduce((sum, o) => sum + (o ? o.additionalPrice * qtyOf(o.id) : 0), 0);
       const base = { currentUnitPrice, currentCatalogRevision: menu.catalogRevision };
       const soldOutOption = selected.find((o) => o?.isSoldOut);
       const groupsOk = menu.optionGroups.every((g) => {
@@ -53,7 +54,10 @@ export function createCatalogCartValidator(catalog: Pick<CatalogRepository, 'get
         return count >= g.minSelect && count <= g.maxSelect;
       });
 
-      if (selected.some((o) => !o) || !groupsOk) items[item.clientItemId] = { ...base, status: 'OPTIONS_INVALID' };
+      // 옵션 수량: 수량을 허용하지 않는 옵션은 1개뿐, 허용하는 옵션은 maxQuantity까지. 그룹 개수는 고른 옵션 종류 수 기준이다
+      const quantityOk = selected.every((o) => !o || qtyOf(o.id) === 1 || (o.allowQuantity === true && typeof o.maxQuantity === 'number' && qtyOf(o.id) <= o.maxQuantity));
+
+      if (selected.some((o) => !o) || !groupsOk || !quantityOk) items[item.clientItemId] = { ...base, status: 'OPTIONS_INVALID' };
       else if (menu.isSoldOut) items[item.clientItemId] = { ...base, status: 'MENU_SOLD_OUT' };
       else if (soldOutOption) items[item.clientItemId] = { ...base, status: 'OPTION_SOLD_OUT', soldOutOptionName: soldOutOption.name };
       else if (currentUnitPrice !== item.acknowledgedUnitPrice) items[item.clientItemId] = { ...base, status: 'PRICE_CHANGED' };

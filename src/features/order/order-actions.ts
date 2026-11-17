@@ -51,18 +51,24 @@ function syncHistory(): void {
 
 /** 승인한 항목·가격·계좌 버전을 요청에 고정한다 */
 export function buildCreateOrderRequest(cart: CartEnvelope, account: MockDestinationAccount): CreateOrderRequest {
+  // 옵션 수량이 2개 이상인 항목이 있으면 v3(options[{optionId, quantity}]), 없으면 이전과 같은 v2(optionIds)
+  const withQuantity = cart.items.some((item) => Object.keys(item.optionQuantities ?? {}).length > 0);
   return {
     idempotencyKey: createLocalId(),
-    requestVersion: ORDER.requestVersion,
+    requestVersion: withQuantity ? ORDER.requestVersionWithOptionQuantity : ORDER.requestVersion,
     storeId: cart.storeId ?? '',
     destinationRef: account.id,
-    items: cart.items.map((item) => ({
-      menuId: item.menuId,
-      optionIds: item.optionIds,
-      quantity: item.quantity,
-      approvedUnitPrice: item.acknowledgedUnitPrice,
-      approvedCatalogRevision: item.acknowledgedCatalogRevision,
-    })),
+    items: cart.items.map((item) => {
+      const common = {
+        menuId: item.menuId,
+        quantity: item.quantity,
+        approvedUnitPrice: item.acknowledgedUnitPrice,
+        approvedCatalogRevision: item.acknowledgedCatalogRevision,
+      };
+      return withQuantity
+        ? { ...common, options: item.optionIds.map((optionId) => ({ optionId, quantity: item.optionQuantities?.[optionId] ?? 1 })) }
+        : { ...common, optionIds: item.optionIds };
+    }),
     approvedTotalAmount: cart.items.reduce((sum, item) => sum + item.acknowledgedUnitPrice * item.quantity, 0),
     disclosureVersion: ORDER.disclosureVersion,
     disclosureAcknowledged: true,

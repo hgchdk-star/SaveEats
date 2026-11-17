@@ -19,6 +19,12 @@ export type CartItem = {
   menuId: Uuid;
   /** 정렬하고 중복을 없앤 옵션 id */
   optionIds: Uuid[];
+  /**
+   * 옵션별 수량(메뉴 한 개에 들어가는 개수). 2개 이상인 옵션만 담고, 없는 옵션은 1개다.
+   * 옵션 수량 도입 전에 저장된 항목에는 이 필드가 없으며 모든 옵션이 1개로 읽힌다.
+   */
+  optionQuantities?: Record<Uuid, number>;
+  /** 메뉴 주문 수량(옵션 수량과 별개) */
   quantity: number;
   /** 사용자가 마지막으로 확인한 단가. 주문 가격의 원장이 아니다 */
   acknowledgedUnitPrice: Won;
@@ -68,9 +74,28 @@ export function normalizeOptionIds(optionIds: readonly Uuid[]): Uuid[] {
   return [...new Set(optionIds)].sort();
 }
 
-/** 같은 메뉴라도 옵션 조합이 다르면 다른 항목이다. 서버 configuration_key와 같은 규칙 (DB-005) */
-export function configurationKey(menuId: Uuid, optionIds: readonly Uuid[]): string {
-  return `${menuId}|${normalizeOptionIds(optionIds).join(',')}`;
+/**
+ * 옵션 수량을 정리한다: 고른 옵션에 대한 2 이상의 정수만 남기고 id 순으로 정렬한다. 모두 1개면 undefined.
+ * 같은 값이 같은 모양이 되도록(저장·합치기 기준) 한 곳에서 만든다.
+ */
+export function normalizeOptionQuantities(optionIds: readonly Uuid[], optionQuantities?: Readonly<Record<Uuid, number>>): Record<Uuid, number> | undefined {
+  if (!optionQuantities) return undefined;
+  const picked = new Set(optionIds);
+  const entries = Object.keys(optionQuantities)
+    .filter((id) => picked.has(id) && Number.isInteger(optionQuantities[id]) && optionQuantities[id] >= 2)
+    .sort()
+    .map((id) => [id, optionQuantities[id]] as const);
+  return entries.length > 0 ? Object.fromEntries(entries) : undefined;
+}
+
+/**
+ * 같은 메뉴라도 옵션 조합이 다르면 다른 항목이다. 옵션 수량이 다르면 다른 조합이다.
+ * 서버 configuration_key와 같은 규칙 (DB-005). 모든 옵션이 1개이면 옵션 수량 도입 전과 같은 키다.
+ */
+export function configurationKey(menuId: Uuid, optionIds: readonly Uuid[], optionQuantities?: Readonly<Record<Uuid, number>>): string {
+  const ids = normalizeOptionIds(optionIds);
+  const q = normalizeOptionQuantities(ids, optionQuantities) ?? {};
+  return `${menuId}|${ids.map((id) => (q[id] ? `${id}*${q[id]}` : id)).join(',')}`;
 }
 
 export function cartQuantity(cart: CartEnvelope): number {
@@ -98,6 +123,8 @@ export type AddToCartInput = {
   storeId: Uuid;
   menuId: Uuid;
   optionIds: readonly Uuid[];
+  /** 옵션별 수량(2개 이상인 것만 의미가 있다). 없으면 모두 1개 */
+  optionQuantities?: Readonly<Record<Uuid, number>>;
   quantity: number;
   unitPrice: Won;
   catalogRevision: number;
@@ -124,8 +151,9 @@ export function addToCart(cart: CartEnvelope, input: AddToCartInput, options?: {
 
   const base = otherStore ? [] : cart.items;
   const optionIds = normalizeOptionIds(input.optionIds);
-  const key = configurationKey(input.menuId, optionIds);
-  const same = base.find((item) => configurationKey(item.menuId, item.optionIds) === key);
+  const optionQuantities = normalizeOptionQuantities(optionIds, input.optionQuantities);
+  const key = configurationKey(input.menuId, optionIds, optionQuantities);
+  const same = base.find((item) => configurationKey(item.menuId, item.optionIds, item.optionQuantities) === key);
 
   if (same && same.quantity + input.quantity > LIMITS.quantityMax) return { ok: false, reason: 'OVER_LIMIT' };
   if (!same && base.length >= LIMITS.cartLineKindsMax) return { ok: false, reason: 'OVER_KINDS' };
@@ -138,6 +166,7 @@ export function addToCart(cart: CartEnvelope, input: AddToCartInput, options?: {
           clientItemId: createLocalId(),
           menuId: input.menuId,
           optionIds,
+          ...(optionQuantities ? { optionQuantities } : {}),
           quantity: input.quantity,
           acknowledgedUnitPrice: input.unitPrice,
           acknowledgedCatalogRevision: input.catalogRevision,
@@ -246,6 +275,13 @@ export function checkoutBlock(cart: CartEnvelope, validation: CartValidation): C
 const isSafeInt = (value: unknown, min: number): value is number => Number.isSafeInteger(value) && (value as number) >= min;
 const isString = (value: unknown): value is string => typeof value === 'string';
 
+/** 없거나(옵션 수량 도입 전 저장값), 고른 옵션에 대한 2 이상의 정수 값만 있는 객체 */
+function isOptionQuantities(value: unknown, optionIds: readonly string[]): boolean {
+  if (value === undefined) return true;
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) return false;
+  return Object.entries(value as Record<string, unknown>).every(([id, q]) => optionIds.includes(id) && isSafeInt(q, 2));
+}
+
 function isCartItem(value: unknown): value is CartItem {
   if (typeof value !== 'object' || value === null) return false;
   const item = value as Record<string, unknown>;
@@ -254,6 +290,7 @@ function isCartItem(value: unknown): value is CartItem {
     isString(item.menuId) &&
     Array.isArray(item.optionIds) &&
     item.optionIds.every(isString) &&
+    isOptionQuantities(item.optionQuantities, item.optionIds) &&
     isSafeInt(item.quantity, LIMITS.quantityMin) &&
     item.quantity <= LIMITS.quantityMax &&
     isSafeInt(item.acknowledgedUnitPrice, 0) &&
