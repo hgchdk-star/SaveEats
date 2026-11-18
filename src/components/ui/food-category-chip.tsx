@@ -2,10 +2,7 @@ import { Image } from 'expo-image';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { SvgXml } from 'react-native-svg';
 
-import { BG as CATEGORY_ART_BG } from '@/config/category-images';
 import { colors, font, radius, size, spacing, text } from '@/theme';
-
-import { Icon } from './icon';
 
 type FoodCategoryChipProps = {
   label: string;
@@ -13,8 +10,6 @@ type FoodCategoryChipProps = {
   imageUri: string | null;
   /** 사진이 없을 때 그리는 일러스트(SVG 문서). imageUri가 있으면 사진이 먼저다 */
   art?: string | null;
-  /** true면 원 안에 SaveEats 로고(접시 아이콘)를 보인다. '전체' 칩이 쓴다 */
-  logo?: boolean;
   selected: boolean;
   onPress: () => void;
 };
@@ -23,7 +18,7 @@ type FoodCategoryChipProps = {
  * 음식 카테고리 칩. 한 그룹 안에서 항상 하나만 선택된다 (FR-CAT-004).
  * 선택된 칩은 작은 흰 글자가 올라가므로 actionFill 채움.
  */
-export function FoodCategoryChip({ label, imageUri, art = null, logo = false, selected, onPress }: FoodCategoryChipProps) {
+export function FoodCategoryChip({ label, imageUri, art = null, selected, onPress }: FoodCategoryChipProps) {
   return (
     <Pressable
       accessibilityRole="radio"
@@ -37,10 +32,6 @@ export function FoodCategoryChip({ label, imageUri, art = null, logo = false, se
       ]}>
       {imageUri ? (
         <Image source={{ uri: imageUri }} contentFit="cover" style={[styles.thumb, selected && styles.thumbSelected]} />
-      ) : logo ? (
-        <View style={[styles.thumb, styles.thumbLogo, selected && styles.thumbSelected]}>
-          <Icon name="plate" size={16} color={colors.brand} />
-        </View>
       ) : art ? (
         <View style={[styles.thumb, styles.thumbArt, selected && styles.thumbSelected]}>
           <SvgXml xml={art} width="100%" height="100%" />
@@ -83,11 +74,6 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-  },
-  thumbLogo: {
-    backgroundColor: CATEGORY_ART_BG,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   thumbArt: {
     overflow: 'hidden',

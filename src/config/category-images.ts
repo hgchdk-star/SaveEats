@@ -59,6 +59,13 @@ const FOODS: Record<string, string> = {
     '<path d="M24 61q6-6 12 0t12 0 12 0 12 0 12 0 12 0v5H24Z" fill="#5C9A45"/><path d="M28 66H92L84 74L76 67L68 74L60 67L28 67Z" fill="#F2B33A"/>' +
     '<rect x="26" y="68" width="68" height="10" rx="5" fill="#5A3322"/><path d="M26 80H94V82a8 8 0 0 1-8 8H34a8 8 0 0 1-8-8Z" fill="#C98B45"/>' +
     '</g>',
+  // '전체' 칩: 숟가락과 젓가락(갈색)
+  utensils:
+    '<rect width="120" height="120" fill="#E9D8C4"/>' +
+    '<g transform="translate(-2 0)">' +
+    '<ellipse cx="42" cy="36" rx="14" ry="18" fill="#8A5A3B"/><ellipse cx="38" cy="31" rx="5" ry="8" fill="#A87450"/><rect x="39" y="50" width="6" height="54" rx="3" fill="#8A5A3B"/>' +
+    '<path d="M68 14h5l-2.2 90h-3.4z" fill="#6B4429"/><path d="M80 14h5l-1.6 90H80z" fill="#6B4429" transform="rotate(-5 82 60)"/>' +
+    '</g>',
 };
 
 /** 서버 카테고리 코드 → 그릴 음식 */
@@ -71,6 +78,8 @@ const BY_CATEGORY_CODE: Record<string, keyof typeof FOODS> = {
   chinese: 'jajangmyeon',
   japanese: 'sushi',
   burger: 'burger',
+  // 서버 코드는 아니고, 홈·카테고리 화면의 '전체' 칩이 쓴다
+  all: 'utensils',
 };
 
 /**
@@ -78,7 +87,7 @@ const BY_CATEGORY_CODE: Record<string, keyof typeof FOODS> = {
  * 마음에 안 들면 UNIFIED_BG를 false로 두면 위의 그림별 원래 배경으로 돌아간다.
  */
 const UNIFIED_BG = true;
-export const BG = '#E9D8C4';
+const BG = '#E9D8C4';
 const FIRST_RECT = /^<rect width="120" height="120" fill="#[0-9A-Fa-f]{6}"\/>/;
 const withBackground = (body: string) => (UNIFIED_BG ? body.replace(FIRST_RECT, `<rect width="120" height="120" fill="${BG}"/>`) : body);
 
