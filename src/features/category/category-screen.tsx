@@ -54,7 +54,7 @@ export function CategoryScreen({ code }: { code: string }) {
     categories.status === 'ok' ? (
       <View style={styles.chipBar}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} accessibilityRole="radiogroup" contentContainerStyle={styles.chipRow}>
-          <FoodCategoryChip label="전체" imageUri={null} selected={selectedCode === ALL} onPress={() => router.setParams({ code: ALL })} />
+          <FoodCategoryChip label="전체" imageUri={null} logo selected={selectedCode === ALL} onPress={() => router.setParams({ code: ALL })} />
           {categories.data.map((c) => (
             <FoodCategoryChip key={c.id} label={c.name} imageUri={null} art={categoryArt(c.code)} selected={selectedCode === c.code} onPress={() => router.setParams({ code: c.code })} />
           ))}
