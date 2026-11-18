@@ -41,6 +41,7 @@
 - 시험하지 못한 것: 실제 로그인 사용자로 정정·숨김 호출, iPhone 화면.
 
 ## 저장소 상태 메모
-- 이 migration 파일은 아직 main에 없다. 혜지의 `feat/history-hide-and-correct` 병합이 필요하다. 그 브랜치에는 `delete_my_account` migration도 함께 있어, 병합하면 탈퇴 migration이 저장소에 들어오지만 원격에는 적용되지 않은 상태가 된다(별도 결정).
-- 옵션 수량 migration(`20261117010000`)도 main에 없다(`feat/option-quantity`). 두 파일이 모두 병합되기 전에는 원격 이력과 main의 파일 목록이 어긋난다.
-- 원격 migration 이력은 `20261112000000`이 `20261117010000`보다 앞 번호지만 나중에 적용되었다(번호 순서와 적용 순서가 다름).
+- 이 migration 파일은 혜지의 `feat/history-hide-and-correct`(커밋 `e4fd166`)에서 가져와 PR(`chore/sync-applied-remote-migrations`)로 main에 반영한다. 파일 내용은 원본과 같아(SHA-256 위와 동일) 혜지 브랜치를 나중에 병합해도 이 파일은 충돌하지 않는다.
+- 그 브랜치의 `delete_my_account` migration(`20261116000000`, 커밋 `caf298a`)은 이 PR에 포함하지 않았고 원격에도 적용하지 않았다. 혜지 브랜치를 그대로 병합하면 적용되지 않은 탈퇴 migration이 main에 들어오므로, 병합 전에 적용 여부를 정해야 한다.
+- 옵션 수량 migration(`20261117010000`)도 같은 PR로 반영한다(`option-quantity-apply-20261117.md` 참고).
+- 원격 migration 이력은 `20261112000000`이 `20261117010000`보다 앞 번호지만 나중에 적용되었다(번호 순서와 적용 순서가 다름). 새 DB를 만들 때는 파일명 순서로 적용되며, 두 순서 모두 DB 시험이 통과한다.
