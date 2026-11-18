@@ -54,3 +54,17 @@ python import_goobne.py --package $P --cleanup-restore --yes-dev-project --backu
 ```
 주문 옵션 스냅샷이 가리키는 옵션(과 그 그룹)은 기본으로 남긴다(`--include-referenced`로 포함 가능). 메뉴는 삭제하지 않는다. 전체 되돌리기(`--restore`)를 하려면 먼저 `--cleanup-restore`를 한다.
 테스트는 `GOOBNE_BACKUP_ROOT`로 임시 백업 폴더를 쓴다(실제 백업과 섞이지 않게).
+
+## 가게 안 메뉴 그룹 (`--groups-*`)
+쿠팡이츠 가게 메뉴 응답에서 수집한 메뉴 그룹·소속·순서(`goobne-menu-groups-20261118`)를 기존 가게의 메뉴에 연결한다. 메뉴는 삭제·재생성하지 않는다.
+**선행 조건:** 새 migration `20261119000000_store_menu_groups.sql`(테이블 2개, `get_store`의 `menuGroups`)이 서버에 먼저 반영돼 있어야 한다.
+```bash
+G=/path/to/goobne-menu-groups-20261118
+python import_goobne.py --package $P --groups-package $G --groups-check                      # 계획·누락·중복·미분류 검사(점검 전용, out/menu_groups_plan.md)
+python import_goobne.py --package $P --groups-package $G --groups-apply --yes-dev-project    # 백업(groups-<시각>) → 한 트랜잭션 → Guest 검증
+python import_goobne.py --package $P --groups-package $G --groups-verify                     # Guest(anon) 응답이 수집 순서와 같은지 재검증
+python import_goobne.py --package $P --groups-package $G --groups-restore --yes-dev-project --backup-dir backup/groups-<시각>
+```
+- 앱 표시명은 `menu_group_display.json`(원본 이름은 DB `source_name`과 내부 기록에 보존). 외부 플랫폼 혜택 문구(예: `[와우전용]`)는 앱 표시명에서 뺀 제안이며 서정 확인 대상이다.
+- 메뉴 `sort_order`는 수집 순서(구역 → 구역 안)를 10 간격 숫자로 맞춘다(기존/신규 구분 없음). 복구는 백업의 이전 값으로 되돌린다.
+- 연결할 수 없는 소속(보류한 메뉴)은 임의로 연결하지 않고 보고서에 남긴다. 그룹에 없는 활성 메뉴는 앱에서 "기타 메뉴"로 보이며 검사가 알려 준다.

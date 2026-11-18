@@ -996,6 +996,266 @@ def restore_cleanup(cur, backup_dir):
     return len(data['groups']), len(data['options'])
 
 
+# ---------------------------------------------------------------- 가게 안 메뉴 그룹 (쿠팡이츠 가게 메뉴 구역과 순서)
+GROUPS_BATCH = BATCH + '-menu-groups'
+SORT_STEP = 10  # 메뉴 sort_order 간격(나중에 사이에 끼워 넣을 수 있게)
+
+
+def build_groups_plan(groups_dir, plan, state):
+    """수집한 메뉴 그룹·소속·순서를 SaveEats 메뉴(UUID)에 연결하는 계획. DB는 읽지 않고 state(기존 상태)만 쓴다.
+    - 원본 숫자 ID는 UUID로 쓰지 않는다: plan['menus'](원본 메뉴 id → UUID, 연결된 기존 메뉴는 기존 UUID)로 바꾼다.
+    - 그룹 UUID는 UUIDv5(재실행해도 같다). 메뉴 본체는 만들거나 지우지 않는다.
+    - 연결할 수 없는 소속(보류한 메뉴 등)은 unresolved로 남기고 임의로 연결하지 않는다."""
+    src = read_json(os.path.join(groups_dir, 'menu_groups.json'))
+    ver = read_json(os.path.join(groups_dir, 'verification.json'))
+    display = {k: v for k, v in read_json(os.path.join(HERE, 'menu_group_display.json')).items() if not k.startswith('_')}
+    issues, notes = [], []
+    store_src = src['source_store_id']
+    if str(store_src) != str(plan['store']['source_store_id']):
+        issues.append(f'메뉴 그룹 자료의 가게({store_src})가 메뉴 수집 가게({plan["store"]["source_store_id"]})와 다르다')
+    mapped = {r['source_menu_id']: r for r in plan['menus']}
+    skipped = {x['source_menu_id'] for x in plan['skipped_menus']}
+
+    groups, items, unresolved, flat = [], [], [], []
+    seen_flat = set()
+    memberships = 0
+    for gi, g in enumerate(sorted(src['groups'], key=lambda x: x['sort_order'])):
+        gid = uid('menu-group', SOURCE_SYSTEM, store_src, g['source_group_id'])
+        shown = display.get(str(g['source_group_id']), {}).get('display_name') or g['name'].strip()
+        members = sorted(g['menus'], key=lambda m: m['sort_order'])
+        applied = 0
+        for m in members:
+            memberships += 1
+            row = mapped.get(m['source_menu_id'])
+            if row is None:
+                unresolved.append({'group': g['name'], 'source_menu_id': m['source_menu_id'], 'name': m['name'], 'position': m['sort_order'],
+                                   'reason': '보류한 메뉴(이번 적용에서 제외)' if m['source_menu_id'] in skipped else '적용 대상 메뉴가 아님'})
+                continue
+            items.append({'group_id': gid, 'menu_id': row['id'], 'sort_order': int(m['sort_order']), 'source_menu_id': m['source_menu_id'], 'name': row['name'], 'active': row['is_active']})
+            applied += 1
+            if row['id'] not in seen_flat:
+                seen_flat.add(row['id'])
+                flat.append(row['id'])
+        groups.append({'id': gid, 'name': shown, 'source_name': g['name'].strip(), 'sort_order': gi, 'source_group_id': g['source_group_id'],
+                       'source_menu_count': len(members), 'applied_count': applied, 'expose_status': g.get('expose_status'), 'real_menu': g.get('real_menu')})
+        if not (shown or '').strip():
+            issues.append(f'그룹 이름이 비었다: {g["source_group_id"]}')
+        if len(shown) > 60:
+            issues.append(f'그룹 이름이 60자를 넘는다: {shown}')
+        if g.get('expose_status') != 'EXPOSE' or g.get('real_menu') is not True:
+            notes.append(f'노출 상태/실제 메뉴 구분이 예외인 그룹: {g["name"]} ({g.get("expose_status")}, real_menu={g.get("real_menu")})')
+
+    # 자료 일관성(verification.json)과 대조
+    if len(src['groups']) != ver['groups']:
+        issues.append(f'그룹 수가 verification.json과 다르다: {len(src["groups"])} / {ver["groups"]}')
+    if memberships != ver['memberships']:
+        issues.append(f'소속 수가 verification.json과 다르다: {memberships} / {ver["memberships"]}')
+    all_src_ids = [m['source_menu_id'] for g in src['groups'] for m in g['menus']]
+    if len(set(all_src_ids)) != ver['unique_menus']:
+        issues.append(f'고유 메뉴 수가 verification.json과 다르다: {len(set(all_src_ids))} / {ver["unique_menus"]}')
+    multi = {i for i in all_src_ids if all_src_ids.count(i) > 1}
+    if multi:
+        notes.append(f'여러 그룹에 속한 메뉴 {len(multi)}개(메뉴 본체는 하나, 그룹에서 각각 보인다)')
+    # 같은 그룹 안 중복 / 순서 중복
+    for g in src['groups']:
+        ids = [m['source_menu_id'] for m in g['menus']]
+        if len(ids) != len(set(ids)):
+            issues.append(f'같은 그룹 안에 메뉴가 중복됐다: {g["name"]}')
+        so = [m['sort_order'] for m in g['menus']]
+        if len(so) != len(set(so)):
+            issues.append(f'그룹 안 순서 값이 겹친다: {g["name"]}')
+    # 수집 메뉴 중 어느 그룹에도 없는 메뉴(적용 대상인데 분류가 없는 것)
+    grouped_ids = {i['menu_id'] for i in items}
+    missing = [r for r in plan['menus'] if r['id'] not in grouped_ids]
+    for r in missing:
+        issues.append(f'그룹에 속하지 않은 적용 메뉴: {r["name"]} ({r["source_menu_id"]})')
+    # 서버에 있는 활성 메뉴 중 그룹에 없는 것(예: 보류한 기존 메뉴). 앱에서는 '기타 메뉴'로 모이므로 숨기지 않고 알린다
+    state_menus = {m['id']: m for m in state.get('menus', [])}
+    planned_ids = {r['id'] for r in plan['menus']}
+    ungrouped_existing = [m for mid, m in state_menus.items() if mid not in grouped_ids and mid not in planned_ids and m.get('is_active')]
+    for m in ungrouped_existing:
+        notes.append(f'미분류(그룹 없음) 활성 메뉴: {m["name"]} — 앱에서 "기타 메뉴"로 보인다')
+
+    # 메뉴 sort_order: 수집 순서(구역 순서 → 구역 안 순서)를 그대로 숫자로 만든다. 기존/신규 구분 없음
+    menu_sort = {mid: SORT_STEP * (i + 1) for i, mid in enumerate(flat)}
+    tail = SORT_STEP * (len(flat) + 1)
+    for k, m in enumerate(sorted(ungrouped_existing, key=lambda m: (m['sort_order'], m['name']))):
+        menu_sort[m['id']] = tail + SORT_STEP * k
+    # 그룹은 있으나 보이는 메뉴가 없는 그룹(주류)은 서버가 응답에서 뺀다. 계획에서 미리 보여 준다
+    visible = []
+    for g in groups:
+        act = [i for i in items if i['group_id'] == g['id'] and i['active']]
+        visible.append({'group': g, 'visible_menus': len(act)})
+    return {'groups': groups, 'items': items, 'unresolved': unresolved, 'menu_sort': menu_sort, 'flat': flat, 'visible': visible,
+            'ungrouped_existing': [{'id': m['id'], 'name': m['name']} for m in ungrouped_existing], 'missing': [r['name'] for r in missing],
+            'multi_count': len(multi), 'issues': issues, 'notes': notes, 'store_source_id': store_src,
+            'source_menu_total': len(all_src_ids), 'source_groups': len(src['groups'])}
+
+
+def render_groups_report(gp, state):
+    L = []
+    w = L.append
+    w('# 가게 안 메뉴 그룹 적용 계획 (쿠팡이츠 구역·순서 그대로)')
+    w('')
+    w('앱에 보이는 순서(그룹 위→아래, 그룹 안 위→아래)와 메뉴 sort_order가 같은 값으로 맞춰진다. 기존/신규 메뉴 구분은 없다.')
+    w('')
+    w('| # | 앱 표시 그룹명 | 원본 그룹명 | 수집 메뉴 | 연결됨 | 앱에 보임 | 비고 |')
+    w('|---|---|---|---|---|---|---|')
+    shown_i = 0
+    for v in gp['visible']:
+        g = v['group']
+        hidden = v['visible_menus'] == 0
+        if not hidden:
+            shown_i += 1
+        note = '보이는 메뉴가 없어 숨김(주류 정책)' if hidden else ('이름 변경(외부 플랫폼 혜택 문구 제거)' if g['name'] != g['source_name'] else '')
+        unres = [u for u in gp['unresolved'] if u['group'] == g['source_name']]
+        if unres:
+            note = (note + '; ' if note else '') + '보류 메뉴 ' + ', '.join(f'{u["name"]}(자리 {u["position"]})' for u in unres)
+        w(f'| {"-" if hidden else shown_i} | {g["name"]} | {g["source_name"]} | {g["source_menu_count"]} | {g["applied_count"]} | {v["visible_menus"]} | {note} |')
+    shown_groups = sum(1 for v in gp['visible'] if v['visible_menus'] > 0)
+    w('')
+    w(f'- 앱에 보이는 그룹 {shown_groups}개(전체 {len(gp["groups"])}개). 그룹에 없는 활성 메뉴는 맨 뒤 "기타 메뉴"로 보인다: {len(gp["ungrouped_existing"])}개')
+    w(f'- 수집 소속 {gp["source_menu_total"]}개 = 연결 {len(gp["items"])} + 연결 못 함 {len(gp["unresolved"])}')
+    w(f'- 누락 검사(적용 메뉴 중 그룹에 없는 메뉴): {len(gp["missing"])}개 / 중복 검사(같은 그룹 안 중복): {"없음" if not any("중복" in i for i in gp["issues"]) else "있음"} / 여러 그룹 소속 메뉴: {gp["multi_count"]}개')
+    w('')
+    w('## 연결하지 않은 소속')
+    if gp['unresolved']:
+        for u in gp['unresolved']:
+            w(f'- {u["group"]} · 자리 {u["position"]} · {u["name"]} ({u["source_menu_id"]}): {u["reason"]}')
+    else:
+        w('- 없음')
+    w('')
+    w('## 미분류 활성 메뉴 (그룹 없음)')
+    for m in gp['ungrouped_existing']:
+        w(f'- {m["name"]} `{m["id"]}`')
+    if not gp['ungrouped_existing']:
+        w('- 없음')
+    w('')
+    w('## DB 변경')
+    w(f'- store_menu_groups {len(gp["groups"])}행 추가(이름·원본 이름·순서), store_menu_group_items {len(gp["items"])}행 추가')
+    changed = sum(1 for m in state.get('menus', []) if gp['menu_sort'].get(m['id']) not in (None, m['sort_order']))
+    w(f'- menus.sort_order 갱신 {changed}개(수집 순서대로). 메뉴 삭제·재생성 없음. UUID·주문·리뷰·사진·추천/인기 불변')
+    w(f'- 내부 출처 기록 {len(gp["groups"])}건(원본 그룹 이름·순서 보존)')
+    if gp['notes']:
+        w('')
+        w('## 참고')
+        for n in gp['notes']:
+            w(f'- {n}')
+    if gp['issues']:
+        w('')
+        w('## 오류 (적용 불가)')
+        for i in gp['issues']:
+            w(f'- {i}')
+    else:
+        w('')
+        w('## 변환 검사: 오류 없음')
+    return '\n'.join(L) + '\n'
+
+
+def apply_groups(cur, gp, plan):
+    from psycopg2.extras import execute_values
+    g_ids = [g['id'] for g in gp['groups']]
+    execute_values(cur, """insert into public.store_menu_groups (id, store_id, name, source_name, sort_order, is_active)
+        values %s on conflict (id) do update set name = excluded.name, source_name = excluded.source_name, sort_order = excluded.sort_order, is_active = true""",
+                   [(g['id'], STORE_ID, g['name'], g['source_name'], g['sort_order'], True) for g in gp['groups']])
+    # 이 배치의 연결은 지우고 다시 넣는다(재실행·순서 변경에도 중복 없음). 이 도구가 만든 그룹 밖의 그룹은 건드리지 않는다
+    cur.execute('delete from public.store_menu_group_items where group_id = any(%s::uuid[])', (g_ids,))
+    execute_values(cur, "insert into public.store_menu_group_items (group_id, store_id, menu_id, sort_order) values %s",
+                   [(i['group_id'], STORE_ID, i['menu_id'], i['sort_order']) for i in gp['items']], page_size=500)
+    # 메뉴 순서: 이 가게 메뉴만, 값이 달라진 것만 갱신한다
+    cur.execute('select id::text, sort_order from public.menus where store_id = %s', (STORE_ID,))
+    cur_sort = {r[0]: r[1] for r in cur.fetchall()}
+    for mid, so in gp['menu_sort'].items():
+        if mid in cur_sort and cur_sort[mid] != so:
+            cur.execute('update public.menus set sort_order = %s where id = %s and store_id = %s', (so, mid, STORE_ID))
+    cur.execute('delete from private.store_source_records where load_batch = %s and store_id = %s', (GROUPS_BATCH, STORE_ID))
+    url = next((m['source_reference'] for m in plan['menus'] if m.get('source_reference')), 'https://www.coupangeats.com/')
+    execute_values(cur, """insert into private.store_source_records
+          (store_id, url, collected_for, subject_label, host_kind, rights_permission, reuse_permission, evidence, note, checked_on, load_batch)
+        values %s""",
+                   [(STORE_ID, url, 'OTHER', g['source_name'], 'PLATFORM', '미확인', '미확인',
+                     '쿠팡이츠 가게 메뉴 응답(store.get_store_with_menu, 2026-11-18), 개인화 그룹 제외',
+                     f'메뉴 그룹 원본 이름·순서 보존(원본 group id {g["source_group_id"]}, 순서 {g["sort_order"] + 1}). 앱 표시명: {g["name"]}. 원본의 외부 플랫폼 혜택·서비스 문구는 SaveEats가 제공하는 것이 아니다.',
+                     '2026-11-18', GROUPS_BATCH) for g in gp['groups']], page_size=100)
+
+
+def restore_groups(cur, gp, backup):
+    """이번에 만든 그룹·연결을 지우고(연결은 CASCADE) 메뉴 순서를 백업 값으로 되돌린다."""
+    cur.execute('delete from public.store_menu_groups where id = any(%s::uuid[])', ([g['id'] for g in gp['groups']],))
+    cur.execute('delete from private.store_source_records where load_batch = %s and store_id = %s', (GROUPS_BATCH, STORE_ID))
+    for mid, so in backup['menu_sort_before'].items():
+        cur.execute('update public.menus set sort_order = %s where id = %s and store_id = %s', (so, mid, STORE_ID))
+
+
+def verify_groups(cur, gp, plan, anon_rest=True):
+    """Guest(anon) 관점의 get_store 응답이 수집 자료의 그룹·메뉴 순서와 같은지 대조한다."""
+    results = []
+
+    def check(name, ok, detail=''):
+        results.append(bool(ok))
+        print(('PASS ' if ok else 'FAIL ') + name + ('' if ok else f'  -> {detail}'))
+
+    cur.execute("select count(*) from public.store_menu_groups where store_id = %s", (STORE_ID,))
+    check('그룹 수(DB)', cur.fetchone()[0] >= len(gp['groups']))
+    cur.execute('set local role anon')
+    cur.execute('select public.get_store(%s::uuid)', (STORE_ID,))
+    dto = cur.fetchone()[0]
+    cur.execute('reset role')
+    got = [(g['name'], g['menuIds']) for g in dto['menuGroups']]
+    want = []
+    for v in gp['visible']:
+        g = v['group']
+        ids = [i['menu_id'] for i in sorted((i for i in gp['items'] if i['group_id'] == g['id'] and i['active']), key=lambda i: (i['sort_order'], i['name']))]
+        if ids:
+            want.append((g['name'], ids))
+    check('앱(Guest) 그룹 이름·순서가 수집 자료와 같다', [n for n, _ in got] == [n for n, _ in want], ([n for n, _ in got], [n for n, _ in want]))
+    # 같은 순서값끼리는 서버가 이름순이므로, 순서 비교는 menuIds 자체로 한다(순서값이 모두 다르면 이름순이 개입하지 않는다)
+    check('그룹 안 메뉴 순서가 수집 자료와 같다', all(g_ids == w_ids for (_, g_ids), (_, w_ids) in zip(got, want)),
+          next(((a[0], len(a[1]), len(b[1])) for a, b in zip(got, want) if a[1] != b[1]), None))
+    check('주류 그룹(보이는 메뉴 없음)은 앱 응답에 없다', all('주류' not in n for n, _ in got))
+    menus = dto['menus']
+    ids_in_groups = [i for _, ids in got for i in ids]
+    check('여러 그룹에 있어도 menus에는 한 번씩만 있다(복제 없음)', len({m['id'] for m in menus}) == len(menus))
+    check('그룹 안 메뉴가 모두 menus에 있다', set(ids_in_groups) <= {m['id'] for m in menus})
+    ungrouped = [m['name'] for m in menus if m['id'] not in set(ids_in_groups)]
+    check('그룹에 없는 활성 메뉴 = 예상한 미분류(앱에서 기타 메뉴)', sorted(ungrouped) == sorted(m['name'] for m in gp['ungrouped_existing']), ungrouped)
+    flat_expected = []
+    seen = set()
+    for _, ids in want:
+        for i in ids:
+            if i not in seen:
+                seen.add(i)
+                flat_expected.append(i)
+    flat_menus = [m['id'] for m in menus if m['id'] in seen]
+    check('menus 배열 순서(정렬 기준)도 같은 순서다: 기존 메뉴가 앞에 몰리지 않는다', flat_menus == flat_expected)
+    old_ids = [m['id'] for m in menus if plan_kind(plan, m['id']) == 'LINK']
+    old_in = [i for i in old_ids if i in seen]
+    check('기존 메뉴가 맨 앞에 몰려 있지 않다(수집 순서 자리에 섞여 있다)', len(old_in) <= 1 or set(flat_expected[:len(old_in)]) != set(old_in))
+    if anon_rest:
+        base = os.environ.get('SUPABASE_URL') or os.environ.get('EXPO_PUBLIC_SUPABASE_URL')
+        key = os.environ.get('SUPABASE_PUBLISHABLE_KEY') or os.environ.get('EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY')
+        if base and key and base.startswith('https://'):
+            req = urllib.request.Request(base.rstrip('/') + '/rest/v1/rpc/get_store', data=json.dumps({'p_store_id': STORE_ID}).encode(), method='POST')
+            req.add_header('apikey', key)
+            req.add_header('Content-Type', 'application/json')
+            try:
+                with urllib.request.urlopen(req, timeout=30) as r:
+                    api = json.loads(r.read())
+                api_got = [(g['name'], g['menuIds']) for g in api.get('menuGroups', [])]
+                check('REST API(get_store, Guest 키)로도 같은 그룹·순서', api_got == got and [m['id'] for m in api['menus']] == [m['id'] for m in menus])
+            except Exception as e:
+                check('REST API 조회', False, safe_error(e))
+    print(f'{sum(results)} / {len(results)} 통과')
+    return all(results)
+
+
+def plan_kind(plan, menu_id):
+    for r in plan['menus']:
+        if r['id'] == menu_id:
+            return r['kind']
+    return None
+
+
 # ---------------------------------------------------------------- 진입점
 def main():
     install_safe_excepthook()
@@ -1012,8 +1272,9 @@ def main():
     ap.add_argument('--yes-dev-project', action='store_true', help='연결 대상이 팀이 지정한 개발 프로젝트임을 확인했다')
     ap.add_argument('--backup-dir', help='--restore/--verify에 쓸 백업 폴더')
     mode = ap.add_mutually_exclusive_group(required=True)
-    for name in ('check', 'backup', 'apply', 'verify', 'restore', 'cleanup', 'cleanup-restore'):
+    for name in ('check', 'backup', 'apply', 'verify', 'restore', 'cleanup', 'cleanup-restore', 'groups-check', 'groups-apply', 'groups-verify', 'groups-restore'):
         mode.add_argument(f'--{name}', action='store_true')
+    ap.add_argument('--groups-package', help='메뉴 그룹 수집 자료 폴더(menu_groups.json, verification.json). groups-* 모드에 필요')
     ap.add_argument('--execute', action='store_true', help='--cleanup 을 실제로 실행한다(없으면 후보만 보여 준다)')
     ap.add_argument('--include-referenced', action='store_true', help='--cleanup 에서 주문 스냅샷이 가리키는 가상 옵션도 삭제한다(기본은 남김)')
     args = ap.parse_args()
@@ -1045,7 +1306,9 @@ def main():
             g, o = restore_cleanup(cur, args.backup_dir)
         print(f'정리 복구: 그룹 {g}개·옵션 {o}개를 되돌렸습니다(이미 있으면 건너뜀).')
         return 0
-    if not args.yes_dev_project and (args.backup or args.apply or args.restore or (args.cleanup and args.execute)):
+    if (args.groups_check or args.groups_apply or args.groups_verify or args.groups_restore) and not args.groups_package:
+        sys.exit('--groups-package (메뉴 그룹 자료 폴더)가 필요합니다.')
+    if not args.yes_dev_project and (args.backup or args.apply or args.restore or args.groups_apply or args.groups_restore or (args.cleanup and args.execute)):
         sys.exit('--yes-dev-project 가 필요합니다. 연결 대상이 팀이 지정한 개발 프로젝트임을 먼저 확인하세요.')
     conn = connect()
     with conn, conn.cursor() as cur:
@@ -1061,6 +1324,58 @@ def main():
 
     if args.apply and plan['undecided']:
         sys.exit('미결정 항목이 있어 적용하지 않습니다: ' + '; '.join(plan['undecided']))
+    if args.groups_check or args.groups_apply or args.groups_verify or args.groups_restore:
+        gp = build_groups_plan(args.groups_package, plan, state)
+        if args.groups_check:
+            report = render_groups_report(gp, state)
+            os.makedirs(out, exist_ok=True)
+            with open(os.path.join(out, 'menu_groups_plan.md'), 'w', encoding='utf-8') as f:
+                f.write(report)
+            print(report)
+            return 1 if gp['issues'] else 0
+        if gp['issues']:
+            print('메뉴 그룹 검사에서 오류가 있어 진행하지 않습니다:')
+            for i in gp['issues']:
+                print(' -', i)
+            return 1
+        if args.groups_verify:
+            conn = connect()
+            with conn, conn.cursor() as cur:
+                ok = verify_groups(cur, gp, plan)
+            return 0 if ok else 1
+        if args.groups_restore:
+            if not args.backup_dir:
+                sys.exit('--backup-dir (groups-<시각> 백업 폴더)가 필요합니다.')
+            backup = read_json(os.path.join(args.backup_dir, 'groups_before.json'))
+            conn = connect()
+            with conn, conn.cursor() as cur:
+                restore_groups(cur, gp, backup)
+            print('메뉴 그룹 복구: 이번에 만든 그룹·연결을 지우고 메뉴 순서를 백업 값으로 되돌렸습니다.')
+            return 0
+        # groups-apply: 백업 → 한 트랜잭션 → 검증
+        stamp = datetime.datetime.now().strftime('%Y%m%d-%H%M%S-%f')
+        backup_dir = os.path.join(BACKUP_ROOT, 'groups-' + stamp)
+        os.makedirs(backup_dir, exist_ok=False)
+        write_json(os.path.join(backup_dir, 'groups_before.json'),
+                   {'menu_sort_before': {m['id']: m['sort_order'] for m in state['menus']}, 'group_ids': [g['id'] for g in gp['groups']],
+                    'other_store_fingerprints': fps, 'order_fingerprint': ofp})
+        print(f'백업 저장: {backup_dir}')
+        conn = connect()
+        try:
+            with conn, conn.cursor() as cur:
+                apply_groups(cur, gp, plan)
+        except Exception as e:
+            print('메뉴 그룹 반영 실패(롤백됨):', safe_error(e))
+            return 1
+        conn = connect()
+        with conn, conn.cursor() as cur:
+            ok = verify_groups(cur, gp, plan)
+            ok_orders = order_fingerprint(cur) == ofp
+            ok_others = other_store_fingerprints(cur) == fps
+        print(('PASS ' if ok_orders else 'FAIL ') + '주문·리뷰 스냅샷 지문 변경 없음')
+        print(('PASS ' if ok_others else 'FAIL ') + '다른 가게 변경 없음')
+        return 0 if ok and ok_orders and ok_others else 1
+
     if args.cleanup:
         conn = connect()
         with conn, conn.cursor() as cur:
