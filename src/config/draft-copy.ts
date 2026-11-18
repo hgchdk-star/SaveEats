@@ -582,8 +582,9 @@ export const draftCopy = {
 
   menu: {
     ruleSingle: '1개 선택',
-    ruleMax: (max: number) => `최대 ${max}개까지 고를 수 있어요`,
-    ruleFull: (max: number) => `${max}개 모두 골랐어요`,
+    /** 그룹 최대 선택은 고른 옵션 종류 수 기준이다(옵션별 수량과 별개). 실제 제한이 있을 때만 보인다 */
+    ruleMax: (max: number) => `최대 ${max}종 선택`,
+    ruleFull: (max: number) => `${max}종 모두 골랐어요`,
     quantityHelp: (max: number) => `최대 ${max}개`,
     noteSoldOut: '품절된 메뉴라 지금은 담을 수 없어요',
     noteLoading: '옵션 정보를 불러온 뒤 담을 수 있어요',

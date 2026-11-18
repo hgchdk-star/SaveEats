@@ -31,6 +31,7 @@ import { formatWon } from '@/utils/format';
 import {
   allowsQuantity,
   firstMissingRequired,
+  groupRuleKind,
   isRequired,
   isSingle,
   pruneQuantities,
@@ -183,7 +184,9 @@ export function MenuDetailScreen({ menuId }: { menuId: string }) {
           ? menu.optionGroups.map((group) => {
               const current = selection[group.id] ?? [];
               const single = isSingle(group);
-              const full = !single && current.length >= group.maxSelect;
+              const ruleKind = groupRuleKind(group, current.length);
+              // 가득 참(더 못 고름)은 실제 제한이 있을 때만. 최대가 선택지 수 이상이면 잠그지 않는다
+              const full = ruleKind === 'limit-full';
               return (
                 <OptionGroup
                   key={group.id}
@@ -191,7 +194,7 @@ export function MenuDetailScreen({ menuId }: { menuId: string }) {
                   required={isRequired(group)}
                   single={single}
                   full={full}
-                  rule={single ? draftCopy.menu.ruleSingle : full ? draftCopy.menu.ruleFull(group.maxSelect) : draftCopy.menu.ruleMax(group.maxSelect)}
+                  rule={ruleKind === 'single' ? draftCopy.menu.ruleSingle : ruleKind === 'limit-full' ? draftCopy.menu.ruleFull(group.maxSelect) : ruleKind === 'limit' ? draftCopy.menu.ruleMax(group.maxSelect) : ''}
                   options={group.options.map((o) => ({
                     id: o.id,
                     name: o.name,

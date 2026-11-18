@@ -29,7 +29,7 @@ type OptionGroupProps = {
   required: boolean;
   /** 최대 1개면 라디오, 그 외에는 체크박스 */
   single: boolean;
-  /** "1개 선택", "최대 N개까지 고를 수 있어요", "N개 모두 골랐어요" */
+  /** "1개 선택", "최대 N종 선택", "N종 모두 골랐어요". 실제 제한이 없으면 빈 문자열(줄을 그리지 않는다) */
   rule: string;
   /** 최대 개수까지 골랐을 때 규칙 줄을 강조한다 */
   full: boolean;
@@ -49,7 +49,7 @@ export function OptionGroup({ name, required, single, rule, full, options, onTog
         </Text>
         <Badge tone={required ? 'brand' : 'neutral'}>{required ? '필수' : '선택'}</Badge>
       </View>
-      <Text style={[styles.rule, full && styles.ruleFull]}>{rule}</Text>
+      {rule ? <Text style={[styles.rule, full && styles.ruleFull]}>{rule}</Text> : <View style={styles.ruleGap} />}
       <View accessibilityRole={single ? 'radiogroup' : undefined}>
         {options.map((option, index) => {
           const quantity = option.quantity ?? 1;
@@ -129,6 +129,10 @@ const styles = StyleSheet.create({
     color: colors.inkTertiary,
     marginTop: 2,
     marginBottom: spacing[2],
+  },
+  /** 규칙 줄이 없을 때 이름과 첫 옵션 사이 간격만 남긴다 */
+  ruleGap: {
+    height: spacing[2],
   },
   ruleFull: {
     ...font('600'),

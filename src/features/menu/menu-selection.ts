@@ -13,6 +13,29 @@ export type OptionQuantities = Record<Uuid, number>;
 export const isRequired = (group: MenuOptionGroupDto) => group.minSelect >= 1;
 export const isSingle = (group: MenuOptionGroupDto) => group.maxSelect === 1;
 
+/** 지금 고를 수 있는 옵션 종류 수. 품절은 고를 수 없으므로 뺀다(품절 여부가 바뀌면 값도 바뀐다) */
+export const selectableCount = (group: MenuOptionGroupDto): number => group.options.filter((o) => !o.isSoldOut).length;
+
+/**
+ * 그룹의 '최대 선택'이 실제 제한인가. 최대 선택은 고른 옵션 '종류 수' 기준이다(옵션별 수량과 별개).
+ * 최대가 고를 수 있는 종류 수 이상이면 전부 골라도 되므로 실제 제한이 아니다(원본의 1000 같은 값 포함).
+ * 단일 선택(최대 1)은 라디오로 따로 안내한다.
+ */
+export const hasRealMaxLimit = (group: MenuOptionGroupDto): boolean => !isSingle(group) && group.maxSelect < selectableCount(group);
+
+/**
+ * 그룹 아래 규칙 줄에 무엇을 보일지.
+ * - single: "1개 선택"
+ * - limit / limit-full: 실제 제한이 있을 때만 "최대 N종 선택" (다 골랐으면 limit-full)
+ * - none: 실제 제한이 없으면 문구를 생략한다. 필수 여부는 배지와 담기 검증이 따로 맡는다
+ */
+export type GroupRuleKind = 'single' | 'limit' | 'limit-full' | 'none';
+export function groupRuleKind(group: MenuOptionGroupDto, pickedCount: number): GroupRuleKind {
+  if (isSingle(group)) return 'single';
+  if (!hasRealMaxLimit(group)) return 'none';
+  return pickedCount >= group.maxSelect ? 'limit-full' : 'limit';
+}
+
 /** 수량을 조절할 수 있는 옵션인가. 2개 이상 고를 수 있어야 조절할 의미가 있다 */
 export const allowsQuantity = (option: MenuOptionDto): boolean => option.allowQuantity === true && typeof option.maxQuantity === 'number' && option.maxQuantity >= 2;
 
