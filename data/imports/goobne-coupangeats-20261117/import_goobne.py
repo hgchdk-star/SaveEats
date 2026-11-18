@@ -133,22 +133,34 @@ def sniff_image(path):
     return None, None
 
 
+_EVIDENCE = None
+
+
+def quantity_evidence():
+    """option_quantity_evidence.json: 옵션(선택지) 이름별 수량 조절 근거. 그룹 전체를 일괄 추정하지 않는다."""
+    global _EVIDENCE
+    if _EVIDENCE is None:
+        data = read_json(os.path.join(HERE, 'option_quantity_evidence.json'))
+        _EVIDENCE = {o['name'].strip(): o for o in data['options']}
+    return _EVIDENCE
+
+
 def quantity_rule(group, option):
     """옵션 수량 조절 허용 규칙. (허용 여부, 보류 사유) 를 돌려준다. 후보가 아니면 (False, None).
     후보: 원본 그룹 타입이 SELECT_MULTI_QTY 이고 옵션 maxQuantity >= 2.
-    확인된 것(서정이 쿠팡이츠 실제 화면에서 확인, 2026-11-18): '소스&치킨무&피클 추가선택' 그룹의 소스 옵션마다 -/+ 조절기가 뜬다.
-      → 그 그룹의 이름에 '소스'가 들어간 옵션, 그리고 원본 quantityChangeable=true 옵션만 켠다.
-    그 밖의 후보(치킨무·피클·추블링 살사·치트킹, '최대 2개 가능' 그룹의 옵션)는 화면 확인 전이라 켜지도 끄지도 않고 따로 보고한다."""
+    켜는 조건: 근거 파일에서 그 옵션이 CONFIRMED 이거나 원본 quantityChangeable=true.
+    그 밖의 후보는 켜지도 끄지도 않고(일반 옵션) 사유와 함께 보류 목록에 남긴다."""
     mx = option.get('max_quantity')
     if group['type'] != 'SELECT_MULTI_QTY' or not isinstance(mx, int) or mx < 2:
         return False, None
     if option['quantity_changeable']:
         return True, None
-    if '소스&치킨무&피클' in group['name'] and '소스' in option['name']:
+    ev = quantity_evidence().get(option['name'].strip())
+    if ev and ev['status'] == 'CONFIRMED' and '소스&치킨무&피클' in group['name']:
         return True, None
-    if '소스&치킨무&피클' in group['name']:
-        return False, '같은 그룹이지만 이름에 소스가 없어 화면 확인 전(치킨무·피클·추블링 살사·치트킹)'
-    return False, "'최대 2개 가능' 그룹: 같은 옵션 반복인지 서로 다른 옵션 합계인지 화면 확인 전"
+    if ev:
+        return False, '근거 파일: %s — %s' % (ev['status'], ev['evidence'])
+    return False, '근거 파일에 없는 선택지(수량 조절 여부 확인 전, 그룹: %s)' % group['name'].strip()
 
 
 # ---------------------------------------------------------------- 계획 만들기 (DB를 읽지 않고 existing 상태만 받는다)

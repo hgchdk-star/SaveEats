@@ -1,0 +1,33 @@
+{
+  "_설명": "옵션 수량 조절(−/+) 허용 근거. 선택지(옵션 이름) 단위로 근거를 남긴다. 그룹 전체가 수량 조절 가능하다고 일괄 추정하지 않는다. 목록에 CONFIRMED가 아닌 옵션은 켜지도 끄지도 않고 보류한다. 새로 확인하면 이 파일만 고치고 도구를 다시 돌린다.",
+  "observations": [
+    {
+      "date": "2026-11-18",
+      "by": "서정",
+      "method": "쿠팡이츠 앱 화면 확인(굽네치킨&피자 서대문 연희점)",
+      "group": "소스&치킨무&피클 추가선택 (사용자 표현: 치킨무&소스&… 추가선택)",
+      "observed": "소스 옵션마다 −/+ 수량 조절기가 표시됨",
+      "limits": "옵션별 개별 캡처는 없다. 그룹 타입 SELECT_MULTI_QTY, 원본 quantityChangeable=false, 원본 maxQuantity=1000 중 어느 값이 조절기를 여는지는 확인하지 못했다. 그룹 전체 옵션으로 일반화하지 않는다."
+    }
+  ],
+  "options": [
+    {"name": "파.떡.치 소스", "status": "CONFIRMED", "evidence": "원본 quantityChangeable=true(최소 0, 최대 1000) + 화면 확인"},
+    {"name": "갈릭디핑 소스", "status": "CONFIRMED", "evidence": "화면 관찰: 소스 옵션마다 조절기 (서정 2026-11-18). 원본 플래그는 false"},
+    {"name": "핫소스", "status": "CONFIRMED", "evidence": "화면 관찰: 소스 옵션마다 조절기 (서정 2026-11-18). 원본 플래그는 false"},
+    {"name": "매콤소스", "status": "CONFIRMED", "evidence": "화면 관찰: 소스 옵션마다 조절기 (서정 2026-11-18). 원본 플래그는 false"},
+    {"name": "달콤소스", "status": "CONFIRMED", "evidence": "화면 관찰: 소스 옵션마다 조절기 (서정 2026-11-18). 원본 플래그는 false"},
+    {"name": "마블링소스", "status": "CONFIRMED", "evidence": "화면 관찰: 소스 옵션마다 조절기 (서정 2026-11-18). 원본 플래그는 false"},
+    {"name": "고블링소스", "status": "CONFIRMED", "evidence": "화면 관찰: 소스 옵션마다 조절기 (서정 2026-11-18). 원본 플래그는 false"},
+    {"name": "요블링소스", "status": "CONFIRMED", "evidence": "화면 관찰: 소스 옵션마다 조절기 (서정 2026-11-18). 원본 플래그는 false"},
+    {"name": "마그마소스", "status": "CONFIRMED", "evidence": "화면 관찰: 소스 옵션마다 조절기 (서정 2026-11-18). 원본 플래그는 false"},
+    {"name": "왕중왕소스", "status": "CONFIRMED", "evidence": "화면 관찰: 소스 옵션마다 조절기 (서정 2026-11-18). 원본 플래그는 false"},
+    {"name": "추블링 살사", "status": "UNCONFIRMED", "evidence": "이름에 '소스'가 없는 살사. 화면 확인 전"},
+    {"name": "치킨무", "status": "UNCONFIRMED", "evidence": "같은 그룹이지만 소스가 아니다. 화면 확인 전"},
+    {"name": "피클", "status": "UNCONFIRMED", "evidence": "같은 그룹이지만 소스가 아니다. 화면 확인 전"},
+    {"name": "치트킹 (콘스프맛)", "status": "UNCONFIRMED", "evidence": "같은 그룹이지만 소스가 아니다. 화면 확인 전"}
+  ],
+  "groups_not_in_scope": [
+    "굽민의 소리 C (… ) (최대 2개 가능): '치킨무 미제공', '소스 미제공' — 같은 옵션 반복인지 서로 다른 옵션 합계인지 확인 전",
+    "[굽블링] 파스타 선택 (최대 2개 가능), 파스타 선택 (최대 2개 가능): 같은 옵션 반복 여부 확인 전"
+  ]
+}
