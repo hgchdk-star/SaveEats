@@ -17,7 +17,7 @@ export type OptionRowData = {
   locked: boolean;
   /**
    * 수량을 조절할 수 있는 옵션이면 최대 수량. 없으면 수량 조절이 없는 옵션이다(기존 동작).
-   * 선택한 옵션에만 수량 조절을 보여 준다.
+   * 선택한 옵션에만 수량 조절을 같은 행 오른쪽에 보여 준다.
    */
   maxQuantity?: number;
   /** 고른 수량(메뉴 한 개에 들어가는 개수). 기본 1 */
@@ -53,26 +53,29 @@ export function OptionGroup({ name, required, single, rule, full, options, onTog
       <View accessibilityRole={single ? 'radiogroup' : undefined}>
         {options.map((option, index) => {
           const quantity = option.quantity ?? 1;
-          const total = option.additionalPrice * quantity;
+          // 수량 조절은 수량을 허용하는 옵션을 '선택했을 때'만 같은 행 오른쪽에 나타난다(아래에 줄을 따로 만들지 않는다)
           const adjustable = option.maxQuantity !== undefined && option.selected && !option.soldOut;
           return (
-            <View key={option.id} style={[index > 0 && styles.rowBorder, adjustable && styles.rowWithQuantity]}>
+            <View key={option.id} style={[styles.line, index > 0 && styles.rowBorder]}>
+              {/* 체크(선택·해제)와 이름·단가는 하나의 누르는 영역. 조절기는 그 바깥 형제라서 누르면 행 선택이 바뀌지 않는다 */}
               <Pressable
                 accessibilityRole={single ? 'radio' : 'checkbox'}
                 accessibilityLabel={option.soldOut ? `${option.name}, 품절` : option.name}
                 accessibilityState={{ checked: option.selected, disabled: option.locked }}
                 disabled={option.locked}
                 onPress={() => onToggle(option.id)}
-                style={[styles.row, adjustable && styles.rowTight]}>
+                style={styles.row}>
                 <OptionControl single={single} selected={option.selected} locked={option.locked} />
                 <Text style={[styles.label, option.locked && styles.locked]}>{option.name}</Text>
                 {option.soldOut ? <Badge>품절</Badge> : null}
-                <Text style={[styles.add, option.locked && styles.locked]}>{total ? `+${formatWon(total)}` : '+0원'}</Text>
+                {/* 단가는 그대로 보여 준다. 수량을 곱한 합계는 화면 아래 금액에 반영된다 */}
+                <Text style={[styles.add, option.locked && styles.locked]}>{option.additionalPrice ? `+${formatWon(option.additionalPrice)}` : '+0원'}</Text>
               </Pressable>
               {adjustable ? (
-                <View style={styles.quantityLine}>
+                <View style={styles.quantitySlot}>
                   <QuantitySelector
-                    size="sm"
+                    size="row"
+                    accent
                     label={`${option.name} 수량`}
                     value={quantity}
                     min={1}
@@ -138,26 +141,29 @@ const styles = StyleSheet.create({
     ...font('600'),
     color: colors.brandText,
   },
+  /** 한 옵션 = 한 줄. 왼쪽은 선택 영역(체크·이름·단가), 오른쪽은 수량 조절기 */
+  line: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing[2],
+  },
+  /** 남는 폭을 모두 쓰고, 이름이 길거나 큰 글자에서는 이름이 줄바꿈된다(조절기와 겹치지 않는다) */
   row: {
+    flex: 1,
+    minWidth: 0,
     minHeight: 52,
     paddingVertical: 14,
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     gap: spacing[3],
   },
   rowBorder: {
     borderTopWidth: 1,
     borderTopColor: colors.line,
   },
-  rowTight: {
-    paddingBottom: spacing[2],
-  },
-  rowWithQuantity: {
-    paddingBottom: spacing[3],
-  },
-  /** 라벨 시작 위치(체크박스 22 + 간격 12)에 맞춘다 */
-  quantityLine: {
-    paddingLeft: 22 + spacing[3],
+  /** 조절기는 줄어들지 않는다. 터치 여유(hitSlop)까지 포함해 48×46 */
+  quantitySlot: {
+    flexShrink: 0,
   },
   control: {
     width: 22,
@@ -192,6 +198,8 @@ const styles = StyleSheet.create({
     fontSize: 15,
     lineHeight: 22,
     flex: 1,
+    flexShrink: 1,
+    minWidth: 0,
     color: colors.ink,
   },
   add: {
@@ -199,6 +207,7 @@ const styles = StyleSheet.create({
     ...tabularNums,
     fontSize: 14,
     lineHeight: 22,
+    flexShrink: 0,
     color: colors.inkSecondary,
   },
   locked: {

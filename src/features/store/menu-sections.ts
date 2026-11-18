@@ -123,3 +123,30 @@ export function activeSectionIndex(offsets: readonly number[], scrollY: number, 
 export function scrollTargetForSection(sectionY: number, headerHeight: number): number {
   return Math.max(0, sectionY - headerHeight);
 }
+
+/**
+ * 가게 안 검색어가 바뀔 때의 전환. 검색 시작(START)에는 지금 위치·선택 그룹을 저장하고,
+ * 검색 끝(END)에는 저장한 위치로 복원한다. 검색어는 공백·대소문자를 무시한 뒤 비어 있는지로 본다.
+ */
+export function searchTransition(prev: string, next: string): 'START' | 'END' | 'NONE' {
+  const was = normalizeForSearch(prev).length > 0;
+  const will = normalizeForSearch(next).length > 0;
+  if (!was && will) return 'START';
+  if (was && !will) return 'END';
+  return 'NONE';
+}
+
+/**
+ * 검색을 시작할 때 결과가 고정 영역 바로 아래에서 시작하도록 스크롤할 y.
+ * 이미 고정 영역 위쪽(맨 위 근처)에 있으면 null(움직이지 않는다).
+ * anchorY: 고정 영역이 원래 놓인 y(스크롤 내용 기준), barHeight: 위에 항상 보이는 상단 바 높이.
+ */
+export function searchAnchorScroll(scrollY: number, anchorY: number, barHeight: number): number | null {
+  const pinnedAt = Math.max(0, anchorY - barHeight);
+  return scrollY > pinnedAt ? pinnedAt : null;
+}
+
+/** 고정 영역(검색+그룹 탭)이 위로 올라가다 상단 바 아래에 멈추기까지의 스크롤 구간 [0, 끝]. 끝은 1 이상이다 */
+export function stickyScrollRange(anchorY: number, barHeight: number): [number, number] {
+  return [0, Math.max(1, anchorY - barHeight)];
+}

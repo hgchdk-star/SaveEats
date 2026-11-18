@@ -604,6 +604,10 @@ export const draftCopy = {
     /** 서로 다른 메뉴·옵션 조합이 최대 종류 수를 넘을 때. 서정 확정 문구(2026-11-03) */
     toastOverKinds: (max: number) => `메뉴는 옵션 조합별로 최대 ${max}종까지 담을 수 있어요.`,
     toastAdded: '장바구니에 담았어요',
+    /** 메뉴 목록에서 바로 담기(초안): 메뉴 정보를 불러오지 못해 담지 않았을 때 */
+    quickAddLoadFailed: '메뉴 정보를 불러오지 못해 담지 못했어요. 다시 시도해 주세요.',
+    /** 접근성 이름: '메뉴명 장바구니에 담기' */
+    quickAddLabel: (name: string) => `${name} 장바구니에 담기`,
     toastAddedAction: '보기',
   },
 
