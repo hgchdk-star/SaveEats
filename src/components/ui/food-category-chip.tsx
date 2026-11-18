@@ -2,6 +2,7 @@ import { Image } from 'expo-image';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { SvgXml } from 'react-native-svg';
 
+import { BG as CATEGORY_ART_BG } from '@/config/category-images';
 import { colors, font, radius, size, spacing, text } from '@/theme';
 
 import { Icon } from './icon';
@@ -38,7 +39,7 @@ export function FoodCategoryChip({ label, imageUri, art = null, logo = false, se
         <Image source={{ uri: imageUri }} contentFit="cover" style={[styles.thumb, selected && styles.thumbSelected]} />
       ) : logo ? (
         <View style={[styles.thumb, styles.thumbLogo, selected && styles.thumbSelected]}>
-          <Icon name="plate" size={16} color={colors.onBrand} />
+          <Icon name="plate" size={16} color={colors.brand} />
         </View>
       ) : art ? (
         <View style={[styles.thumb, styles.thumbArt, selected && styles.thumbSelected]}>
@@ -84,7 +85,7 @@ const styles = StyleSheet.create({
     borderRadius: 14,
   },
   thumbLogo: {
-    backgroundColor: colors.brand,
+    backgroundColor: CATEGORY_ART_BG,
     alignItems: 'center',
     justifyContent: 'center',
   },

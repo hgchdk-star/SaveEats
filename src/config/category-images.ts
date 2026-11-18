@@ -78,7 +78,7 @@ const BY_CATEGORY_CODE: Record<string, keyof typeof FOODS> = {
  * 마음에 안 들면 UNIFIED_BG를 false로 두면 위의 그림별 원래 배경으로 돌아간다.
  */
 const UNIFIED_BG = true;
-const BG = '#E9D8C4';
+export const BG = '#E9D8C4';
 const FIRST_RECT = /^<rect width="120" height="120" fill="#[0-9A-Fa-f]{6}"\/>/;
 const withBackground = (body: string) => (UNIFIED_BG ? body.replace(FIRST_RECT, `<rect width="120" height="120" fill="${BG}"/>`) : body);
 
