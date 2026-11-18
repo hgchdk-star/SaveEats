@@ -7,6 +7,7 @@ import { FoodCategoryChip } from '@/components/ui/food-category-chip';
 import { Screen } from '@/components/ui/screen';
 import { StoreList } from '@/components/ui/store-list';
 import { TopNavigation } from '@/components/ui/top-navigation';
+import { categoryArt } from '@/config/category-images';
 import { draftCopy } from '@/config/draft-copy';
 import { LIMITS } from '@/config/limits';
 import { StoreCardItem } from '@/features/store/store-card-item';
@@ -55,7 +56,7 @@ export function CategoryScreen({ code }: { code: string }) {
         <ScrollView horizontal showsHorizontalScrollIndicator={false} accessibilityRole="radiogroup" contentContainerStyle={styles.chipRow}>
           <FoodCategoryChip label="전체" imageUri={null} selected={selectedCode === ALL} onPress={() => router.setParams({ code: ALL })} />
           {categories.data.map((c) => (
-            <FoodCategoryChip key={c.id} label={c.name} imageUri={null} selected={selectedCode === c.code} onPress={() => router.setParams({ code: c.code })} />
+            <FoodCategoryChip key={c.id} label={c.name} imageUri={null} art={categoryArt(c.code)} selected={selectedCode === c.code} onPress={() => router.setParams({ code: c.code })} />
           ))}
         </ScrollView>
       </View>
