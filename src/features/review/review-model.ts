@@ -14,6 +14,14 @@ export function sortLabel(sort: ReviewSort): string {
 }
 
 /**
+ * 화면에 그릴 리뷰: 목록을 처음 받았을 때의 값이 아니라 store(byId)의 최신 값을 우선한다.
+ * 도움돼요 응답은 byId에만 반영되므로, 목록의 옛 값으로 그리면 overlay가 지워지는 순간 눌림이 풀린 것처럼 보인다.
+ */
+export function liveReview<T extends Pick<MockReview, 'reviewId'>>(byId: Record<string, T>, review: T): T {
+  return byId[review.reviewId] ?? review;
+}
+
+/**
  * 도움돼요 표시: 서버 값 위에 내가 방금 누른 값(낙관적 overlay)을 얹어서 보여준다.
  * 서버가 알려준 개수에 내 선택이 달라진 만큼만 더하거나 뺀다.
  */
