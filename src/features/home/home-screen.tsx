@@ -1,5 +1,4 @@
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -28,8 +27,6 @@ import { PopularMenuSection } from './popular-menu-section';
 import { RecentSection } from './recent-section';
 import { SectionHeader } from './section-header';
 
-const ALL = 'all';
-
 /**
  * 홈. 섹션마다 따로 불러오고, 한 섹션이 실패해도 나머지는 그대로 쓸 수 있다 (API-002).
  * 계좌 줄과 검색창은 먼저 그리고, 홈 "지금 많이 찾는 메뉴"는 노출 기준과 문구가 정해질 때까지 두지 않는다.
@@ -39,7 +36,6 @@ export function HomeScreen() {
   const insets = useSafeAreaInsets();
   const cartCount = useCartQuantity();
   const session = useSession();
-  const [categoryCode, setCategoryCode] = useState(ALL);
 
   const categories = useAsync('home:categories', () => catalogRepository.listCategories());
   const banners = useAsync('home:banners', () => (homeUsesServer ? Promise.resolve([]) : mockHome.listBanners()));
@@ -55,11 +51,8 @@ export function HomeScreen() {
     recommended.reload();
   };
 
+  // 홈 칩 줄에는 '전체'가 없다(검색 화면과 같은 구성). 칩을 누르면 카테고리 가게 목록으로 이동하고, 거기서 '전체'를 고를 수 있다
   const pickCategory = (code: string) => {
-    if (code === ALL) {
-      setCategoryCode(ALL);
-      return;
-    }
     // 미결정 묶음1 #1: 칩을 누르면 카테고리 가게 목록으로 이동한다
     if (UNDECIDED.categoryChipAction === 'navigateCategoryStoreList') goCategoryStoreList(code);
   };
@@ -89,9 +82,8 @@ export function HomeScreen() {
               {categories.status === 'error' ? <SectionError message={draftCopy.home.categoriesError} onRetry={categories.reload} /> : null}
               {categories.status === 'ok' ? (
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} accessibilityRole="radiogroup" contentContainerStyle={styles.chipRow}>
-                  <FoodCategoryChip label="전체" imageUri={null} art={categoryArt(ALL)} selected={categoryCode === ALL} onPress={() => pickCategory(ALL)} />
                   {categories.data.map((c) => (
-                    <FoodCategoryChip key={c.id} label={c.name} imageUri={null} art={categoryArt(c.code)} selected={categoryCode === c.code} onPress={() => pickCategory(c.code)} />
+                    <FoodCategoryChip key={c.id} label={c.name} imageUri={null} art={categoryArt(c.code)} selected={false} onPress={() => pickCategory(c.code)} />
                   ))}
                 </ScrollView>
               ) : null}
