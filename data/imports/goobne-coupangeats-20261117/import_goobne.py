@@ -171,6 +171,12 @@ def build_plan(package, existing, option_max_quantity=OPTION_MAX_QUANTITY, max_s
     photos = read_json(os.path.join(package, 'photo_index.json'))
     mapping = read_json(os.path.join(HERE, 'menu_mapping.json'))['links']
     issues, notes = [], []
+    skip_ids = {h['skip_source_menu_id'] for h in mapping if h['status'] == 'HOLD' and h.get('skip_source_menu_id')}
+    skipped_menus = [{'source_menu_id': m['source_menu_id'], 'name': m['name']} for m in menus if m['source_menu_id'] in skip_ids]
+    menus = [m for m in menus if m['source_menu_id'] not in skip_ids]
+    groups = [g for g in groups if g['source_menu_id'] not in skip_ids]
+    options = [o for o in options if o['source_menu_id'] not in skip_ids]
+    photos = [x for x in photos if x['source_menu_id'] not in skip_ids]
 
     store_ids = {m['source_store_id'] for m in menus}
     if len(store_ids) != 1:
@@ -408,7 +414,7 @@ def build_plan(package, existing, option_max_quantity=OPTION_MAX_QUANTITY, max_s
         'menus': menu_rows, 'groups': group_rows, 'options': option_rows, 'photos': photo_rows, 'records': records,
         'links': [{'existing_menu_id': l['existing_menu_id'], 'existing_name': l['existing_name'], 'source_menu_id': sid, 'source_name': l['source_name'],
                    'basis': l['basis'], 'evidence': l['evidence']} for sid, l in links.items()],
-        'held': held, 'deact_groups': deact_groups, 'deact_options': deact_options, 'skipped_existing_photo': skipped_existing_photo,
+        'held': held, 'skipped_menus': skipped_menus, 'deact_groups': deact_groups, 'deact_options': deact_options, 'skipped_existing_photo': skipped_existing_photo,
         'missing_photo_menus': [{'source_menu_id': r['source_menu_id'], 'name': r['name']} for r in missing],
         'unknown_status_menus': [{'source_menu_id': r['source_menu_id'], 'name': r['name'], 'price': r['base_price'], 'alcohol': r['alcohol'], 'active': r['is_active']}
                                  for r in menu_rows if r['source_sale_status'] == '미확인'],
@@ -451,6 +457,12 @@ def render_report(plan, state):
     w(f'- 개발용 근거: {state.get("dev_evidence", "(미확인 — 서정 확인 필요)")}')
     w(f'- 검사 시각: {datetime.datetime.now().isoformat(timespec="seconds")} / 상태 출처: {state.get("source", "?")}')
     w(f'- 대상 가게: `{STORE_NAME}` {STORE_ID} (UUID 유지, 이름·대표사진·영업/추천 상태는 바꾸지 않음)')
+    w('')
+    w('## 수집·적용·보류')
+    w(f'- 수집 메뉴 116개 = 적용 대상 {len(plan["menus"])}개(기존 메뉴 갱신 {len(linked)} + 새로 추가 {sum(1 for r in plan["menus"] if r["kind"] == "NEW")}) + 보류 {len(plan["skipped_menus"])}개')
+    for sk in plan['skipped_menus']:
+        w(f'  - 보류(이번 적용에서 제외): {sk["name"]} ({sk["source_menu_id"]})')
+    w(f'- 새 메뉴 중 앱에서 숨김(비활성): {sum(1 for r in plan["menus"] if r["kind"] == "NEW" and not r["is_active"])}개')
     w('')
     w('## 변경 요약')
     w('| 구분 | 추가 | 수정 | 비활성 | 삭제 |')
