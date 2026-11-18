@@ -89,7 +89,7 @@ export function HomeScreen() {
               {categories.status === 'error' ? <SectionError message={draftCopy.home.categoriesError} onRetry={categories.reload} /> : null}
               {categories.status === 'ok' ? (
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} accessibilityRole="radiogroup" contentContainerStyle={styles.chipRow}>
-                  <FoodCategoryChip label="전체" imageUri={null} selected={categoryCode === ALL} onPress={() => pickCategory(ALL)} />
+                  <FoodCategoryChip label="전체" imageUri={null} art={categoryArt(ALL)} selected={categoryCode === ALL} onPress={() => pickCategory(ALL)} />
                   {categories.data.map((c) => (
                     <FoodCategoryChip key={c.id} label={c.name} imageUri={null} art={categoryArt(c.code)} selected={categoryCode === c.code} onPress={() => pickCategory(c.code)} />
                   ))}
