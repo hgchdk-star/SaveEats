@@ -9,7 +9,7 @@
 - 기존 메뉴 ↔ 수집 메뉴 대응은 `menu_mapping.json`(근거 포함). 근거가 부족한 것은 `HOLD`로 두고 연결하지 않는다.
 - 연결된 메뉴는 **가격만 갱신**한다(이름·사진·설명 유지, 설명이 비어 있으면 채움).
 - 기존 가상 옵션은 삭제하지 않고 **비활성**, 실제 옵션은 새 행으로 추가한다.
-- 옵션 수량 조절: `quantity_rule()`이 정한 확인된 옵션(소스&치킨무&피클 그룹의 소스 옵션)에만 켠다. 상한은 원본 maxQuantity(1000)를 그대로 따른다. 미확인 옵션은 보고서에 따로 나오고 일반 옵션으로 둔다.
+- 옵션 수량 조절: `quantity_rule()`이 정한 확인된 옵션(소스&치킨무&피클 그룹의 소스 옵션)에만 켠다. 상한은 **서정이 정할 때까지 미결정**이며(원본 1000·mock 5 사용 금지) 정해지기 전에는 `--apply`가 거절된다. 미확인 옵션은 보고서에 따로 나오고 일반 옵션으로 둔다.
 - 그룹 선택 상한(max_select) 원본 1000은 바꾸지 않는다(`--max-select-mode options`는 보류, 기본은 source).
 - 시카고 딥디쉬 피자는 '시카고 피자'와 연결(서정 확정). 주류 7개는 비노출로 추가(`--show-alcohol`로 노출).
 - 공개 출처 목록(`store_sources`, 승인 지문이 있는 16건)은 건드리지 않는다. 쿠팡이츠 출처는 내부 기록(`private.store_source_records`)에만 남긴다(권리·사용 허락 미확인).
@@ -30,7 +30,7 @@ python import_goobne.py --package $P --apply  --yes-dev-project    # 사진 업�
 python import_goobne.py --package $P --verify --backup-dir backup/<시각>
 python import_goobne.py --package $P --restore --yes-dev-project --backup-dir backup/<적용 전 시각>
 ```
-옵션: `--no-option-quantity`(옵션 수량 조절을 전부 끔), `--show-alcohol`(주류 노출), `--option-max-quantity N`(상한을 원본 대신 N으로 줄임), `--max-select-mode options`(보류 중인 A안).
+옵션: `--no-option-quantity`(옵션 수량 조절을 전부 끔), `--show-alcohol`(주류 노출), `--option-max-quantity N`(서정이 정한 수량 상한, 적용에 필수), `--max-select-mode options`(보류 중인 A안).
 
 ## 백업 · 복구
 - 백업은 기존 가게의 메뉴·옵션 그룹·옵션 원본 행, 이 가게 주문·리뷰 스냅샷 해시, 다른 가게 해시를 저장한다. 같은 이름의 백업은 덮어쓰지 않는다.

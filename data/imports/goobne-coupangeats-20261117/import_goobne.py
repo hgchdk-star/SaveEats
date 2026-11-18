@@ -38,7 +38,7 @@ STORE_NAME = '굽네치킨'
 BUCKET = 'menu-images'
 MAX_IMAGE_BYTES = 2 * 1024 * 1024
 NEW_MENU_SORT_BASE = 100  # 기존 메뉴(1~15)를 위에 두고 새 메뉴는 그 뒤에 쿠팡이츠 순서대로
-OPTION_MAX_QUANTITY = None  # 서정 결정 2026-11-18: 수량 상한은 수집 원본의 옵션별 maxQuantity를 따른다(임의 상한을 두지 않음). 값을 주면 그 값으로 줄인다
+OPTION_MAX_QUANTITY = None  # 미결정(서정 확인 대기). 원본 maxQuantity=1000이나 mock의 5를 임의로 쓰지 않는다. 정해지기 전에는 --apply를 거절한다
 ALCOHOL = re.compile(r'참이슬|진로이즈백|^새로 |카스|테라|생맥주')
 
 EXISTING_SQL = """
@@ -278,7 +278,7 @@ def build_plan(package, existing, option_max_quantity=OPTION_MAX_QUANTITY, max_s
         src_max = o.get('max_quantity')
         max_q = None
         if allow:
-            max_q = min(src_max, option_max_quantity) if option_max_quantity else src_max
+            max_q = min(src_max, option_max_quantity) if option_max_quantity else None  # 상한은 서정이 정한 값만 쓴다
         if hold:
             k = (gkey[o['group_key']]['name'].strip(), o['name'].strip(), src_max, hold)
             qty_hold[k] = qty_hold.get(k, 0) + 1
@@ -288,7 +288,10 @@ def build_plan(package, existing, option_max_quantity=OPTION_MAX_QUANTITY, max_s
             'allow_quantity': allow, 'max_quantity': max_q, 'source_max_quantity': src_max,
             'sort_order': int(o['sort_order']), 'source_option_id': o['source_option_id'], 'group_key': o['group_key'],
             'source_menu_id': o['source_menu_id']})
-    if any(o['allow_quantity'] and (o['max_quantity'] is None or o['max_quantity'] < 2) for o in option_rows):
+    undecided = []
+    if any(o['allow_quantity'] and o['max_quantity'] is None for o in option_rows):
+        undecided.append('수량 조절 옵션 %d행의 앱 허용 상한(max_quantity). 원본 1000과 mock의 5는 쓰지 않는다' % sum(1 for o in option_rows if o['allow_quantity']))
+    if any(o['allow_quantity'] and o['max_quantity'] is not None and o['max_quantity'] < 2 for o in option_rows):
         issues.append('수량 옵션의 상한은 2 이상이어야 한다')
 
     # ---- 기존 가상 옵션: 연결된 메뉴에 새 옵션이 생기면 기존 옵션·그룹은 비활성(삭제하지 않는다)
@@ -364,7 +367,7 @@ def build_plan(package, existing, option_max_quantity=OPTION_MAX_QUANTITY, max_s
             qty_by_menu.setdefault(o['source_menu_id'], []).append(o)
     for sid, os_ in qty_by_menu.items():
         records.append({'url': ref_of[sid], 'collected_for': 'OTHER', 'subject_label': f'옵션 수량 조절 {len(os_)}개',
-                        'note': f'옵션 수량 허용 {len(os_)}행: 원본 그룹 SELECT_MULTI_QTY 소스 옵션(quantityChangeable 플래그 또는 소스 옵션 화면 확인). 원본 maxQuantity={sorted({o["source_max_quantity"] for o in os_})}를 그대로 앱 상한으로 사용(서정 결정 2026-11-18). 1000의 의미는 미확인'})
+                        'note': f'옵션 수량 허용 {len(os_)}행: 원본 그룹 SELECT_MULTI_QTY 소스 옵션(quantityChangeable 플래그 또는 소스 옵션 화면 확인). 원본 maxQuantity={sorted({o["source_max_quantity"] for o in os_})}는 보존하고 앱 허용 상한은 {sorted({o["max_quantity"] for o in os_}, key=str)}(서정 확정 값). 원본 값의 의미는 미확인'})
     if max_select_mode == 'options':
         per_menu = {}
         for g in group_rows:
@@ -397,7 +400,7 @@ def build_plan(package, existing, option_max_quantity=OPTION_MAX_QUANTITY, max_s
         'missing_photo_menus': [{'source_menu_id': r['source_menu_id'], 'name': r['name']} for r in missing],
         'unknown_status_menus': [{'source_menu_id': r['source_menu_id'], 'name': r['name'], 'price': r['base_price'], 'alcohol': r['alcohol'], 'active': r['is_active']}
                                  for r in menu_rows if r['source_sale_status'] == '미확인'],
-        'max_select_mode': max_select_mode, 'option_max_quantity': option_max_quantity,
+        'max_select_mode': max_select_mode, 'option_max_quantity': option_max_quantity, 'undecided': undecided,
         'quantity_hold': [{'group': k[0], 'option': k[1], 'source_max': k[2], 'reason': k[3], 'rows': n} for k, n in sorted(qty_hold.items())],
         'issues': issues, 'notes': notes,
     }
@@ -477,7 +480,8 @@ def render_report(plan, state):
     for g in plan['deact_groups']:
         w(f'  - {next(r["name"] for r in plan["menus"] if r["id"] == g["menu_id"])} / {g["name"]}')
     on = [o for o in plan['options'] if o['allow_quantity']]
-    w(f'- 수량 조절을 켜는 옵션: {len(on)}행(이름 {len({o["name"] for o in on})}종), 상한은 원본 maxQuantity({sorted({o["max_quantity"] for o in on})}) 그대로')
+    cap = sorted({o['max_quantity'] for o in on if o['max_quantity'] is not None})
+    w(f'- 수량 조절을 켜는 옵션: {len(on)}행(이름 {len({o["name"] for o in on})}종). 앱 허용 상한: ' + (str(cap) if cap else '**미결정 — 정해지기 전에는 --apply를 거절한다**') + ' (원본 maxQuantity 1000은 내부 기록에 보존)')
     w(f'- 수량 조절 보류(미확인, 켜지도 끄지도 않고 일반 옵션으로 둠): {sum(h["rows"] for h in plan["quantity_hold"])}행')
     for h in plan['quantity_hold']:
         w(f'  - [{h["group"]}] {h["option"]} (원본 max {h["source_max"]}) ×{h["rows"]}: {h["reason"]}')
@@ -498,6 +502,8 @@ def render_report(plan, state):
     w(f'- 원본 max_select=1000인 그룹 {len(big)}개(선택지 수 {min(g["option_count"] for g in big)}~{max(g["option_count"] for g in big)}). 현재 방식: **{"원본 그대로" if plan["max_select_mode"] == "source" else "선택지 수로 표현"}**')
     w('')
     w('## 미결정 · 확인 필요')
+    for u in plan['undecided']:
+        w(f'- [미결정] {u}')
     for n in plan['notes']:
         w(f'- {n}')
     if plan['issues']:
@@ -777,7 +783,7 @@ def main():
     load_env_file()
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument('--package', required=True, help='수집 자료 폴더(읽기 전용)')
-    ap.add_argument('--option-max-quantity', type=int, default=OPTION_MAX_QUANTITY, help='수량 옵션 상한을 원본 maxQuantity 대신 이 값으로 줄인다(기본: 원본 값을 따름)')
+    ap.add_argument('--option-max-quantity', type=int, default=OPTION_MAX_QUANTITY, help='수량 옵션의 앱 허용 상한(서정이 정한 값). 없으면 --apply 거절')
     ap.add_argument('--max-select-mode', choices=('source', 'options'), default='source', help='원본 max_select=1000을 그대로(source) 또는 선택지 수로(options)')
     ap.add_argument('--confirm-link', action='append', default=[], help='보류된 기존 메뉴 UUID를 후보 수집 메뉴에 연결(서정 확인 후)')
     ap.add_argument('--no-option-quantity', action='store_true', help='옵션 수량 조절을 전부 끈다(기본은 quantity_rule에서 확인된 옵션만 켬)')
@@ -824,6 +830,8 @@ def main():
             print(' -', i)
         return 1
 
+    if args.apply and plan['undecided']:
+        sys.exit('미결정 항목이 있어 적용하지 않습니다: ' + '; '.join(plan['undecided']))
     if args.backup or args.apply:
         # 백업은 절대 덮어쓰지 않는다(이름 충돌 시 실패). 이미 이 배치가 반영된 뒤의 상태는 '복구 기준'이 될 수 없어 표시해 둔다
         stamp = datetime.datetime.now().strftime('%Y%m%d-%H%M%S-%f')
