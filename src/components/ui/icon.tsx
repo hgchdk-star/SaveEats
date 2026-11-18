@@ -37,7 +37,8 @@ export type IconName = keyof typeof PATHS;
 
 type IconProps = {
   name: IconName;
-  size?: 14 | 16 | 20 | 24 | 32;
+  /** 14~32는 디자인 토큰 크기. 28(온보딩 화살표)과 44(스플래시 로고)는 시작 화면 시안에서만 쓴다 */
+  size?: 14 | 16 | 20 | 24 | 28 | 32 | 44;
   /** 기본은 본문 글자색. 아이콘만 Tomato로 칠하는 곳은 활성 찜·활성 탭·알림 점뿐 */
   color?: string;
   /** 상태를 뜻할 때만: 찜 켜짐, 땡김도 별, 활성 홈·찜 탭 */

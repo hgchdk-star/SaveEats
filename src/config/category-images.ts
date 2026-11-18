@@ -73,8 +73,17 @@ const BY_CATEGORY_CODE: Record<string, keyof typeof FOODS> = {
   burger: 'burger',
 };
 
+/**
+ * 모든 그림의 배경색을 하나로 맞춘다. 그림마다 배경이 달라 피자는 너무 어둡고 분식은 너무 밝았다.
+ * 마음에 안 들면 UNIFIED_BG를 false로 두면 위의 그림별 원래 배경으로 돌아간다.
+ */
+const UNIFIED_BG = true;
+const BG = '#E9D8C4';
+const FIRST_RECT = /^<rect width="120" height="120" fill="#[0-9A-Fa-f]{6}"\/>/;
+const withBackground = (body: string) => (UNIFIED_BG ? body.replace(FIRST_RECT, `<rect width="120" height="120" fill="${BG}"/>`) : body);
+
 /** 칩에서 그리는 SVG 전체 문서. react-native-svg의 SvgXml로 그린다 */
-const toSvg = (body: string) => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" preserveAspectRatio="xMidYMid slice">${body}</svg>`;
+const toSvg = (body: string) => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" preserveAspectRatio="xMidYMid slice">${withBackground(body)}</svg>`;
 
 /** 카테고리 칩 그림. 그림이 없는 카테고리는 null이고, 칩이 이름 첫 글자를 보여 준다 */
 export function categoryArt(categoryCode: string): string | null {

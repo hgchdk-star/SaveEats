@@ -1,10 +1,12 @@
 import { useEffect, useRef, type ComponentRef } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
+import { SvgXml } from 'react-native-svg';
 
+import { categoryArt } from '@/config/category-images';
 import { draftCopy } from '@/config/draft-copy';
+import { formatWon } from '@/utils/format';
 import { colors, font, radius, shadow, spacing, text } from '@/theme';
 
-import { FoodImage } from './food-image';
 import { Icon } from './icon';
 import { Price } from './price';
 
@@ -21,7 +23,7 @@ const copy = draftCopy.start;
 /**
  * 온보딩 · SaveEats 이용 방법이 같이 쓰는 페이지 넘김. 그림 · 제목 · 설명 · 점. 좌우로 밀어도, 점을 눌러도 넘어간다.
  * [새 컴포넌트 제안] OnboardingPager. 버튼(다음·시작하기·건너뛰기)은 화면 쪽 CTA 바가 맡는다.
- * 그림은 DS의 음식 사진 자리 · 아이콘 · 가격을 조합한 예시 그림이다. 사진 파일이 없어 사진 자리는 중립 Placeholder로 보인다.
+ * 그림은 DS의 예시 음식 일러스트 · 아이콘 · 가격을 조합한 예시 그림이다(디자인 시안과 같다). 음식 그림은 카테고리 칩과 같은 SVG를 쓴다.
  */
 export function OnboardingPager({ pages, page, onPageChange }: OnboardingPagerProps) {
   const { width } = useWindowDimensions();
@@ -77,13 +79,21 @@ export function OnboardingPager({ pages, page, onPageChange }: OnboardingPagerPr
   );
 }
 
+/** 정사각형 음식 일러스트(디자인의 FoodImage 예시). 카테고리 코드로 고른다 */
+function FoodArt({ code, size }: { code: string; size: number }) {
+  const xml = categoryArt(code);
+  return <View style={[styles.food, { width: size, height: size }]}>{xml ? <SvgXml xml={xml} width="100%" height="100%" /> : null}</View>;
+}
+
+const BROWSE_FOODS = ['chicken', 'bunsik', 'pizza', 'korean'] as const;
+
 function Art({ kind }: { kind: OnboardingPage['art'] }) {
   if (kind === 'browse') {
     return (
       <View accessibilityElementsHidden style={styles.grid}>
-        {[0, 1, 2, 3].map((i) => (
-          <View key={i} style={styles.gridCell}>
-            <FoodImage uri={null} width={112} />
+        {BROWSE_FOODS.map((code) => (
+          <View key={code} style={styles.gridCell}>
+            <FoodArt code={code} size={112} />
           </View>
         ))}
       </View>
@@ -93,10 +103,10 @@ function Art({ kind }: { kind: OnboardingPage['art'] }) {
     return (
       <View accessibilityElementsHidden style={styles.deliver}>
         <View style={styles.dish}>
-          <FoodImage uri={null} width={104} />
+          <FoodArt code="chicken" size={104} />
           <Text style={styles.cross}>{copy.artNoFood}</Text>
         </View>
-        <Icon name="chevronRight" size={32} color={colors.brand} />
+        <Icon name="chevronRight" size={28} color={colors.brand} />
         <View style={styles.bank}>
           <View style={styles.bankIcon}>
             <Icon name="bank" size={32} color={colors.brandText} />
@@ -110,8 +120,9 @@ function Art({ kind }: { kind: OnboardingPage['art'] }) {
     <View accessibilityElementsHidden style={styles.start}>
       <View style={styles.ctaMock}>
         <Text style={styles.ctaMockText}>{copy.artOrder}</Text>
+        <Text style={styles.ctaMockPrice}>{formatWon(30500)}</Text>
       </View>
-      <Icon name="chevronDown" size={32} color={colors.brand} />
+      <Icon name="chevronDown" size={28} color={colors.brand} />
       <View style={styles.bankChip}>
         <Icon name="bank" size={20} color={colors.brandText} />
         <Text style={styles.bankChipText}>{copy.artAccount}</Text>
@@ -134,20 +145,22 @@ const styles = StyleSheet.create({
   text: { paddingTop: spacing[8], paddingHorizontal: spacing[1] },
   title: { ...text.display, fontSize: 26, lineHeight: 36, color: colors.ink },
   desc: { ...text.body1, color: colors.inkSecondary, marginTop: spacing[3] },
-  note: { ...text.body2, color: colors.inkTertiary, marginTop: spacing[3] },
+  note: { ...text.body2, fontSize: 15, lineHeight: 22, color: colors.inkSecondary, marginTop: spacing[4] },
   dots: { flexDirection: 'row', gap: spacing[2], paddingHorizontal: spacing[5], paddingVertical: spacing[4] },
   dot: { width: 8, height: 8, borderRadius: radius.full, backgroundColor: colors.lineStrong },
   dotOn: { width: 24, backgroundColor: colors.brand },
   grid: { width: 236, flexDirection: 'row', flexWrap: 'wrap', gap: spacing[3] },
   gridCell: { width: 112 },
   deliver: { flexDirection: 'row', alignItems: 'center', gap: spacing[3] },
-  dish: { alignItems: 'center', gap: spacing[2], opacity: 0.7 },
+  food: { borderRadius: radius.md, overflow: 'hidden' },
+  dish: { alignItems: 'center', gap: spacing[2], opacity: 0.55 },
   cross: { ...font('600'), fontSize: 12, lineHeight: 16, color: colors.inkTertiary },
   bank: { alignItems: 'center', gap: spacing[2], padding: spacing[4], borderRadius: radius.lg, backgroundColor: colors.surface, boxShadow: shadow.float },
   bankIcon: { width: 56, height: 56, borderRadius: 28, backgroundColor: colors.brandSoft, alignItems: 'center', justifyContent: 'center' },
   start: { alignItems: 'center', gap: spacing[3] },
-  ctaMock: { height: 56, paddingHorizontal: spacing[5], borderRadius: radius.md, backgroundColor: colors.brand, alignItems: 'center', justifyContent: 'center' },
+  ctaMock: { height: 56, paddingHorizontal: spacing[5], borderRadius: radius.md, backgroundColor: colors.actionFill, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing[3] },
   ctaMockText: { ...font('700'), fontSize: 17, color: colors.onBrand },
+  ctaMockPrice: { ...font('700'), fontSize: 17, color: colors.onBrand, fontVariant: ['tabular-nums'] },
   bankChip: { flexDirection: 'row', alignItems: 'center', gap: spacing[2], height: 44, paddingHorizontal: spacing[4], borderRadius: radius.full, backgroundColor: colors.surface, boxShadow: shadow.float },
   bankChipText: { ...font('700'), fontSize: 15, color: colors.ink },
 });
