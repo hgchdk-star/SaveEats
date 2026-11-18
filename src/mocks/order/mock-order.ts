@@ -1,4 +1,5 @@
 import { mockCatalog } from '@/mocks/catalog/mock-catalog-repository';
+import { requestItemOptions } from '@/mocks/order/request-options';
 import { failOnce, mockDelay, mockScenario } from '@/mocks/scenario';
 import { getDb, nextSeq, persistDb, recordEvent, type ServerDb } from '@/mocks/server/db';
 import { buildSnapshot } from '@/mocks/server/snapshot';
@@ -26,15 +27,30 @@ function verify(request: CreateOrderRequest) {
     const menu = mockCatalog.activeMenu(item.menuId);
     if (!menu || menu.isSoldOut || menu.storeId !== request.storeId) throw new ServiceError('ITEM_UNAVAILABLE');
     const options = menu.optionGroups.flatMap((g) => g.options);
-    const picked = item.optionIds.map((id) => options.find((o) => o.id === id));
-    if (picked.some((p) => !p || p.isSoldOut)) throw new ServiceError('ITEM_UNAVAILABLE');
-    const unitPrice = menu.price + picked.reduce((sum, p) => sum + (p?.additionalPrice ?? 0), 0);
+    // 두 요청 모양을 섞었거나 같은 옵션을 두 번 보내면 서버처럼 INVALID_INPUT
+    const requested = requestItemOptions(item);
+    if (!requested) throw new ServiceError('INVALID_INPUT');
+    const picked = requested.map((r) => ({ option: options.find((o) => o.id === r.optionId), quantity: r.quantity }));
+    if (picked.some((p) => !p.option || p.option.isSoldOut)) throw new ServiceError('ITEM_UNAVAILABLE');
+    // 수량을 허용하지 않는 옵션은 1개만, 허용하는 옵션은 maxQuantity까지 (서버 INVALID_OPTIONS)
+    if (picked.some((p) => p.quantity !== 1 && !(p.option?.allowQuantity === true && typeof p.option.maxQuantity === 'number' && p.quantity <= p.option.maxQuantity))) {
+      throw new ServiceError('INVALID_OPTIONS');
+    }
+    const unitPrice = menu.price + picked.reduce((sum, p) => sum + (p.option?.additionalPrice ?? 0) * p.quantity, 0);
     if (unitPrice !== item.approvedUnitPrice) throw new ServiceError('PRICE_CHANGED');
   }
 
   const { snapshot, total } = buildSnapshot(
     request.storeId,
-    request.items.map((i) => ({ menuId: i.menuId, optionIds: i.optionIds, quantity: i.quantity })),
+    request.items.map((i) => {
+      const requested = requestItemOptions(i) ?? [];
+      return {
+        menuId: i.menuId,
+        optionIds: requested.map((r) => r.optionId),
+        optionQuantities: Object.fromEntries(requested.filter((r) => r.quantity > 1).map((r) => [r.optionId, r.quantity])),
+        quantity: i.quantity,
+      };
+    }),
     account,
   );
   if (total !== request.approvedTotalAmount) throw new ServiceError('PRICE_CHANGED');

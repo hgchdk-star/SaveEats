@@ -74,7 +74,8 @@ function sauceGroup(menuNo: number): MenuOptionGroupDto {
     minSelect: 0,
     maxSelect: 2,
     options: [
-      { id: id(base + 21), name: '양념 소스', additionalPrice: 500, isSoldOut: false },
+      // 옵션 수량 확인용: 양념 소스만 최대 5개까지 고를 수 있다. 나머지는 기존처럼 한 번만 고른다
+      { id: id(base + 21), name: '양념 소스', additionalPrice: 500, isSoldOut: false, allowQuantity: true, maxQuantity: 5 },
       { id: id(base + 22), name: '허니 머스터드 소스', additionalPrice: 500, isSoldOut: false },
       { id: id(base + 23), name: '치즈 디핑 소스', additionalPrice: 1000, isSoldOut: false },
       { id: id(base + 24), name: '갈릭 버터 디핑 소스와 할라피뇨 피클을 함께 담은 추가 구성', additionalPrice: 1500, isSoldOut: false },

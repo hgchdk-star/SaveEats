@@ -563,6 +563,14 @@ export const draftCopy = {
   store: {
     loadErrorTitle: '가게 정보를 불러오지 못했어요',
     noMenus: '아직 등록된 메뉴가 없어요',
+    /** 가게 안 메뉴 그룹. 문구는 초안이다(서정 확인 전). 그룹에 속하지 않은 메뉴를 모아 보여 주는 구역 이름 */
+    ungroupedMenus: '기타 메뉴',
+    /** 이 가게 메뉴 검색 */
+    menuSearchPlaceholder: '이 가게 메뉴 검색',
+    menuSearchClear: '검색어 지우기',
+    menuSearchEmptyTitle: '검색 결과가 없어요',
+    menuSearchEmptyDescription: '다른 이름으로 검색해 보세요.',
+    menuSearchResultCount: (count: number) => `검색 결과 ${count}개`,
     /** 계약 isOpen 값의 표시 문구. 화면에서는 "준비 중"으로 통일한다 (서정 확인 2026-10-29). 10/1 결정 문서의 "영업 종료"는 같은 상태를 부르는 이름이다 */
     statusOpen: '영업 중',
     statusClosed: '준비 중',
@@ -582,8 +590,9 @@ export const draftCopy = {
 
   menu: {
     ruleSingle: '1개 선택',
-    ruleMax: (max: number) => `최대 ${max}개까지 고를 수 있어요`,
-    ruleFull: (max: number) => `${max}개 모두 골랐어요`,
+    /** 그룹 최대 선택은 고른 옵션 종류 수 기준이다(옵션별 수량과 별개). 실제 제한이 있을 때만 보인다 */
+    ruleMax: (max: number) => `최대 ${max}종 선택`,
+    ruleFull: (max: number) => `${max}종 모두 골랐어요`,
     quantityHelp: (max: number) => `최대 ${max}개`,
     noteSoldOut: '품절된 메뉴라 지금은 담을 수 없어요',
     noteLoading: '옵션 정보를 불러온 뒤 담을 수 있어요',
@@ -595,6 +604,10 @@ export const draftCopy = {
     /** 서로 다른 메뉴·옵션 조합이 최대 종류 수를 넘을 때. 서정 확정 문구(2026-11-03) */
     toastOverKinds: (max: number) => `메뉴는 옵션 조합별로 최대 ${max}종까지 담을 수 있어요.`,
     toastAdded: '장바구니에 담았어요',
+    /** 메뉴 목록에서 바로 담기(초안): 메뉴 정보를 불러오지 못해 담지 않았을 때 */
+    quickAddLoadFailed: '메뉴 정보를 불러오지 못해 담지 못했어요. 다시 시도해 주세요.',
+    /** 접근성 이름: '메뉴명 장바구니에 담기' */
+    quickAddLabel: (name: string) => `${name} 장바구니에 담기`,
     toastAddedAction: '보기',
   },
 

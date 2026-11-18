@@ -82,7 +82,7 @@ begin
     if (select array_agg(k order by k) from jsonb_object_keys(v_item) k)
        is distinct from array['lineTotal', 'menuId', 'menuImageRef', 'menuName', 'options', 'quantity', 'unitPrice'] then return 'item keys'; end if;
     for v_opt in select o from jsonb_array_elements(v_item -> 'options') o loop
-      if (select array_agg(k order by k) from jsonb_object_keys(v_opt) k) is distinct from array['additionalPrice', 'groupName', 'optionName'] then return 'option keys'; end if;
+      if (select array_agg(k order by k) from jsonb_object_keys(v_opt) k) is distinct from array['additionalPrice', 'groupName', 'optionName', 'quantity'] then return 'option keys'; end if;
     end loop;
   end loop;
   return 'OK';

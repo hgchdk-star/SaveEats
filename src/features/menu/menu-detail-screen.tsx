@@ -29,13 +29,20 @@ import { colors, size, spacing, text } from '@/theme';
 import { formatWon } from '@/utils/format';
 
 import {
+  allowsQuantity,
   firstMissingRequired,
+  groupRuleKind,
   isRequired,
   isSingle,
+  pruneQuantities,
+  quantityOf,
   selectedOptionIds,
   selectedOptionNames,
+  selectedOptionQuantities,
+  setOptionQuantity,
   toggleOption,
   unitPrice,
+  type OptionQuantities,
   type Selection,
 } from './menu-selection';
 
@@ -51,6 +58,8 @@ export function MenuDetailScreen({ menuId }: { menuId: string }) {
 
   const menuState = useAsync(`menu:${menuId}`, () => catalogRepository.getMenu(menuId));
   const [selection, setSelection] = useState<Selection>({});
+  // 옵션별 수량(메뉴 한 개에 들어가는 개수). 메뉴 주문 수량(quantity)과 별개다
+  const [optionQuantities, setOptionQuantities] = useState<OptionQuantities>({});
   const [quantity, setQuantity] = useState<number>(LIMITS.quantityMin);
   const [solid, setSolid] = useState(false);
   const [otherStoreSheet, setOtherStoreSheet] = useState(false);
@@ -100,7 +109,8 @@ export function MenuDetailScreen({ menuId }: { menuId: string }) {
   }
 
   const optionIds = selectedOptionIds(menu, selection);
-  const unit = unitPrice(menu, selection);
+  const pickedQuantities = selectedOptionQuantities(menu, selection, optionQuantities);
+  const unit = unitPrice(menu, selection, pickedQuantities);
   const total = unit * quantity;
   const missing = firstMissingRequired(menu, selection);
   // 미결정 묶음1 #2: 준비 중(영업 종료) 가게의 메뉴를 담을 수 있는지 (설정값)
@@ -123,11 +133,12 @@ export function MenuDetailScreen({ menuId }: { menuId: string }) {
         storeId: menu.storeId,
         menuId: menu.id,
         optionIds,
+        optionQuantities: pickedQuantities,
         quantity,
         unitPrice: unit,
         catalogRevision: menu.catalogRevision,
         menuName: menu.name,
-        optionNames: selectedOptionNames(menu, selection),
+        optionNames: selectedOptionNames(menu, selection, pickedQuantities),
         imageRef: menu.imageRef,
       },
       { replaceOtherStore },
@@ -173,7 +184,9 @@ export function MenuDetailScreen({ menuId }: { menuId: string }) {
           ? menu.optionGroups.map((group) => {
               const current = selection[group.id] ?? [];
               const single = isSingle(group);
-              const full = !single && current.length >= group.maxSelect;
+              const ruleKind = groupRuleKind(group, current.length);
+              // 가득 참(더 못 고름)은 실제 제한이 있을 때만. 최대가 선택지 수 이상이면 잠그지 않는다
+              const full = ruleKind === 'limit-full';
               return (
                 <OptionGroup
                   key={group.id}
@@ -181,7 +194,7 @@ export function MenuDetailScreen({ menuId }: { menuId: string }) {
                   required={isRequired(group)}
                   single={single}
                   full={full}
-                  rule={single ? draftCopy.menu.ruleSingle : full ? draftCopy.menu.ruleFull(group.maxSelect) : draftCopy.menu.ruleMax(group.maxSelect)}
+                  rule={ruleKind === 'single' ? draftCopy.menu.ruleSingle : ruleKind === 'limit-full' ? draftCopy.menu.ruleFull(group.maxSelect) : ruleKind === 'limit' ? draftCopy.menu.ruleMax(group.maxSelect) : ''}
                   options={group.options.map((o) => ({
                     id: o.id,
                     name: o.name,
@@ -189,8 +202,17 @@ export function MenuDetailScreen({ menuId }: { menuId: string }) {
                     soldOut: o.isSoldOut,
                     selected: current.includes(o.id),
                     locked: o.isSoldOut || (full && !current.includes(o.id)),
+                    // 수량을 허용하는 옵션만 수량 조절을 보여 준다. 나머지는 기존 그대로
+                    maxQuantity: allowsQuantity(o) ? (o.maxQuantity as number) : undefined,
+                    quantity: quantityOf(pickedQuantities, o.id),
                   }))}
-                  onToggle={(optionId) => setSelection((prev) => toggleOption(prev, group, optionId))}
+                  onToggle={(optionId) => {
+                    const nextSelection = toggleOption(selection, group, optionId);
+                    setSelection(nextSelection);
+                    // 선택에서 빠진 옵션의 수량은 지운다
+                    setOptionQuantities((prev) => pruneQuantities(menu, nextSelection, prev));
+                  }}
+                  onQuantityChange={(optionId, next) => setOptionQuantities((prev) => setOptionQuantity(menu, selection, prev, optionId, next))}
                 />
               );
             })

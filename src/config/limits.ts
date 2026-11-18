@@ -61,6 +61,12 @@ export const LIMITS = {
 /** 최종 주문 확인 고지 버전. 표시한 고지 문구의 버전을 요청에 함께 보낸다 (ORD-004) */
 export const ORDER = {
   disclosureVersion: '2026-09-30',
-  /** 주문 생성 요청 버전. 서버는 v2만 받는다 (혜지 합의 2026-11) */
+  /** 주문 생성 요청 버전. 옵션을 모두 1개씩 고르면 v2(optionIds)로 보낸다 (혜지 합의 2026-11) */
   requestVersion: 2,
+  /**
+   * 옵션 수량이 2개 이상인 항목이 하나라도 있을 때의 요청 버전. 모든 항목을 items[].options[{optionId, quantity}]로 보낸다.
+   * 서버 migration 20261117010000_option_quantity 이후에만 받는다. 그 전 서버는 INVALID_INPUT으로 거절하므로
+   * 옵션 수량을 쓰지 않는 주문은 계속 v2로 보내 옛 서버에서도 그대로 동작한다.
+   */
+  requestVersionWithOptionQuantity: 3,
 } as const;

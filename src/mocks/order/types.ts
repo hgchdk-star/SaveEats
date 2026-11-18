@@ -70,13 +70,22 @@ export interface AccountService {
 
 export type MockOrderStatus = 'PENDING' | 'USER_CONFIRMED' | 'CANCELLED';
 
+export type CreateOrderItemBase = { menuId: Uuid; quantity: number; approvedUnitPrice: Won; approvedCatalogRevision: number };
+export type CreateOrderItemV2 = CreateOrderItemBase & { optionIds: Uuid[] };
+export type CreateOrderItemV3 = CreateOrderItemBase & { options: { optionId: Uuid; quantity: number }[] };
+export type CreateOrderItem = CreateOrderItemV2 | CreateOrderItemV3;
+
 export type CreateOrderRequest = {
   idempotencyKey: string;
   requestVersion: number;
   storeId: Uuid;
   /** 돈이 갈 계좌의 비민감 참조(AccountVault의 destinationRef). 계좌 값은 서버에 보내지 않는다. 요청 v2 (혜지 합의 2026-11) */
   destinationRef: string;
-  items: { menuId: Uuid; optionIds: Uuid[]; quantity: number; approvedUnitPrice: Won; approvedCatalogRevision: number }[];
+  /**
+   * requestVersion 2: items[].optionIds (옵션마다 1개). requestVersion 3: items[].options[{optionId, quantity}] (옵션 수량).
+   * 한 요청 안에서 두 모양을 섞지 않고, 같은 옵션을 두 번 보내지 않는다. 서버가 어긋나면 INVALID_INPUT이다.
+   */
+  items: CreateOrderItem[];
   approvedTotalAmount: Won;
   disclosureVersion: string;
   disclosureAcknowledged: true;
@@ -96,7 +105,8 @@ export type MockOrderSnapshot = {
     unitPrice: Won;
     quantity: number;
     lineTotal: Won;
-    options: { groupName: string; optionName: string; additionalPrice: Won }[];
+    /** quantity: 메뉴 한 개에 들어간 옵션 개수. 옵션 수량 도입 전 주문과 응답에 없으면 1 */
+    options: { groupName: string; optionName: string; additionalPrice: Won; quantity: number }[];
   }[];
   /**
    * 주문 당시 목적지(은행명 · 끝 4자리). 서버는 계좌를 몰라서 응답에 주지 않는다. 앱이 기기 보안 저장소에서 합치고(with-local-destination),

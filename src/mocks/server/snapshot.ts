@@ -2,7 +2,8 @@ import type { Uuid } from '@/contracts/common';
 import { mockCategories, mockMenus, mockStores } from '@/mocks/catalog/data';
 import type { MockDestinationAccount, MockOrderSnapshot } from '@/mocks/order/types';
 
-export type SnapshotLine = { menuId: Uuid; optionIds: Uuid[]; quantity: number };
+/** optionQuantities: 옵션별 수량(2개 이상인 것만). 없으면 모두 1개 */
+export type SnapshotLine = { menuId: Uuid; optionIds: Uuid[]; optionQuantities?: Record<Uuid, number>; quantity: number };
 
 /**
  * 주문 당시의 이름·가격·옵션·계좌(마스킹)를 굳힌 값 (ORD-007).
@@ -16,7 +17,8 @@ export function buildSnapshot(storeId: Uuid, lines: SnapshotLine[], account: Pic
     const menu = mockMenus.find((m) => m.id === line.menuId);
     const options = (menu?.optionGroups ?? []).flatMap((g) => g.options.map((o) => ({ groupName: g.name, option: o })));
     const picked = line.optionIds.map((id) => options.find((o) => o.option.id === id)).filter((o): o is NonNullable<typeof o> => !!o);
-    const unitPrice = (menu?.price ?? 0) + picked.reduce((sum, p) => sum + p.option.additionalPrice, 0);
+    const qtyOf = (optionId: Uuid) => line.optionQuantities?.[optionId] ?? 1;
+    const unitPrice = (menu?.price ?? 0) + picked.reduce((sum, p) => sum + p.option.additionalPrice * qtyOf(p.option.id), 0);
     total += unitPrice * line.quantity;
     return {
       menuId: line.menuId,
@@ -25,7 +27,7 @@ export function buildSnapshot(storeId: Uuid, lines: SnapshotLine[], account: Pic
       unitPrice,
       quantity: line.quantity,
       lineTotal: unitPrice * line.quantity,
-      options: picked.map((p) => ({ groupName: p.groupName, optionName: p.option.name, additionalPrice: p.option.additionalPrice })),
+      options: picked.map((p) => ({ groupName: p.groupName, optionName: p.option.name, additionalPrice: p.option.additionalPrice, quantity: qtyOf(p.option.id) })),
     };
   });
   return {
