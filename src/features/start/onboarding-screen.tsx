@@ -29,7 +29,7 @@ const PAGES: OnboardingPage[] = confirmedCopy.onboardingTitles.map((title, i) =>
  *
  * first: 건너뛰기 가능, 마지막 'SaveEats 시작하기' 또는 건너뛰기 → 저장하고 홈. 로그인 · 계좌를 강제하지 않는다.
  *        건너뛰어도 최종 주문 확인의 '음식은 주문되지 않아요' 고지는 항상 다시 나온다 (FR-ONB-008).
- * howto: 건너뛰기 없음, 마지막 '확인' → 설정으로 돌아간다. 완료 여부를 다시 저장하지 않는다.
+ * howto: 건너뛰기 없음, 마지막 '확인' → 홈으로 간다(설정으로 돌아가지 않는다). 완료 여부를 다시 저장하지 않는다.
  */
 export function OnboardingScreen({ mode }: { mode: 'first' | 'howto' }) {
   const [page, setPage] = useState(0);
@@ -41,9 +41,15 @@ export function OnboardingScreen({ mode }: { mode: 'first' | 'howto' }) {
     router.replace('/');
   };
 
+  // 쌓인 화면(설정 등)을 모두 닫고 홈 탭으로 간다
+  const goHome = () => {
+    router.dismissAll();
+    router.navigate('/');
+  };
+
   const next = () => {
     if (!last) setPage(page + 1);
-    else if (howto) router.back();
+    else if (howto) goHome();
     else void finish();
   };
 
