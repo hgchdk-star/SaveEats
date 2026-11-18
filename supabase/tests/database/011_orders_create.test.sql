@@ -86,9 +86,9 @@ begin
     if jsonb_typeof(v_item -> 'options') <> 'array' then return 'options type'; end if;
     for v_opt in select o from jsonb_array_elements(v_item -> 'options') o loop
       if jsonb_typeof(v_opt) <> 'object' then return 'option type'; end if;
-      if (select array_agg(k order by k) from jsonb_object_keys(v_opt) k) is distinct from array['additionalPrice', 'groupName', 'optionName'] then return 'option keys'; end if;
+      if (select array_agg(k order by k) from jsonb_object_keys(v_opt) k) is distinct from array['additionalPrice', 'groupName', 'optionName', 'quantity'] then return 'option keys'; end if;
       if jsonb_typeof(v_opt -> 'groupName') <> 'string' or jsonb_typeof(v_opt -> 'optionName') <> 'string'
-         or jsonb_typeof(v_opt -> 'additionalPrice') <> 'number' then return 'option value types'; end if;
+         or jsonb_typeof(v_opt -> 'additionalPrice') <> 'number' or jsonb_typeof(v_opt -> 'quantity') <> 'number' then return 'option value types'; end if;
     end loop;
   end loop;
   return 'OK';
@@ -404,7 +404,7 @@ select is((select array_agg(k order by k) from jsonb_object_keys(current_setting
 select is((select array_agg(k order by k) from jsonb_object_keys(current_setting('zz.r1')::jsonb -> 'snapshot' -> 'items' -> 0) k),
   array['lineTotal', 'menuId', 'menuImageRef', 'menuName', 'options', 'quantity', 'unitPrice'], 'snapshot.items[] 키');
 select is((select array_agg(k order by k) from jsonb_object_keys(current_setting('zz.r1')::jsonb -> 'snapshot' -> 'items' -> 0 -> 'options' -> 0) k),
-  array['additionalPrice', 'groupName', 'optionName'], 'snapshot.items[].options[] 키');
+  array['additionalPrice', 'groupName', 'optionName', 'quantity'], 'snapshot.items[].options[] 키 (quantity는 옵션 수량 · 옵션 수량 PR에서 추가됨)');
 select is(public.zdto_shape(current_setting('zz.r1')::jsonb, true), 'OK', '생성 응답의 키 이름과 타입이 앱 parseOrderDto와 일치 (replayed는 boolean)');
 select is(public.zdto_shape(current_setting('zz.r1')::jsonb - 'replayed', true), 'top-level keys', '(도구 확인) replayed가 빠지면 생성 응답 검사에서 잡힌다');
 select is(public.zdto_shape(current_setting('zz.r1')::jsonb, false), 'top-level keys', '(도구 확인) 조회 응답 검사는 replayed 키가 있으면 잡는다');
@@ -421,9 +421,9 @@ select is(jsonb_array_length(current_setting('zz.r1')::jsonb -> 'snapshot' -> 'i
 select is(current_setting('zz.r1')::jsonb -> 'snapshot' -> 'items' -> 0,
   jsonb_build_object('menuId', public.zid('M1'), 'menuName', '치킨', 'menuImageRef', 'menus/m1.png', 'unitPrice', 12800, 'quantity', 2, 'lineTotal', 25600,
     'options', jsonb_build_array(
-      jsonb_build_object('groupName', '사이즈', 'optionName', '큰것', 'additionalPrice', 2000),
-      jsonb_build_object('groupName', '추가', 'optionName', '무', 'additionalPrice', 500),
-      jsonb_build_object('groupName', '추가', 'optionName', '소스', 'additionalPrice', 300))),
+      jsonb_build_object('groupName', '사이즈', 'optionName', '큰것', 'additionalPrice', 2000, 'quantity', 1),
+      jsonb_build_object('groupName', '추가', 'optionName', '무', 'additionalPrice', 500, 'quantity', 1),
+      jsonb_build_object('groupName', '추가', 'optionName', '소스', 'additionalPrice', 300, 'quantity', 1))),
   '첫 줄: 요청 순서 유지, 옵션은 그룹 순서 → 옵션 순서로 (요청의 옵션 순서와 무관)');
 select is(current_setting('zz.r1')::jsonb -> 'snapshot' -> 'items' -> 1,
   jsonb_build_object('menuId', public.zid('M2'), 'menuName', '콜라', 'menuImageRef', null, 'unitPrice', 2000, 'quantity', 3, 'lineTotal', 6000, 'options', '[]'::jsonb),
