@@ -1,8 +1,8 @@
 /**
  * 카테고리 칩의 음식 이미지 (FR-CAT-001). 디자인 시스템(Claude Design)의 샘플 음식 일러스트를 그대로 옮겼다.
  * 서버 카테고리 응답에는 이미지가 없어서 앱에 넣어 두고 카테고리 코드로 연결한다.
- * 디자인에 이미지가 있는 카테고리만 여기 있다. 중식·일식·버거는 디자인에도 이미지가 없어서 칩이 이름 첫 글자로 보인다.
- * 새 이미지가 정해지면 아래 SVG 본문만 추가하거나 바꾼다. 코드는 서버 카테고리 코드(list_categories의 code)다.
+ * 치킨·분식·피자·한식·카페디저트는 디자인 자료의 그림 그대로다. 디자인에 없던 중식(짜장면)·일식(초밥)·버거는 같은 그림체로 새로 그렸다
+ * (서정 님 확정 디자인이 나오면 아래 SVG 본문만 바꾼다). 코드는 서버 카테고리 코드(list_categories의 code)다.
  */
 const FOODS: Record<string, string> = {
   chicken:
@@ -28,26 +28,41 @@ const FOODS: Record<string, string> = {
   dessert:
     '<rect width="120" height="120" fill="#EADBD0"/><circle cx="60" cy="60" r="46" fill="#FFFFFF"/><circle cx="60" cy="60" r="30" fill="#F7E4D0"/>' +
     '<circle cx="60" cy="60" r="22" fill="#FBF3EA"/><path d="M52 52c6-6 14 2 8 8s-14-2-8-8z" fill="#D9B08A"/><circle cx="92" cy="86" r="8" fill="#C8371F"/><circle cx="84" cy="94" r="6" fill="#B02E1A"/><ellipse cx="96" cy="78" rx="4" ry="2" fill="#4F8A3A"/>',
+  // 아래 셋은 디자인에 없어서 위와 같은 그림체(위에서 내려다본 접시, 평평한 도형)로 새로 그렸다
+  jajangmyeon:
+    '<rect width="120" height="120" fill="#E6D5C3"/><circle cx="60" cy="60" r="48" fill="#2E2926"/><circle cx="60" cy="60" r="41" fill="#F4EEE6"/>' +
+    '<path d="M30 62c8-14 22-14 30 0s22 14 30 0" stroke="#E8CF9C" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M30 74c8-12 22-12 30 0s22 12 30 0" stroke="#DDBE86" stroke-width="5" fill="none" stroke-linecap="round"/>' +
+    '<ellipse cx="60" cy="50" rx="27" ry="19" fill="#3A2218"/><ellipse cx="52" cy="44" rx="9" ry="4" fill="#5A3A2A"/><circle cx="70" cy="52" r="3" fill="#5A3A2A"/><circle cx="46" cy="56" r="2.5" fill="#5A3A2A"/>' +
+    '<rect x="62" y="38" width="12" height="4" rx="2" fill="#6BA34A" transform="rotate(25 68 40)"/><rect x="48" y="32" width="12" height="4" rx="2" fill="#5C9A45" transform="rotate(-20 54 34)"/>',
+  sushi:
+    '<rect width="120" height="120" fill="#E8DCCB"/><rect x="8" y="30" width="104" height="60" rx="14" fill="#2E2926"/><rect x="13" y="35" width="94" height="50" rx="10" fill="#F4EEE6"/>' +
+    '<ellipse cx="36" cy="62" rx="15" ry="10" fill="#FFFFFF"/><ellipse cx="36" cy="58" rx="17" ry="9" fill="#EF7B52"/><path d="M24 56c4 3 8 3 12 0M34 60c4 3 8 3 12 0" stroke="#FBD1BB" stroke-width="2" fill="none" stroke-linecap="round"/>' +
+    '<ellipse cx="66" cy="62" rx="15" ry="10" fill="#FFFFFF"/><ellipse cx="66" cy="58" rx="17" ry="9" fill="#C9372C"/><ellipse cx="62" cy="55" rx="8" ry="2.5" fill="#E0614F"/><rect x="64" y="48" width="4" height="22" rx="2" fill="#2E2926"/>' +
+    '<circle cx="92" cy="60" r="12" fill="#2E2926"/><circle cx="92" cy="60" r="9" fill="#FFFFFF"/><circle cx="92" cy="60" r="4" fill="#E9803A"/><circle cx="52" cy="76" r="4" fill="#7BB661"/>',
+  burger:
+    '<rect width="120" height="120" fill="#E8D5BE"/><circle cx="60" cy="60" r="47" fill="#FFFFFF"/><circle cx="60" cy="60" r="40" fill="#F7EFE6"/>' +
+    '<path d="M26 60C26 34 94 34 94 60Z" fill="#D9984F"/><ellipse cx="48" cy="48" rx="3.2" ry="1.7" fill="#F6E6C2" transform="rotate(-20 48 48)"/><ellipse cx="62" cy="42" rx="3.2" ry="1.7" fill="#F6E6C2"/><ellipse cx="75" cy="49" rx="3.2" ry="1.7" fill="#F6E6C2" transform="rotate(20 75 49)"/><ellipse cx="57" cy="54" rx="3.2" ry="1.7" fill="#F6E6C2"/>' +
+    '<path d="M24 61q6-6 12 0t12 0 12 0 12 0 12 0 12 0v5H24Z" fill="#5C9A45"/><path d="M28 66H92L84 74L76 67L68 74L60 67L28 67Z" fill="#F2B33A"/>' +
+    '<rect x="26" y="68" width="68" height="10" rx="5" fill="#5A3322"/><path d="M26 80H94V82a8 8 0 0 1-8 8H34a8 8 0 0 1-8-8Z" fill="#C98B45"/>',
 };
 
-/** 서버 카테고리 코드 → 그릴 음식. 디자인에 이미지가 있는 카테고리만 있다 */
+/** 서버 카테고리 코드 → 그릴 음식 */
 const BY_CATEGORY_CODE: Record<string, keyof typeof FOODS> = {
   chicken: 'chicken',
   bunsik: 'tteokbokki',
   pizza: 'pizza',
   korean: 'bibimbap',
   cafe_dessert: 'dessert',
+  chinese: 'jajangmyeon',
+  japanese: 'sushi',
+  burger: 'burger',
 };
 
-const toDataUri = (body: string) =>
-  `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" preserveAspectRatio="xMidYMid slice">${body}</svg>`)}`;
+/** 칩에서 그리는 SVG 전체 문서. react-native-svg의 SvgXml로 그린다 */
+const toSvg = (body: string) => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" preserveAspectRatio="xMidYMid slice">${body}</svg>`;
 
-const CACHE: Record<string, string> = {};
-
-/** 카테고리 칩 이미지. 이미지가 없는 카테고리는 null이고, 칩이 이름 첫 글자를 보여 준다 */
-export function categoryImageUri(categoryCode: string): string | null {
+/** 카테고리 칩 그림. 그림이 없는 카테고리는 null이고, 칩이 이름 첫 글자를 보여 준다 */
+export function categoryArt(categoryCode: string): string | null {
   const food = BY_CATEGORY_CODE[categoryCode];
-  if (!food) return null;
-  CACHE[food] ??= toDataUri(FOODS[food]);
-  return CACHE[food];
+  return food ? toSvg(FOODS[food]) : null;
 }

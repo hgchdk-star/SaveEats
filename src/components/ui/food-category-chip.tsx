@@ -1,5 +1,6 @@
 import { Image } from 'expo-image';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { SvgXml } from 'react-native-svg';
 
 import { colors, font, radius, size, spacing, text } from '@/theme';
 
@@ -7,6 +8,8 @@ type FoodCategoryChipProps = {
   label: string;
   /** 음식 사진 썸네일. 없으면 이름 첫 글자를 Placeholder 원에 보여준다 */
   imageUri: string | null;
+  /** 사진이 없을 때 그리는 일러스트(SVG 문서). imageUri가 있으면 사진이 먼저다 */
+  art?: string | null;
   selected: boolean;
   onPress: () => void;
 };
@@ -15,7 +18,7 @@ type FoodCategoryChipProps = {
  * 음식 카테고리 칩. 한 그룹 안에서 항상 하나만 선택된다 (FR-CAT-004).
  * 선택된 칩은 작은 흰 글자가 올라가므로 actionFill 채움.
  */
-export function FoodCategoryChip({ label, imageUri, selected, onPress }: FoodCategoryChipProps) {
+export function FoodCategoryChip({ label, imageUri, art = null, selected, onPress }: FoodCategoryChipProps) {
   return (
     <Pressable
       accessibilityRole="radio"
@@ -29,6 +32,10 @@ export function FoodCategoryChip({ label, imageUri, selected, onPress }: FoodCat
       ]}>
       {imageUri ? (
         <Image source={{ uri: imageUri }} contentFit="cover" style={[styles.thumb, selected && styles.thumbSelected]} />
+      ) : art ? (
+        <View style={[styles.thumb, styles.thumbArt, selected && styles.thumbSelected]}>
+          <SvgXml xml={art} width="100%" height="100%" />
+        </View>
       ) : (
         <View style={[styles.thumb, styles.thumbEmpty, selected && styles.thumbSelected]}>
           <Text style={styles.glyph}>{label.slice(0, 1)}</Text>
@@ -67,6 +74,9 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
+  },
+  thumbArt: {
+    overflow: 'hidden',
   },
   thumbEmpty: {
     backgroundColor: colors.foodPlaceholder,
