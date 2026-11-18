@@ -25,6 +25,7 @@ import json
 import os
 import re
 import sys
+import time
 import urllib.error
 import urllib.request
 import uuid
@@ -481,7 +482,9 @@ def build_plan(package, existing, option_max_quantity=OPTION_MAX_QUANTITY, max_s
         'held': held, 'skipped_menus': skipped_menus,
         'replaced': [{'existing': ex_menus[r['existing_menu_id']], 'source_menu_id': r['source_menu_id'],
                       'new_menu_id': uid('menu', SOURCE_SYSTEM, source_store_id, r['source_menu_id']), 'evidence': r['evidence']} for r in replaced],
-        'already_replaced': [r['existing_name'] for r in already_replaced], 'deact_groups': deact_groups, 'deact_options': deact_options, 'skipped_existing_photo': skipped_existing_photo,
+        'already_replaced': [r['existing_name'] for r in already_replaced],
+        # 교체 전·후 모두: 기존 메뉴 id → 수집으로 등록한 새 메뉴 id (검증에서 쓴다)
+        'replaced_all': [{'existing_id': r['existing_menu_id'], 'new_menu_id': uid('menu', SOURCE_SYSTEM, source_store_id, r['source_menu_id'])} for r in replaced + already_replaced], 'deact_groups': deact_groups, 'deact_options': deact_options, 'skipped_existing_photo': skipped_existing_photo,
         'missing_photo_menus': [{'source_menu_id': r['source_menu_id'], 'name': r['name']} for r in missing],
         'unknown_status_menus': [{'source_menu_id': r['source_menu_id'], 'name': r['name'], 'price': r['base_price'], 'alcohol': r['alcohol'], 'active': r['is_active']}
                                  for r in menu_rows if r['source_sale_status'] == '미확인'],
@@ -706,15 +709,21 @@ def upload_photos(plan):
         if status in (200, 201):
             done.append(p['object_path'])
             continue
-        try:
-            with urllib.request.urlopen(public_url(p['object_path']), timeout=60) as r:
-                same = hashlib.sha256(r.read()).hexdigest() == p['sha256']
-        except Exception:
-            same = False
+        # 이미 있는 파일이면 같은 파일인지 내려받아 대조한다. 일시적인 읽기 실패는 몇 번 다시 시도하고, 끝내 못 읽으면 실패로 센다(덮어쓰지 않는다)
+        same, reason = False, ''
+        for attempt in range(3):
+            try:
+                with urllib.request.urlopen(public_url(p['object_path']), timeout=60) as r:
+                    same = hashlib.sha256(r.read()).hexdigest() == p['sha256']
+                reason = '' if same else '서버에 있는 파일이 다르다'
+                break
+            except Exception as e:
+                reason = '확인용 조회 실패(' + safe_error(e, 80) + ')'
+                time.sleep(1.5 * (attempt + 1))
         if same:
             done.append(p['object_path'])
         else:
-            failed.append((p['object_path'], status, redact(body[:120].decode('utf-8', 'replace'))))
+            failed.append((p['object_path'], status, reason + ' / ' + redact(body[:120].decode('utf-8', 'replace'))))
     return done, failed
 
 
@@ -741,7 +750,7 @@ def apply_db(cur, plan, uploaded):
     execute_values(cur, """insert into public.menus (id, store_id, name, description, base_price, image_ref, sort_order, is_active, is_sold_out)
         values %s
         on conflict (id) do update set name = excluded.name, description = excluded.description, base_price = excluded.base_price,
-          sort_order = excluded.sort_order, image_ref = coalesce(excluded.image_ref, public.menus.image_ref)""",
+          image_ref = coalesce(excluded.image_ref, public.menus.image_ref)""",  # sort_order는 건드리지 않는다(메뉴 그룹 순서를 재실행이 되돌리지 않게)
         [(m['id'], STORE_ID, m['name'], m['description'], m['base_price'], m['image_ref'] if m['image_ref'] in uploaded else None,
           m['sort_order'], m['is_active'], m['is_sold_out']) for m in new])
     deleted_files = delete_replaced(cur, plan)
@@ -816,7 +825,7 @@ def verify(plan, cur, before=None, photos_expected=True):
     linked = [m for m in plan['menus'] if m['kind'] == 'LINK']
     check('가게 UUID 유지', now['store'] and now['store']['id'] == STORE_ID)
     check('기존 메뉴 UUID 전부 유지', all(m['id'] in menus_db for m in linked) and all(h['existing_menu_id'] in menus_db for h in plan['held']))
-    check('교체 대상 기존 메뉴는 삭제되고 수집 메뉴가 새 UUID로 등록됨', all(r['existing']['id'] not in menus_db and r['new_menu_id'] in menus_db for r in plan['replaced']))
+    check('교체 대상 기존 메뉴는 삭제되고 수집 메뉴가 새 UUID로 등록됨', all(r['existing_id'] not in menus_db and r['new_menu_id'] in menus_db for r in plan['replaced_all']))
     check('메뉴 가격 일치(연결+새)', all(menus_db.get(m['id'], {}).get('base_price') == m['base_price'] for m in plan['menus']))
     check('새 메뉴 수', all(m['id'] in menus_db for m in new) and len(menus_db) == len(plan['menus']) + len(plan['held']), f'{len(menus_db)}')
     want_ref = (lambda m: m['image_ref']) if photos_expected else (lambda m: ex_ref(m))
@@ -835,7 +844,7 @@ def verify(plan, cur, before=None, photos_expected=True):
         b = before['existing']
         bm = {m['id']: m for m in b['menus']}
         check('추천·인기 표시·품절·활성 보존', all(menus_db[i]['is_popular'] == m['is_popular'] and menus_db[i]['popularity_score'] == m['popularity_score']
-                                         and menus_db[i]['is_sold_out'] == m['is_sold_out'] and menus_db[i]['is_active'] == m['is_active'] and menus_db[i]['name'] == m['name'] for i, m in bm.items() if i not in {r['existing']['id'] for r in plan['replaced']}))
+                                         and menus_db[i]['is_sold_out'] == m['is_sold_out'] and menus_db[i]['is_active'] == m['is_active'] and menus_db[i]['name'] == m['name'] for i, m in bm.items() if i not in {r['existing_id'] for r in plan['replaced_all']}))
         check('주문·리뷰 스냅샷 해시 변경 없음', order_fingerprint(cur) == before['order_fingerprint'])
         check('다른 가게 변경 없음', other_store_fingerprints(cur) == before['other_store_fingerprints'])
         check('공개 출처 목록 변경 없음', now['refs']['store_sources'] == b['refs']['store_sources'])

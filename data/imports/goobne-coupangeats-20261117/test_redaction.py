@@ -107,6 +107,69 @@ class RedactionTests(unittest.TestCase):
         assert_clean(self, repr(failed))
 
 
+class UploadRetryTests(unittest.TestCase):
+    """이미 올라가 있는 파일을 확인하려고 내려받다가 한 번 실패해도, 같은 파일이면 다시 시도해 성공으로 센다(다른 파일이면 덮어쓰지 않고 실패)."""
+
+    def _serve(self, content, fail_gets):
+        state = {'gets': 0}
+
+        class H(http.server.BaseHTTPRequestHandler):
+            def do_POST(self):
+                self.send_response(400)
+                body = b'{"statusCode":"409","error":"Duplicate"}'
+                self.send_header('Content-Length', str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+
+            def do_GET(self):
+                state['gets'] += 1
+                if state['gets'] <= fail_gets:
+                    self.send_response(503)
+                    self.send_header('Content-Length', '0')
+                    self.end_headers()
+                    return
+                self.send_response(200)
+                self.send_header('Content-Length', str(len(content)))
+                self.end_headers()
+                self.wfile.write(content)
+
+            def log_message(self, *a):
+                pass
+        server = http.server.HTTPServer(('127.0.0.1', 0), H)
+        threading.Thread(target=server.serve_forever, daemon=True).start()
+        return server
+
+    def _run(self, remote, local, fail_gets):
+        import hashlib
+        import importlib
+        os.environ.update(FAKE_ENV)
+        import import_goobne
+        T = importlib.reload(import_goobne)
+        T.time.sleep = lambda *_: None
+        server = self._serve(remote, fail_gets)
+        try:
+            os.environ['SUPABASE_URL'] = f'http://127.0.0.1:{server.server_port}'
+            with tempfile.NamedTemporaryFile(suffix='.jpg', delete=False) as f:
+                f.write(local)
+            plan = {'photos': [{'local_path': f.name, 'object_path': 'menus/x.jpg', 'mime': 'image/jpeg', 'sha256': hashlib.sha256(local).hexdigest()}]}
+            result = T.upload_photos(plan)
+            os.unlink(f.name)
+            return result
+        finally:
+            server.shutdown()
+
+    def test_same_file_after_transient_read_failures_counts_as_done(self):
+        done, failed = self._run(b'same-bytes', b'same-bytes', fail_gets=2)
+        self.assertEqual(done, ['menus/x.jpg'])
+        self.assertEqual(failed, [])
+
+    def test_different_file_is_never_overwritten_and_counts_as_failure(self):
+        done, failed = self._run(b'server-bytes', b'local-bytes', fail_gets=0)
+        self.assertEqual(done, [])
+        self.assertEqual(len(failed), 1)
+        self.assertIn('다르다', failed[0][2])
+
+
 class SubprocessTests(unittest.TestCase):
     def run_tool(self, *args, code=None):
         cmd = [sys.executable, os.path.join(HERE, 'import_goobne.py'), *args] if code is None else [sys.executable, '-c', code]
