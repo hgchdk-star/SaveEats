@@ -56,6 +56,8 @@ export async function callOrderRpc(name: string, args: Record<string, unknown>):
     if (error) {
       if (error.code === 'P0001' && error.message && SERVER_CODES.includes(error.message)) throw new ServiceError(error.message);
       if (error.code === '42501') throw new ServiceError('AUTH_REQUIRED');
+      // PostgREST가 함수를 찾지 못함(404). 서버에 그 함수가 없거나 인자가 달라 아무것도 실행되지 않았다. 적용 여부를 모르는 오류가 아니다
+      if (error.code === 'PGRST202') throw new ServiceError('SERVER_FUNCTION_UNAVAILABLE');
       // 서버가 응답한 알 수 없는 오류: 주문이 만들어졌는지 알 수 없는 쪽으로 다룬다
       throw new ServiceError(error.code ? 'ORDER_FAILED' : 'NETWORK_UNAVAILABLE', true);
     }
