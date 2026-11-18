@@ -159,6 +159,13 @@ export function parseStoreDetail(data: unknown): StoreDetailDto {
   need(s.isFavorite === null || isBool(s.isFavorite));
   need(Array.isArray(s.menus));
   (s.menus as unknown[]).forEach(checkMenuSummary);
+  // 메뉴 그룹(없으면 평평한 목록). 있으면 모양이 맞아야 한다. 틀린 응답을 조용히 무시하지 않는다
+  if (s.menuGroups !== undefined) {
+    need(Array.isArray(s.menuGroups));
+    for (const g of s.menuGroups as unknown[]) {
+      need(isObj(g) && isStr(g.id) && isStr(g.name) && Array.isArray(g.menuIds) && (g.menuIds as unknown[]).every(isStr));
+    }
+  }
   return s as unknown as StoreDetailDto;
 }
 

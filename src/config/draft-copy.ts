@@ -563,6 +563,14 @@ export const draftCopy = {
   store: {
     loadErrorTitle: '가게 정보를 불러오지 못했어요',
     noMenus: '아직 등록된 메뉴가 없어요',
+    /** 가게 안 메뉴 그룹. 문구는 초안이다(서정 확인 전). 그룹에 속하지 않은 메뉴를 모아 보여 주는 구역 이름 */
+    ungroupedMenus: '기타 메뉴',
+    /** 이 가게 메뉴 검색 */
+    menuSearchPlaceholder: '이 가게 메뉴 검색',
+    menuSearchClear: '검색어 지우기',
+    menuSearchEmptyTitle: '검색 결과가 없어요',
+    menuSearchEmptyDescription: '다른 이름으로 검색해 보세요.',
+    menuSearchResultCount: (count: number) => `검색 결과 ${count}개`,
     /** 계약 isOpen 값의 표시 문구. 화면에서는 "준비 중"으로 통일한다 (서정 확인 2026-10-29). 10/1 결정 문서의 "영업 종료"는 같은 상태를 부르는 이름이다 */
     statusOpen: '영업 중',
     statusClosed: '준비 중',

@@ -108,6 +108,18 @@ export interface MenuCardDto {
   store: { id: Uuid; name: string; isOpen: boolean };
 }
 
+/**
+ * 가게 안 메뉴 그룹(쿠팡이츠 가게 화면의 메뉴 구역). 옵션 그룹(MenuOptionGroupDto)·홈 카테고리와 다르다.
+ * 메뉴 본체는 StoreDetailDto.menus에 한 번만 있고, 그룹은 메뉴 id만 순서대로 가진다(한 메뉴가 여러 그룹에 있어도 복제하지 않는다).
+ */
+export interface MenuGroupDto {
+  id: Uuid;
+  /** 앱에 보이는 그룹 이름 */
+  name: string;
+  /** 이 그룹 안 메뉴 id, 표시 순서대로. 활성 메뉴만 */
+  menuIds: Uuid[];
+}
+
 export interface StoreDetailDto {
   id: Uuid;
   name: string;
@@ -122,6 +134,12 @@ export interface StoreDetailDto {
   isFavorite: boolean | null;
   /** 활성 메뉴만, 정렬 순서대로. 품절 메뉴 포함 */
   menus: MenuSummaryDto[];
+  /**
+   * 메뉴 그룹, 표시 순서대로. 보이는 메뉴가 없는 그룹은 서버가 뺀다. 그룹이 없는 가게는 빈 배열이고,
+   * 서버가 그룹 도입 전 응답이면 이 필드가 없다(둘 다 평평한 목록으로 보여 준다).
+   * 어느 그룹에도 없는 활성 메뉴는 menus에만 있다. 앱이 '기타 메뉴'로 모아 보여 준다(조용히 빼지 않는다).
+   */
+  menuGroups?: MenuGroupDto[];
 }
 
 export interface MenuOptionDto {
