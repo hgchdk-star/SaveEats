@@ -244,9 +244,16 @@ def build_plan(package, existing, option_max_quantity=OPTION_MAX_QUANTITY, max_s
 
     ex_menus = {m['id']: m for m in existing.get('menus', [])}
     # ---- 대응표
-    links, held = {}, []
+    links, held, replaced, already_replaced = {}, [], [], []
     for ln in mapping:
         ln = dict(ln)
+        if ln['status'] == 'REPLACE':
+            # 서정 승인(C안): 기존 메뉴를 백업 후 삭제하고 수집 메뉴를 새 메뉴로 등록한다(연결·가격 갱신이 아니다).
+            if ln['existing_menu_id'] in ex_menus:
+                replaced.append(ln)
+            else:
+                already_replaced.append(ln)  # 이미 교체돼 기존 메뉴가 없다(재실행)
+            continue
         if ln['existing_menu_id'] not in ex_menus:
             issues.append(f'대응표의 기존 메뉴가 서버에 없다: {ln["existing_name"]}')
             continue
@@ -263,7 +270,7 @@ def build_plan(package, existing, option_max_quantity=OPTION_MAX_QUANTITY, max_s
             held.append(ln)
     # 이미 반영된 뒤 다시 돌릴 때를 위해, 이 도구가 만든 새 메뉴(UUIDv5)는 '기존 메뉴'로 세지 않는다
     own_new = {uid('menu', SOURCE_SYSTEM, source_store_id, m['source_menu_id']) for m in menus}
-    mapped = {l['existing_menu_id'] for l in links.values()} | {h['existing_menu_id'] for h in held}
+    mapped = {l['existing_menu_id'] for l in links.values()} | {h['existing_menu_id'] for h in held} | {r['existing_menu_id'] for r in replaced}
     unmapped_existing = [m for m in existing.get('menus', []) if m['id'] not in mapped and m['id'] not in own_new]
     for m in unmapped_existing:
         issues.append(f'대응표에 없는 기존 메뉴: {m["name"]}')
@@ -471,7 +478,10 @@ def build_plan(package, existing, option_max_quantity=OPTION_MAX_QUANTITY, max_s
         'menus': menu_rows, 'groups': group_rows, 'options': option_rows, 'photos': photo_rows, 'records': records,
         'links': [{'existing_menu_id': l['existing_menu_id'], 'existing_name': l['existing_name'], 'source_menu_id': sid, 'source_name': l['source_name'],
                    'basis': l['basis'], 'evidence': l['evidence']} for sid, l in links.items()],
-        'held': held, 'skipped_menus': skipped_menus, 'deact_groups': deact_groups, 'deact_options': deact_options, 'skipped_existing_photo': skipped_existing_photo,
+        'held': held, 'skipped_menus': skipped_menus,
+        'replaced': [{'existing': ex_menus[r['existing_menu_id']], 'source_menu_id': r['source_menu_id'],
+                      'new_menu_id': uid('menu', SOURCE_SYSTEM, source_store_id, r['source_menu_id']), 'evidence': r['evidence']} for r in replaced],
+        'already_replaced': [r['existing_name'] for r in already_replaced], 'deact_groups': deact_groups, 'deact_options': deact_options, 'skipped_existing_photo': skipped_existing_photo,
         'missing_photo_menus': [{'source_menu_id': r['source_menu_id'], 'name': r['name']} for r in missing],
         'unknown_status_menus': [{'source_menu_id': r['source_menu_id'], 'name': r['name'], 'price': r['base_price'], 'alcohol': r['alcohol'], 'active': r['is_active']}
                                  for r in menu_rows if r['source_sale_status'] == '미확인'],
@@ -525,7 +535,7 @@ def render_report(plan, state):
     w('| 구분 | 추가 | 수정 | 비활성 | 삭제 |')
     w('|---|---|---|---|---|')
     w(f'| 가게 | 0 | 0 | 0 | 0 |')
-    w(f'| 메뉴 | {len(new_menus)} | {len(price_changed)} (가격 갱신, 동일가 {len(linked) - len(price_changed)}) | 0 | 0 |')
+    w(f'| 메뉴 | {len(new_menus)} | {len(price_changed)} (가격 갱신, 동일가 {len(linked) - len(price_changed)}) | 0 | {len(plan["replaced"])} (교체: 백업 후 삭제) |')
     w(f'| 옵션 그룹 | {len(new_groups)} | 0 | {len(active_deact_g)} | 0 |')
     w(f'| 옵션 | {len(new_options)} | 0 | {len(active_deact_o)} | 0 |')
     w(f'| 내부 출처 기록(권리 미확인) | {len(plan["records"])} | 0 | 0 | 0 |')
@@ -535,7 +545,7 @@ def render_report(plan, state):
     w('## 적용 후 예상')
     if t:
         w(f'- 활성 가게 {t.get("stores_active")} → {t.get("stores_active")} (새 가게 없음)')
-        w(f'- 활성 메뉴 {t.get("menus_active")} → {t.get("menus_active", 0) + sum(1 for r in new_menus if r["is_active"])}')
+        w(f'- 활성 메뉴 {t.get("menus_active")} → {t.get("menus_active", 0) + sum(1 for r in new_menus if r["is_active"]) - sum(1 for r in plan["replaced"] if r["existing"].get("is_active"))} (교체로 삭제되는 기존 활성 메뉴 반영)')
         w(f'- 옵션 그룹 {t.get("groups_total")} → {t.get("groups_total", 0) + len(new_groups)} (그 중 비활성 {len(active_deact_g)} 추가), 옵션 {t.get("options_total")} → {t.get("options_total", 0) + len(new_options)} (비활성 {len(active_deact_o)} 추가)')
     w('- 다른 가게 15곳·사용자·주문 스냅샷은 바꾸지 않는다. 이 가게의 주문 {} 건·리뷰 {} 건 연결과 스냅샷도 그대로.'.format(existing.get('refs', {}).get('orders', '?'), existing.get('refs', {}).get('review_menus', '?')))
     w('')
@@ -547,6 +557,12 @@ def render_report(plan, state):
         w(f'| {r["name"]} | {l["source_name"]} | {"이름 동일(띄어쓰기 차이 포함)" if l["basis"] == "EXACT_NAME" else "표기만 다름(설명 대조)" if l["basis"] == "NOTATION" else "서정 확인"} | {r["old_price"]:,} → {r["base_price"]:,} |')
     for h in plan['held']:
         w(f'| **{h["existing_name"]}** | (후보: {h.get("candidate_name")}) | **연결 보류** — {h["evidence"]} | 변경 없음 |')
+    w('')
+    w('## 교체(백업 후 물리 삭제 → 수집 메뉴로 등록)')
+    for r in plan['replaced']:
+        w(f'- 삭제: {r["existing"]["name"]} `{r["existing"]["id"]}` → 등록: 수집 메뉴 {r["source_menu_id"]} (새 UUID `{r["new_menu_id"]}`). 근거: {r["evidence"]}')
+    if not plan['replaced']:
+        w('- 없음' + (' (이미 교체됨: ' + ', '.join(plan['already_replaced']) + ')' if plan['already_replaced'] else ''))
     w('')
     w('## 연결하지 않은 기존 메뉴')
     if plan['held']:
@@ -728,6 +744,7 @@ def apply_db(cur, plan, uploaded):
           sort_order = excluded.sort_order, image_ref = coalesce(excluded.image_ref, public.menus.image_ref)""",
         [(m['id'], STORE_ID, m['name'], m['description'], m['base_price'], m['image_ref'] if m['image_ref'] in uploaded else None,
           m['sort_order'], m['is_active'], m['is_sold_out']) for m in new])
+    deleted_files = delete_replaced(cur, plan)
     # 기존 메뉴: 가격만 갱신(비어 있던 설명은 채움). 이름·사진·인기·추천·활성·품절은 그대로
     for m in linked:
         cur.execute("""update public.menus set base_price = %s, description = coalesce(description, %s) where id = %s and store_id = %s""",
@@ -758,6 +775,7 @@ def apply_db(cur, plan, uploaded):
         [(STORE_ID, r['url'], r['collected_for'], r['subject_label'], 'PLATFORM', '미확인', '미확인',
           '쿠팡이츠 앱 수집(굽네치킨&피자 서대문 연희점, source_store_id=%s). 개발 서버 적용이며 외부 공개 승인이 아님' % plan['store']['source_store_id'],
           r['note'], '2026-11-17', BATCH) for r in plan['records']], page_size=500)
+    return deleted_files
 
 
 def restore_db(cur, plan, backup):
@@ -798,6 +816,7 @@ def verify(plan, cur, before=None, photos_expected=True):
     linked = [m for m in plan['menus'] if m['kind'] == 'LINK']
     check('가게 UUID 유지', now['store'] and now['store']['id'] == STORE_ID)
     check('기존 메뉴 UUID 전부 유지', all(m['id'] in menus_db for m in linked) and all(h['existing_menu_id'] in menus_db for h in plan['held']))
+    check('교체 대상 기존 메뉴는 삭제되고 수집 메뉴가 새 UUID로 등록됨', all(r['existing']['id'] not in menus_db and r['new_menu_id'] in menus_db for r in plan['replaced']))
     check('메뉴 가격 일치(연결+새)', all(menus_db.get(m['id'], {}).get('base_price') == m['base_price'] for m in plan['menus']))
     check('새 메뉴 수', all(m['id'] in menus_db for m in new) and len(menus_db) == len(plan['menus']) + len(plan['held']), f'{len(menus_db)}')
     want_ref = (lambda m: m['image_ref']) if photos_expected else (lambda m: ex_ref(m))
@@ -816,7 +835,7 @@ def verify(plan, cur, before=None, photos_expected=True):
         b = before['existing']
         bm = {m['id']: m for m in b['menus']}
         check('추천·인기 표시·품절·활성 보존', all(menus_db[i]['is_popular'] == m['is_popular'] and menus_db[i]['popularity_score'] == m['popularity_score']
-                                         and menus_db[i]['is_sold_out'] == m['is_sold_out'] and menus_db[i]['is_active'] == m['is_active'] and menus_db[i]['name'] == m['name'] for i, m in bm.items()))
+                                         and menus_db[i]['is_sold_out'] == m['is_sold_out'] and menus_db[i]['is_active'] == m['is_active'] and menus_db[i]['name'] == m['name'] for i, m in bm.items() if i not in {r['existing']['id'] for r in plan['replaced']}))
         check('주문·리뷰 스냅샷 해시 변경 없음', order_fingerprint(cur) == before['order_fingerprint'])
         check('다른 가게 변경 없음', other_store_fingerprints(cur) == before['other_store_fingerprints'])
         check('공개 출처 목록 변경 없음', now['refs']['store_sources'] == b['refs']['store_sources'])
@@ -890,6 +909,90 @@ def anon_verify(plan):
     return not bad and not photo_bad
 
 
+# ---------------------------------------------------------------- 메뉴 교체(C안): 기존 메뉴 백업 → 물리 삭제 → 수집 메뉴 등록
+def replace_refs(cur, menu_id):
+    """기존 메뉴를 가리키는 곳. 하나라도 있으면 교체(삭제)하지 않는다(FK는 RESTRICT, 주문·리뷰를 지우지 않는다)."""
+    cur.execute("""select (select count(*) from public.order_items where menu_id = %s::uuid),
+                          (select count(*) from public.review_menus where menu_id = %s::uuid),
+                          (select count(*) from public.menu_option_groups where menu_id = %s::uuid)""", (menu_id, menu_id, menu_id))
+    a, b, c = cur.fetchone()
+    return {'order_items': a, 'review_menus': b, 'option_groups': c}
+
+
+def backup_replaced(plan, cur, backup_dir, skip_photos):
+    """삭제할 기존 메뉴의 행 전체와 사진 파일을 비공개 백업에 저장한다(인증정보 없음). 참조가 있으면 아무것도 바꾸기 전에 멈춘다."""
+    items = []
+    for r in plan['replaced']:
+        mid = r['existing']['id']
+        refs = replace_refs(cur, mid)
+        if any(refs.values()):
+            sys.exit(f'교체 대상 {r["existing"]["name"]}을(를) 가리키는 참조가 있어 교체를 멈춥니다(아무것도 바꾸지 않았습니다): {refs}')
+        cur.execute('select to_jsonb(m) from public.menus m where m.id = %s and m.store_id = %s', (mid, STORE_ID))
+        row = cur.fetchone()[0]
+        item = {'menu': row, 'file': None, 'new_menu_id': r['new_menu_id'], 'source_menu_id': r['source_menu_id']}
+        ref = row.get('image_ref')
+        if ref and not skip_photos:
+            try:
+                with urllib.request.urlopen(public_url(ref), timeout=60) as resp:
+                    data = resp.read()
+            except Exception as e:
+                sys.exit('기존 메뉴 사진을 백업하지 못해 교체를 멈춥니다(아무것도 바꾸지 않았습니다): ' + safe_error(e))
+            fdir = os.path.join(backup_dir, 'replaced_files')
+            os.makedirs(fdir, exist_ok=True)
+            saved = os.path.join(fdir, os.path.basename(ref))
+            with open(saved, 'wb') as f:
+                f.write(data)
+            item['file'] = {'object_path': ref, 'saved_as': os.path.relpath(saved, backup_dir), 'sha256': hashlib.sha256(data).hexdigest(), 'bytes': len(data)}
+        items.append(item)
+    write_json(os.path.join(backup_dir, 'replaced_menus.json'), {'items': items, 'note': '교체(삭제)한 기존 메뉴 행 전체와 사진 파일. --replace-restore 로 되돌린다'})
+    return items
+
+
+def delete_replaced(cur, plan):
+    """한 트랜잭션 안에서 교체 대상 기존 메뉴를 삭제한다. 참조를 다시 확인하고, 있으면 예외로 전체를 되돌린다. 지운 사진 경로를 돌려준다."""
+    files = []
+    for r in plan['replaced']:
+        mid = r['existing']['id']
+        cur.execute('select image_ref from public.menus where id = %s and store_id = %s', (mid, STORE_ID))
+        row = cur.fetchone()
+        if not row:
+            continue
+        refs = replace_refs(cur, mid)
+        if any(refs.values()):
+            raise RuntimeError(f'교체 대상 {r["existing"]["name"]}을(를) 가리키는 참조가 있다: {refs}')
+        cur.execute('delete from public.menus where id = %s and store_id = %s', (mid, STORE_ID))
+        if cur.rowcount != 1:
+            raise RuntimeError('교체 대상 메뉴를 삭제하지 못했다')
+        if row[0]:
+            files.append(row[0])
+    return files
+
+
+def restore_replaced(cur, plan, backup_dir, skip_photos):
+    """교체를 되돌린다: 수집으로 새로 만든 메뉴(참조 없을 때)를 지우고 기존 메뉴 행과 사진 파일을 백업에서 복원한다."""
+    data = read_json(os.path.join(backup_dir, 'replaced_menus.json'))
+    for item in data['items']:
+        cur.execute('select count(*) from public.order_items where menu_id = %s::uuid', (item['new_menu_id'],))
+        if cur.fetchone()[0]:
+            raise RuntimeError('수집으로 만든 새 메뉴를 가리키는 주문이 있어 되돌릴 수 없다')
+        cur.execute('delete from public.menus where id = %s and store_id = %s', (item['new_menu_id'], STORE_ID))
+        cur.execute('insert into public.menus select * from jsonb_populate_recordset(null::public.menus, %s::jsonb) on conflict (id) do nothing', (json.dumps([item['menu']]),))
+    restored = 0
+    if not skip_photos:
+        for item in data['items']:
+            f = item.get('file')
+            if not f:
+                continue
+            with open(os.path.join(backup_dir, f['saved_as']), 'rb') as fh:
+                blob = fh.read()
+            mime = 'image/png' if f['object_path'].endswith('.png') else 'image/jpeg'
+            status, body = storage_request('POST', f'/storage/v1/object/{BUCKET}/{f["object_path"]}', blob, mime)
+            if status not in (200, 201, 400, 409):
+                sys.exit('사진 복원 실패: ' + str(status))
+            restored += 1
+    return len(data['items']), restored
+
+
 # ---------------------------------------------------------------- 정리(물리 삭제): 실제 옵션으로 대체된 기존 가상 옵션·그룹
 CLEANUP_BATCH = BATCH + '-cleanup'
 
@@ -957,6 +1060,64 @@ def render_cleanup_report(rows, include_referenced):
     w(f'- 삭제 대상: 그룹 {d_g}개, 옵션 {d_o}개 (전체 후보 그룹 {len(rows["groups"])}개·옵션 {len(rows["options"])}개). 참조가 있는 항목 삭제 포함 여부: {"포함" if include_referenced else "제외(기본)"}')
     w('- 메뉴는 하나도 삭제하지 않는다. 다른 가게·사용자·주문·리뷰 데이터는 변경하지 않는다.')
     return '\n'.join(L) + '\n'
+
+
+REPORTED_REFS = {'options': 1, 'groups': 1}  # 서정에게 보고한 참조 건수(옵션 1개, 그룹 1개). 다르면 정리를 멈춘다
+EXPECTED_FKS = {('menu_options', 'menu_options_group_id_fkey', 'menu_option_groups', 'r')}
+EXPECTED_SRC_FUNCS = {'public.create_order'}  # source_option_id/source_group_id 를 쓰는 함수(기록만 한다)
+EXPECTED_TRIGGERS = {('menu_options', 'menu_options_bump_menu_revision'), ('menu_option_groups', 'menu_option_groups_bump_menu_revision')}
+
+
+def cleanup_preflight(cur, rows, include_referenced):
+    """실행 직전 FK·조회 의존성·참조 건수를 라이브 DB에서 다시 확인한다. 보고와 다르면 문제 목록을 돌려준다(삭제하지 않는다)."""
+    problems = []
+    cur.execute("""select conrelid::regclass::text, conname, confrelid::regclass::text, confdeltype
+                   from pg_constraint where contype = 'f' and confrelid in ('public.menu_options'::regclass, 'public.menu_option_groups'::regclass)""")
+    fks = {tuple(r) for r in cur.fetchall()}
+    if fks != EXPECTED_FKS:
+        problems.append(f'가상 옵션·그룹을 가리키는 FK가 보고와 다르다: 예상 {sorted(EXPECTED_FKS)} / 실제 {sorted(fks)}')
+    cur.execute("""select n.nspname || '.' || p.proname from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+                   where n.nspname in ('public', 'private') and (p.prosrc ilike '%source_option_id%' or p.prosrc ilike '%source_group_id%')""")
+    funcs = {r[0] for r in cur.fetchall()}
+    if funcs != EXPECTED_SRC_FUNCS:
+        problems.append(f'원본 옵션·그룹 id를 쓰는 함수가 보고와 다르다: 예상 {sorted(EXPECTED_SRC_FUNCS)} / 실제 {sorted(funcs)}')
+    cur.execute("""select count(*) from pg_views where definition ilike '%order_item_options%' or definition ilike '%source_option_id%' or definition ilike '%menu_options%'""")
+    if cur.fetchone()[0]:
+        problems.append('가상 옵션·주문 옵션 스냅샷을 쓰는 뷰가 있다')
+    cur.execute("""select c.relname, t.tgname from pg_trigger t join pg_class c on c.oid = t.tgrelid
+                   where not t.tgisinternal and c.relname in ('menu_options', 'menu_option_groups', 'order_item_options')""")
+    trg = {tuple(r) for r in cur.fetchall()}
+    if trg != EXPECTED_TRIGGERS:
+        problems.append(f'옵션·그룹·주문 옵션 테이블의 트리거가 보고와 다르다: 예상 {sorted(EXPECTED_TRIGGERS)} / 실제 {sorted(trg)}')
+    d_opts = [o for o in rows['options'] if o['delete']]
+    d_groups = [g for g in rows['groups'] if g['delete']]
+    live_opt_refs = sum(o['refs'] for o in d_opts)
+    live_grp_refs = sum(g['refs'] for g in d_groups)
+    if include_referenced and (live_opt_refs, live_grp_refs) != (REPORTED_REFS['options'], REPORTED_REFS['groups']):
+        problems.append(f'참조 건수가 보고와 다르다: 예상 옵션 {REPORTED_REFS["options"]}·그룹 {REPORTED_REFS["groups"]} / 실제 옵션 {live_opt_refs}·그룹 {live_grp_refs}')
+    # 참조하는 쪽 행이 어떤 주문·리뷰와 이어지는지 (주문 행이 사라지지 않는지는 FK가 지킨다)
+    cur.execute("select count(*) from public.order_item_options oio left join public.order_items oi on oi.id = oio.order_item_id where oi.id is null")
+    if cur.fetchone()[0]:
+        problems.append('주문 항목이 없는 주문 옵션 스냅샷 행이 있다')
+    return problems
+
+
+def write_snapshot_source_map(cur, rows, backup_dir):
+    """삭제할 가상 옵션·그룹의 원본 ID와, 그것을 가리키는 과거 주문 스냅샷 행을 대응시켜 비공개 백업에 남긴다."""
+    d_opts = [o['id'] for o in rows['options'] if o['delete']]
+    d_groups = [g['id'] for g in rows['groups'] if g['delete']]
+    cur.execute("""select jsonb_build_object('order_id', oi.order_id, 'order_item_id', oio.order_item_id, 'snapshot_row_id', oio.id,
+                          'source_group_id', oio.source_group_id, 'source_option_id', oio.source_option_id,
+                          'snapshot_group_name', oio.group_name_snapshot, 'snapshot_option_name', oio.option_name_snapshot,
+                          'snapshot_additional_price', oio.additional_price_snapshot, 'snapshot_quantity', oio.quantity_snapshot)
+                   from public.order_item_options oio join public.order_items oi on oi.id = oio.order_item_id
+                   where oio.source_option_id = any(%s::uuid[]) or oio.source_group_id = any(%s::uuid[]) order by oi.order_id, oio.id""", (d_opts, d_groups))
+    refs = [r[0] for r in cur.fetchall()]
+    names = {o['id']: {'menu': o['menu'], 'group': o['group'], 'option': o['name']} for o in rows['options']}
+    write_json(os.path.join(backup_dir, 'snapshot_source_id_map.json'),
+               {'note': '삭제한 가상 옵션·그룹의 원본 ID와 과거 주문 스냅샷의 원본 ID 대응. 비공개(인증정보 없음). 스냅샷의 이름·가격은 주문 행에 그대로 있다.',
+                'deleted_option_names': names, 'snapshot_rows_referencing_deleted': refs})
+    return len(refs)
 
 
 def run_cleanup(cur, plan, rows, backup_dir):
@@ -1071,7 +1232,7 @@ def build_groups_plan(groups_dir, plan, state):
         issues.append(f'그룹에 속하지 않은 적용 메뉴: {r["name"]} ({r["source_menu_id"]})')
     # 서버에 있는 활성 메뉴 중 그룹에 없는 것(예: 보류한 기존 메뉴). 앱에서는 '기타 메뉴'로 모이므로 숨기지 않고 알린다
     state_menus = {m['id']: m for m in state.get('menus', [])}
-    planned_ids = {r['id'] for r in plan['menus']}
+    planned_ids = {r['id'] for r in plan['menus']} | {r['existing']['id'] for r in plan.get('replaced', [])}
     ungrouped_existing = [m for mid, m in state_menus.items() if mid not in grouped_ids and mid not in planned_ids and m.get('is_active')]
     for m in ungrouped_existing:
         notes.append(f'미분류(그룹 없음) 활성 메뉴: {m["name"]} — 앱에서 "기타 메뉴"로 보인다')
@@ -1272,7 +1433,7 @@ def main():
     ap.add_argument('--yes-dev-project', action='store_true', help='연결 대상이 팀이 지정한 개발 프로젝트임을 확인했다')
     ap.add_argument('--backup-dir', help='--restore/--verify에 쓸 백업 폴더')
     mode = ap.add_mutually_exclusive_group(required=True)
-    for name in ('check', 'backup', 'apply', 'verify', 'restore', 'cleanup', 'cleanup-restore', 'groups-check', 'groups-apply', 'groups-verify', 'groups-restore'):
+    for name in ('check', 'backup', 'apply', 'verify', 'restore', 'replace-restore', 'cleanup', 'cleanup-restore', 'groups-check', 'groups-apply', 'groups-verify', 'groups-restore'):
         mode.add_argument(f'--{name}', action='store_true')
     ap.add_argument('--groups-package', help='메뉴 그룹 수집 자료 폴더(menu_groups.json, verification.json). groups-* 모드에 필요')
     ap.add_argument('--execute', action='store_true', help='--cleanup 을 실제로 실행한다(없으면 후보만 보여 준다)')
@@ -1308,7 +1469,7 @@ def main():
         return 0
     if (args.groups_check or args.groups_apply or args.groups_verify or args.groups_restore) and not args.groups_package:
         sys.exit('--groups-package (메뉴 그룹 자료 폴더)가 필요합니다.')
-    if not args.yes_dev_project and (args.backup or args.apply or args.restore or args.groups_apply or args.groups_restore or (args.cleanup and args.execute)):
+    if not args.yes_dev_project and (args.backup or args.apply or args.restore or args.replace_restore or args.groups_apply or args.groups_restore or (args.cleanup and args.execute)):
         sys.exit('--yes-dev-project 가 필요합니다. 연결 대상이 팀이 지정한 개발 프로젝트임을 먼저 확인하세요.')
     conn = connect()
     with conn, conn.cursor() as cur:
@@ -1389,6 +1550,16 @@ def main():
         if not args.execute:
             print('점검만 했습니다. 실제로 삭제하려면 --execute --yes-dev-project 를 함께 주세요.')
             return 0
+        conn = connect()
+        with conn, conn.cursor() as cur:
+            cur.execute('set transaction read only')
+            problems = cleanup_preflight(cur, rows, args.include_referenced)
+        if problems:
+            print('실행 직전 점검에서 보고와 다른 의존성이 발견되어 이 삭제를 멈춥니다(아무것도 삭제하지 않았습니다):')
+            for pr in problems:
+                print(' -', pr)
+            return 2
+        print('실행 직전 점검 통과: FK·조회 의존성·트리거·참조 건수가 보고와 같다')
         stamp = datetime.datetime.now().strftime('%Y%m%d-%H%M%S-%f')
         backup_dir = os.path.join(BACKUP_ROOT, 'cleanup-' + stamp)
         os.makedirs(backup_dir, exist_ok=False)
@@ -1396,6 +1567,7 @@ def main():
         conn = connect()
         try:
             with conn, conn.cursor() as cur:
+                n_map = write_snapshot_source_map(cur, rows, backup_dir)
                 g, o = run_cleanup(cur, plan, rows, backup_dir)
         except Exception as e:
             print('정리 실패(롤백됨):', safe_error(e))
@@ -1407,6 +1579,7 @@ def main():
             cur.execute('select count(*) from public.menus where store_id = %s::uuid', (STORE_ID,))
             menus_n = cur.fetchone()[0]
         print(f'정리 완료: 그룹 {g}개·옵션 {o}개 삭제. 백업: {backup_dir}')
+        print(f'원본 ID 대응 기록: 과거 주문 스냅샷 {n_map}행 (snapshot_source_id_map.json)')
         print(('PASS ' if ok_orders else 'FAIL ') + '주문·리뷰 스냅샷 지문 변경 없음')
         print(('PASS ' if ok_others else 'FAIL ') + '다른 가게 변경 없음')
         print(f'굽네 메뉴 수(삭제 없음): {menus_n}')
@@ -1423,6 +1596,12 @@ def main():
             print('주의: 이미 이번 배치가 반영된 상태입니다. 이 백업은 적용 후 상태라서 --restore 기준으로 쓸 수 없습니다(원래 백업을 쓰세요).')
         write_json(os.path.join(backup_dir, 'before_state.json'), {'existing': state, 'other_store_fingerprints': fps, 'order_fingerprint': ofp, 'options': opts, 'already_applied': already})
         write_json(os.path.join(backup_dir, 'id_map.json'), id_map(plan))
+        if plan['replaced']:
+            conn = connect()
+            with conn, conn.cursor() as cur:
+                cur.execute('set transaction read only')
+                backup_replaced(plan, cur, backup_dir, args.skip_photos)
+            print(f'교체 대상 기존 메뉴 {len(plan["replaced"])}개를 행·사진 파일까지 백업했습니다(replaced_menus.json).')
         print(f'백업 저장: {backup_dir}')
         if args.backup:
             return 0
@@ -1438,11 +1617,16 @@ def main():
         conn = connect()
         try:
             with conn, conn.cursor() as cur:
-                apply_db(cur, plan, uploaded)
+                deleted_files = apply_db(cur, plan, uploaded)
         except Exception as e:
             print('DB 반영 실패(롤백됨):', safe_error(e))
             return 1
         print('DB 반영 완료. 이어서 검증합니다.')
+        if deleted_files and not args.skip_photos:
+            # 삭제한 기존 메뉴의 사진 파일(백업해 둠). 수집 사진을 쓰므로 고아 파일을 남기지 않는다
+            for path in deleted_files:
+                status, _ = storage_request('DELETE', f'/storage/v1/object/{BUCKET}/{path}')
+                print(f'기존 메뉴 사진 파일 삭제({path}): {"완료" if status in (200, 204, 404) else "실패 " + str(status)}')
         conn = connect()
         with conn, conn.cursor() as cur:
             ok = verify(plan, cur, {'existing': state, 'other_store_fingerprints': fps, 'order_fingerprint': ofp}, not args.skip_photos)
@@ -1456,6 +1640,15 @@ def main():
         if not args.skip_photos:
             ok = anon_verify(plan) and ok
         return 0 if ok else 1
+
+    if args.replace_restore:
+        if not args.backup_dir:
+            sys.exit('--backup-dir (교체 때 만든 백업 폴더)가 필요합니다.')
+        conn = connect()
+        with conn, conn.cursor() as cur:
+            n_menus, n_files = restore_replaced(cur, plan, args.backup_dir, args.skip_photos)
+        print(f'교체 복구: 기존 메뉴 {n_menus}개 행 복원, 사진 {n_files}개 복원. 수집으로 새로 만든 메뉴는 삭제했습니다.')
+        return 0
 
     if args.restore:
         if not args.backup_dir:
