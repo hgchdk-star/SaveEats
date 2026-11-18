@@ -561,7 +561,47 @@ reset role;
 select is((select count(*)::int from public.review_helpful where review_id = public.zo('rid2')), 0, 'DB: 옛 operationId를 재생해도 도움돼요가 되살아나지 않았다 (목표값은 false 그대로)');
 set local role authenticated;
 select is(public.set_helpful(public.zo('rid2'), public.zid('h-5'), true) ->> 'helpfulCount', '1', '(다시 누름)');
-select is(public.zesh(public.zo('rb1'), 'h-self', true), 'P0001:SELF_HELPFUL_NOT_ALLOWED', '[B] 자기 리뷰에는 불가');
+-- 자기 리뷰에도 도움돼요를 누를 수 있다 (20261115000000_helpful_allow_self). rb1은 B가 쓴 리뷰이고 도움돼요 2개(A, C)가 있다.
+select set_config('zz.self1', public.set_helpful(public.zo('rb1'), public.zid('h-self-1'), true)::text, true);
+select is((select array_agg(k order by k) from jsonb_object_keys(current_setting('zz.self1')::jsonb) k), array['helpful', 'helpfulCount', 'replayed', 'reviewId'], '[B] 자기 리뷰 도움돼요 응답 키는 그대로');
+select is(current_setting('zz.self1')::jsonb ->> 'reviewId', public.zo('rb1')::text, '[B] 자기 리뷰 true: reviewId');
+select is(current_setting('zz.self1')::jsonb -> 'helpful', 'true'::jsonb, '[B] 자기 리뷰 true: helpful true (더 이상 SELF_HELPFUL_NOT_ALLOWED가 아니다)');
+select is((current_setting('zz.self1')::jsonb ->> 'helpfulCount')::int, 3, '[B] 자기 리뷰 true: helpfulCount = 기존 2(A, C) + 본인 1');
+select is(current_setting('zz.self1')::jsonb -> 'replayed', 'false'::jsonb, '[B] 자기 리뷰 true: 처음이라 replayed false');
+select is(public.set_helpful(public.zo('rb1'), public.zid('h-self-1'), true) -> 'replayed', 'true'::jsonb, '[B] 자기 리뷰: 같은 operationId 재시도는 replayed true');
+select is(public.set_helpful(public.zo('rb1'), public.zid('h-self-1'), true) ->> 'helpfulCount', '3', '[B] 자기 리뷰: 재생해도 개수는 그대로');
+select is(public.set_helpful(public.zo('rb1'), public.zid('h-self-1b'), true) ->> 'helpfulCount', '3', '[B] 자기 리뷰: 다른 operationId로 또 true해도 사용자당 1개라 개수는 그대로');
+select is(public.zq(format('select public.set_helpful(%L, %L, false)', public.zo('rb1'), public.zid('h-self-1'))), 'P0001:REVIEW_OPERATION_CONFLICT', '[B] 자기 리뷰: 같은 operationId + 다른 목표값 → REVIEW_OPERATION_CONFLICT');
+-- 목록 응답: 본인 리뷰의 helpfulCount · myHelpful · isMine
+select is((select e ->> 'helpfulCount' from jsonb_array_elements(public.list_my_reviews() -> 'items') e where e ->> 'reviewId' = public.zo('rb1')::text), '3', '[B] list_my_reviews: 자기 리뷰 helpfulCount 3');
+select is((select e ->> 'myHelpful' from jsonb_array_elements(public.list_my_reviews() -> 'items') e where e ->> 'reviewId' = public.zo('rb1')::text), 'true', '[B] list_my_reviews: 자기 리뷰 myHelpful true');
+select is((select e ->> 'isMine' from jsonb_array_elements(public.list_my_reviews() -> 'items') e where e ->> 'reviewId' = public.zo('rb1')::text), 'true', '[B] list_my_reviews: isMine true');
+select is((select e ->> 'helpfulCount' from jsonb_array_elements(public.list_public_reviews('store', public.zid('S1'), 'LATEST', null, 50) -> 'items') e where e ->> 'reviewId' = public.zo('rb1')::text), '3', '[B] 공개 목록: 자기 리뷰 helpfulCount 3');
+select is((select e ->> 'myHelpful' from jsonb_array_elements(public.list_public_reviews('store', public.zid('S1'), 'LATEST', null, 50) -> 'items') e where e ->> 'reviewId' = public.zo('rb1')::text), 'true', '[B] 공개 목록: 자기 리뷰 myHelpful true');
+select is((select e ->> 'isMine' from jsonb_array_elements(public.list_public_reviews('store', public.zid('S1'), 'LATEST', null, 50) -> 'items') e where e ->> 'reviewId' = public.zo('rb1')::text), 'true', '[B] 공개 목록: 자기 리뷰 isMine true');
+reset role;
+select is((select count(*)::int from public.review_helpful where review_id = public.zo('rb1') and user_id = 'bbbbbbbb-0000-4000-8000-000000000002'), 1, 'DB: 본인의 도움돼요 행이 생겼다');
+-- Guest가 보는 같은 리뷰: 개수는 본인 것까지 포함, myHelpful · isMine은 false
+select set_config('request.jwt.claims', '', true);
+set local role anon;
+select is((select e ->> 'helpfulCount' from jsonb_array_elements(public.list_public_reviews('store', public.zid('S1'), 'LATEST', null, 50) -> 'items') e where e ->> 'reviewId' = public.zo('rb1')::text), '3', '[Guest] 같은 리뷰 helpfulCount 3 (작성자 본인 것 포함)');
+select is((select e ->> 'myHelpful' from jsonb_array_elements(public.list_public_reviews('store', public.zid('S1'), 'LATEST', null, 50) -> 'items') e where e ->> 'reviewId' = public.zo('rb1')::text), 'false', '[Guest] myHelpful false');
+select is((select e ->> 'isMine' from jsonb_array_elements(public.list_public_reviews('store', public.zid('S1'), 'LATEST', null, 50) -> 'items') e where e ->> 'reviewId' = public.zo('rb1')::text), 'false', '[Guest] isMine false');
+reset role;
+select set_config('request.jwt.claims', '{"sub":"bbbbbbbb-0000-4000-8000-000000000002","role":"authenticated"}', true);
+set local role authenticated;
+-- 해제(false): 개수가 되돌아오고 목록에서도 myHelpful이 false다
+select set_config('zz.self2', public.set_helpful(public.zo('rb1'), public.zid('h-self-2'), false)::text, true);
+select is(current_setting('zz.self2')::jsonb -> 'helpful', 'false'::jsonb, '[B] 자기 리뷰 false: helpful false');
+select is((current_setting('zz.self2')::jsonb ->> 'helpfulCount')::int, 2, '[B] 자기 리뷰 false: helpfulCount 2로 복귀');
+select is(public.set_helpful(public.zo('rb1'), public.zid('h-self-3'), false) ->> 'helpfulCount', '2', '[B] 자기 리뷰: 이미 해제했는데 또 false → 오류 없이 그대로');
+select is((select e ->> 'myHelpful' from jsonb_array_elements(public.list_my_reviews() -> 'items') e where e ->> 'reviewId' = public.zo('rb1')::text), 'false', '[B] 해제 뒤 list_my_reviews myHelpful false');
+select is((select e ->> 'helpfulCount' from jsonb_array_elements(public.list_public_reviews('store', public.zid('S1'), 'LATEST', null, 50) -> 'items') e where e ->> 'reviewId' = public.zo('rb1')::text), '2', '[B] 해제 뒤 공개 목록 helpfulCount 2');
+select is(public.set_helpful(public.zo('rb1'), public.zid('h-self-1'), true) ->> 'helpfulCount', '3', '[B] (재생) 옛 operationId는 적용 당시 결과(개수 3)를 돌려준다');
+reset role;
+select is((select count(*)::int from public.review_helpful where review_id = public.zo('rb1') and user_id = 'bbbbbbbb-0000-4000-8000-000000000002'), 0, 'DB: 옛 operationId를 재생해도 본인 도움돼요가 되살아나지 않았다 (목표값은 false 그대로)');
+select set_config('request.jwt.claims', '{"sub":"bbbbbbbb-0000-4000-8000-000000000002","role":"authenticated"}', true);
+set local role authenticated;
 select is(public.zesh(gen_random_uuid(), 'h-none', true), 'P0001:RESOURCE_NOT_FOUND', '없는 리뷰');
 select is(public.zesh(null, 'h-null', true), 'P0001:INVALID_INPUT', '리뷰 ID null');
 select is(public.zesh(public.zo('rid2'), null, true), 'P0001:INVALID_INPUT', 'operationId null');
@@ -654,7 +694,7 @@ select is(public.zedr(public.zo('rid1'), 'd-stale', 1), 'P0001:REVIEW_REVISION_C
 select is(public.zedr(public.zo('rb1'), 'd-other', 1), 'P0001:RESOURCE_NOT_FOUND', '남의 리뷰 삭제 → RESOURCE_NOT_FOUND');
 select is(public.zedr(null, 'd-null', 1), 'P0001:INVALID_INPUT', '삭제: 리뷰 ID null');
 select is(public.zedr(public.zo('rid1'), 'd-null2', null), 'P0001:INVALID_INPUT', '삭제: expectedRevision null');
-select is(public.zesh(public.zo('rid2'), 'h-del', true), 'P0001:RESOURCE_NOT_FOUND', '삭제된 리뷰에는 도움돼요 불가');
+select is(public.zesh(public.zo('rid2'), 'h-del', true), 'P0001:RESOURCE_NOT_FOUND', '삭제된 리뷰에는 도움돼요 불가 (본인이 삭제한 자기 리뷰여도 RESOURCE_NOT_FOUND)');
 select is(public.get_review_eligibility(public.zo('oa2')) ->> 'eligibility', 'CAN_WRITE', '삭제 + 기한 안 → 다시 CAN_WRITE');
 -- 재작성: 새 ID, 도움돼요 0부터
 select set_config('zz.rid2b', (public.create_review(public.zo('oa2'), public.zid('c-a2b'), 4, '삭제하고 다시 썼어요')::jsonb ->> 'reviewId'), true);
