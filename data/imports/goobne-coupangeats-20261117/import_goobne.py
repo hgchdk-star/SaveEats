@@ -30,6 +30,7 @@ import urllib.request
 import uuid
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+BACKUP_ROOT = os.environ.get('GOOBNE_BACKUP_ROOT') or os.path.join(HERE, 'backup')  # 시험은 임시 폴더를 쓴다(실제 백업과 섞이지 않게)
 NAMESPACE = uuid.UUID('6f1c1e2a-0d3b-4c7e-9a52-7b9d3e1f0a11')
 SOURCE_SYSTEM = 'coupangeats'
 BATCH = 'goobne-coupangeats-20261117'
@@ -92,6 +93,62 @@ left join public.menu_options o on o.group_id = g.id
 where s.id <> %(sid)s::uuid
 group by s.id order by s.id
 """
+
+
+# ---------------------------------------------------------------- 비밀값 마스킹 (모든 출력은 이 함수를 거친다)
+SECRET_ENV_KEYS = ('DATABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY', 'SUPABASE_PUBLISHABLE_KEY', 'EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY')
+
+
+def secret_values():
+    """환경변수에 든 비밀값과 그 조각(연결 문자열의 비밀번호, 비밀번호 안의 @ 로 나뉜 조각)을 길이순으로 돌려준다."""
+    import re
+    from urllib.parse import unquote
+    vals = set()
+    for key in SECRET_ENV_KEYS:
+        v = (os.environ.get(key) or '').strip().strip('"\'')
+        if len(v) >= 3:
+            vals.add(v)
+    url = (os.environ.get('DATABASE_URL') or '').strip().strip('"\'')
+    m = re.match(r'^[A-Za-z][A-Za-z0-9+.-]*://[^:/@]+:(.*)@[^@/]+(/.*)?$', url)
+    if m:
+        pw = m.group(1)
+        for cand in (pw, unquote(pw), pw[1:-1] if pw.startswith('[') and pw.endswith(']') else pw):
+            if len(cand) >= 3:
+                vals.add(cand)
+            for piece in cand.replace('[', '').replace(']', '').split('@'):
+                if len(piece) >= 3:
+                    vals.add(piece)
+    return sorted(vals, key=len, reverse=True)
+
+
+def redact(text):
+    """출력할 문자열에서 비밀값(그리고 비밀값처럼 생긴 패턴)을 ***로 가린다."""
+    import re
+    text = str(text)
+    for v in secret_values():
+        text = text.replace(v, '***')
+    text = re.sub(r'(://[^:/@\s]+:)[^@\s/]*(@)', r'\1***\2', text)                 # URL 안의 비밀번호
+    text = re.sub(r'(host name ")[^"]*@', r'\1***@', text)                            # libpq가 읽은 호스트 앞의 사용자정보 조각
+    text = re.sub(r'eyJ[A-Za-z0-9_\-]{10,}\.[A-Za-z0-9_\-]{10,}\.[A-Za-z0-9_\-]{10,}', '***', text)  # JWT 형태 키
+    text = re.sub(r'sb_(secret|publishable)_[A-Za-z0-9_\-]+', r'sb_\1_***', text)
+    return text
+
+
+def safe_error(e, limit=300):
+    """예외를 '종류: 가려진 설명'으로만 줄인다. DB 오류는 SQLSTATE 코드를 함께 남긴다."""
+    code = getattr(e, 'pgcode', None)
+    return f'{type(e).__name__}' + (f'[{code}]' if code else '') + ': ' + redact(str(e))[:limit]
+
+
+def install_safe_excepthook():
+    """처리되지 않은 예외도 기본 traceback(예외 원문 포함) 대신 가려진 한 줄과 위치만 출력한다."""
+    import traceback
+
+    def hook(exc_type, exc, tb):
+        print('오류: ' + safe_error(exc), file=sys.stderr)
+        for fs in traceback.extract_tb(tb)[-4:]:
+            print(f'  위치: {os.path.basename(fs.filename)}:{fs.lineno} ({fs.name})', file=sys.stderr)
+    sys.excepthook = hook
 
 
 # ---------------------------------------------------------------- 환경 · 입출력
@@ -641,7 +698,7 @@ def upload_photos(plan):
         if same:
             done.append(p['object_path'])
         else:
-            failed.append((p['object_path'], status, body[:120].decode('utf-8', 'replace')))
+            failed.append((p['object_path'], status, redact(body[:120].decode('utf-8', 'replace'))))
     return done, failed
 
 
@@ -753,8 +810,8 @@ def verify(plan, cur, before=None, photos_expected=True):
     check('옵션 그룹 일치', all(groups_db.get(g['id'], {}).get('max_select') == g['max_select'] and groups_db[g['id']]['min_select'] == g['min_select'] and groups_db[g['id']]['is_active'] for g in plan['groups']))
     check('옵션 추가금·수량 설정 일치', all((options_db.get(o['id'], {}).get('additional_price'), options_db.get(o['id'], {}).get('allow_quantity'), options_db.get(o['id'], {}).get('max_quantity'))
                                     == (o['additional_price'], o['allow_quantity'], o['max_quantity']) and options_db[o['id']]['is_active'] for o in plan['options']))
-    check('기존 가상 옵션 비활성(삭제 안 됨)', all(g['id'] in groups_db and not groups_db[g['id']]['is_active'] for g in plan['deact_groups'])
-          and all(o['id'] in options_db and not options_db[o['id']]['is_active'] for o in plan['deact_options']))
+    check('기존 가상 옵션은 비활성이거나 정리로 삭제됨(활성으로 남은 것 없음)', all(g['id'] not in groups_db or not groups_db[g['id']]['is_active'] for g in plan['deact_groups'])
+          and all(o['id'] not in options_db or not options_db[o['id']]['is_active'] for o in plan['deact_options']))
     if before is not None:
         b = before['existing']
         bm = {m['id']: m for m in b['menus']}
@@ -808,7 +865,7 @@ def anon_verify(plan):
             with urllib.request.urlopen(req, timeout=30) as r:
                 dto = json.loads(r.read())
         except Exception as e:
-            bad.append((m['name'], f'조회 실패 {e}'))
+            bad.append((m['name'], '조회 실패 ' + safe_error(e)))
             continue
         if dto['price'] != m['base_price']:
             bad.append((m['name'], f'가격 {dto["price"]} != {m["base_price"]}'))
@@ -833,8 +890,115 @@ def anon_verify(plan):
     return not bad and not photo_bad
 
 
+# ---------------------------------------------------------------- 정리(물리 삭제): 실제 옵션으로 대체된 기존 가상 옵션·그룹
+CLEANUP_BATCH = BATCH + '-cleanup'
+
+
+def cleanup_candidates(cur, plan, include_referenced=False):
+    """삭제 후보와 참조 건수를 라이브 DB에서 센다. 메뉴는 건드리지 않는다.
+    참조 = order_item_options.source_option_id / source_group_id (FK는 없는 단순 값, 주문 스냅샷 열이 따로 있어 조회에는 쓰이지 않는다).
+    참조가 있는 옵션은 기본으로 남기고(include_referenced 일 때만 삭제), 그 옵션을 가진 그룹도 남긴다."""
+    g_ids = [g['id'] for g in plan['deact_groups']]
+    o_ids = [o['id'] for o in plan['deact_options']]
+    rows = {'groups': [], 'options': []}
+    if not g_ids:
+        return rows
+    cur.execute("""select g.id::text, m.name, g.name, g.is_active,
+                          (select count(*) from public.order_item_options x where x.source_group_id = g.id),
+                          (select count(*) from public.menu_options o where o.group_id = g.id)
+                   from public.menu_option_groups g join public.menus m on m.id = g.menu_id
+                   where g.id = any(%s::uuid[]) and m.store_id = %s::uuid order by m.sort_order, g.sort_order""", (g_ids, STORE_ID))
+    groups = {r[0]: {'id': r[0], 'menu': r[1], 'name': r[2], 'is_active': r[3], 'refs': r[4], 'option_total': r[5]} for r in cur.fetchall()}
+    cur.execute("""select o.id::text, o.group_id::text, o.name, o.is_active,
+                          (select count(*) from public.order_item_options x where x.source_option_id = o.id)
+                   from public.menu_options o where o.group_id = any(%s::uuid[]) order by o.sort_order""", (list(groups) or ['00000000-0000-0000-0000-000000000000'],))
+    opts = [{'id': r[0], 'group_id': r[1], 'name': r[2], 'is_active': r[3], 'refs': r[4]} for r in cur.fetchall()]
+    for o in opts:
+        o['delete'] = bool(o['refs'] == 0 or include_referenced)
+        o['group'] = groups[o['group_id']]['name']
+        o['menu'] = groups[o['group_id']]['menu']
+    by_group = {}
+    for o in opts:
+        by_group.setdefault(o['group_id'], []).append(o)
+    for gid, g in groups.items():
+        kept = [o for o in by_group.get(gid, []) if not o['delete']]
+        g['delete'] = bool((g['refs'] == 0 or include_referenced) and not kept)
+        g['kept_options'] = len(kept)
+    # 안전 확인: 활성 옵션·그룹과 새로 만든 행은 후보가 될 수 없다
+    planned = {g['id'] for g in plan['groups']}
+    assert not (set(groups) & planned), '새 그룹이 정리 후보에 들어왔다'
+    rows['groups'] = list(groups.values())
+    rows['options'] = opts
+    return rows
+
+
+def render_cleanup_report(rows, include_referenced):
+    L = []
+    w = L.append
+    w('# 기존 가상 옵션 물리 삭제 후보 (점검 전용)')
+    w('')
+    w('FK: `menu_options.group_id → menu_option_groups` ON DELETE RESTRICT, `menu_option_groups.menu_id → menus` RESTRICT. 옵션·그룹을 가리키는 다른 FK는 없다.')
+    w('`order_item_options.source_option_id / source_group_id`는 FK 없는 단순 uuid다. 서버·앱의 조회 코드는 이 열을 읽지 않고(`get_my_order`는 스냅샷 열만 읽음) `create_order`가 기록만 한다.')
+    w('삭제하면 메뉴의 catalog_revision이 오른다(트리거). 담아 둔 장바구니는 다시 검증된다.')
+    w('')
+    w('| 구분 | 이름 | UUID | 삭제 이유 | 참조 건수 | 삭제 영향 | 물리 삭제 |')
+    w('|---|---|---|---|---|---|---|')
+    for g in rows['groups']:
+        verdict = '가능' if g['delete'] else ('보류(옵션 %d개 남김)' % g['kept_options'] if g['kept_options'] else '보류')
+        impact = '영향 없음' if g['refs'] == 0 else '주문 스냅샷은 그대로, 원본 그룹 id 추적만 끊김'
+        w(f'| 그룹 | {g["menu"]} / {g["name"]} | `{g["id"]}` | 실제 수집 옵션으로 대체(현재 비활성) | 주문 옵션 스냅샷 {g["refs"]}건 | {impact} | {verdict} |')
+    for o in rows['options']:
+        verdict = '가능' if o['delete'] else '보류(주문 스냅샷이 가리킴)'
+        impact = '영향 없음' if o['refs'] == 0 else '주문 스냅샷(이름·가격)은 그대로, 원본 옵션 id 추적만 끊김'
+        w(f'| 옵션 | {o["menu"]} / {o["group"]} / {o["name"]} | `{o["id"]}` | 실제 수집 옵션으로 대체(현재 비활성) | 주문 옵션 스냅샷 {o["refs"]}건 | {impact} | {verdict} |')
+    d_o = sum(1 for o in rows['options'] if o['delete'])
+    d_g = sum(1 for g in rows['groups'] if g['delete'])
+    w('')
+    w(f'- 삭제 대상: 그룹 {d_g}개, 옵션 {d_o}개 (전체 후보 그룹 {len(rows["groups"])}개·옵션 {len(rows["options"])}개). 참조가 있는 항목 삭제 포함 여부: {"포함" if include_referenced else "제외(기본)"}')
+    w('- 메뉴는 하나도 삭제하지 않는다. 다른 가게·사용자·주문·리뷰 데이터는 변경하지 않는다.')
+    return '\n'.join(L) + '\n'
+
+
+def run_cleanup(cur, plan, rows, backup_dir):
+    """백업(삭제할 행 전체) → 옵션 → 그룹 순서로 삭제. 한 트랜잭션(호출한 연결). 기록을 남긴다."""
+    d_opts = [o['id'] for o in rows['options'] if o['delete']]
+    d_groups = [g['id'] for g in rows['groups'] if g['delete']]
+    cur.execute('select coalesce(jsonb_agg(to_jsonb(g)), \'[]\'::jsonb) from public.menu_option_groups g where g.id = any(%s::uuid[])', (d_groups,))
+    g_rows = cur.fetchone()[0]
+    cur.execute('select coalesce(jsonb_agg(to_jsonb(o)), \'[]\'::jsonb) from public.menu_options o where o.id = any(%s::uuid[])', (d_opts,))
+    o_rows = cur.fetchone()[0]
+    write_json(os.path.join(backup_dir, 'deleted_rows.json'), {'groups': g_rows, 'options': o_rows, 'note': '삭제 전 행 전체. --cleanup-restore 로 되돌린다'})
+    cur.execute('delete from public.menu_options where id = any(%s::uuid[])', (d_opts,))
+    if cur.rowcount != len(d_opts):
+        raise RuntimeError('삭제된 옵션 수가 계획과 다르다')
+    cur.execute('delete from public.menu_option_groups where id = any(%s::uuid[])', (d_groups,))
+    if cur.rowcount != len(d_groups):
+        raise RuntimeError('삭제된 그룹 수가 계획과 다르다')
+    cur.execute('delete from private.store_source_records where load_batch = %s and store_id = %s', (CLEANUP_BATCH, STORE_ID))
+    url = next((m['source_reference'] for m in plan['menus'] if m.get('source_reference')), 'https://www.coupangeats.com/')
+    cur.execute("""insert into private.store_source_records
+        (store_id, url, collected_for, subject_label, host_kind, rights_permission, reuse_permission, evidence, note, checked_on, load_batch)
+        values (%s, %s, 'OTHER', %s, 'PLATFORM', '미확인', '미확인', %s, %s, %s, %s)""",
+                (STORE_ID, url, '기존 가상 옵션 물리 삭제', '쿠팡이츠 수집 옵션으로 대체(개발 서버 정리)',
+                 f'가상 옵션 그룹 {len(d_groups)}개·옵션 {len(d_opts)}개를 삭제했다. 주문 스냅샷이 가리키는 옵션 {sum(1 for o in rows["options"] if not o["delete"])}개는 남겼다.',
+                 '2026-11-18', CLEANUP_BATCH))
+    return len(d_groups), len(d_opts)
+
+
+def restore_cleanup(cur, backup_dir):
+    data = read_json(os.path.join(backup_dir, 'deleted_rows.json'))
+    import json as _json
+    if data['groups']:
+        cur.execute('insert into public.menu_option_groups select * from jsonb_populate_recordset(null::public.menu_option_groups, %s::jsonb) on conflict (id) do nothing', (_json.dumps(data['groups']),))
+    if data['options']:
+        cur.execute('insert into public.menu_options select * from jsonb_populate_recordset(null::public.menu_options, %s::jsonb) on conflict (id) do nothing', (_json.dumps(data['options']),))
+    cur.execute('delete from private.store_source_records where load_batch = %s and store_id = %s', (CLEANUP_BATCH, STORE_ID))
+    return len(data['groups']), len(data['options'])
+
+
 # ---------------------------------------------------------------- 진입점
 def main():
+    install_safe_excepthook()
     load_env_file()
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument('--package', required=True, help='수집 자료 폴더(읽기 전용)')
@@ -848,8 +1012,10 @@ def main():
     ap.add_argument('--yes-dev-project', action='store_true', help='연결 대상이 팀이 지정한 개발 프로젝트임을 확인했다')
     ap.add_argument('--backup-dir', help='--restore/--verify에 쓸 백업 폴더')
     mode = ap.add_mutually_exclusive_group(required=True)
-    for name in ('check', 'backup', 'apply', 'verify', 'restore'):
+    for name in ('check', 'backup', 'apply', 'verify', 'restore', 'cleanup', 'cleanup-restore'):
         mode.add_argument(f'--{name}', action='store_true')
+    ap.add_argument('--execute', action='store_true', help='--cleanup 을 실제로 실행한다(없으면 후보만 보여 준다)')
+    ap.add_argument('--include-referenced', action='store_true', help='--cleanup 에서 주문 스냅샷이 가리키는 가상 옵션도 삭제한다(기본은 남김)')
     args = ap.parse_args()
     opts = dict(option_max_quantity=args.option_max_quantity, max_select_mode=args.max_select_mode, confirm_links=tuple(args.confirm_link), hide_alcohol=not args.show_alcohol, enable_option_quantity=not args.no_option_quantity)
     out = os.path.join(HERE, 'out')
@@ -871,7 +1037,15 @@ def main():
         print(report)
         return 1 if plan['issues'] else 0
 
-    if not args.yes_dev_project and (args.backup or args.apply or args.restore):
+    if args.cleanup_restore:
+        if not args.yes_dev_project or not args.backup_dir:
+            sys.exit('--yes-dev-project 와 --backup-dir (정리 백업 폴더)가 필요합니다.')
+        conn = connect()
+        with conn, conn.cursor() as cur:
+            g, o = restore_cleanup(cur, args.backup_dir)
+        print(f'정리 복구: 그룹 {g}개·옵션 {o}개를 되돌렸습니다(이미 있으면 건너뜀).')
+        return 0
+    if not args.yes_dev_project and (args.backup or args.apply or args.restore or (args.cleanup and args.execute)):
         sys.exit('--yes-dev-project 가 필요합니다. 연결 대상이 팀이 지정한 개발 프로젝트임을 먼저 확인하세요.')
     conn = connect()
     with conn, conn.cursor() as cur:
@@ -887,10 +1061,46 @@ def main():
 
     if args.apply and plan['undecided']:
         sys.exit('미결정 항목이 있어 적용하지 않습니다: ' + '; '.join(plan['undecided']))
+    if args.cleanup:
+        conn = connect()
+        with conn, conn.cursor() as cur:
+            cur.execute('set transaction read only')
+            rows = cleanup_candidates(cur, plan, args.include_referenced)
+        report = render_cleanup_report(rows, args.include_referenced)
+        os.makedirs(out, exist_ok=True)
+        with open(os.path.join(out, 'cleanup_plan.md'), 'w', encoding='utf-8') as f:
+            f.write(report)
+        print(report)
+        if not args.execute:
+            print('점검만 했습니다. 실제로 삭제하려면 --execute --yes-dev-project 를 함께 주세요.')
+            return 0
+        stamp = datetime.datetime.now().strftime('%Y%m%d-%H%M%S-%f')
+        backup_dir = os.path.join(BACKUP_ROOT, 'cleanup-' + stamp)
+        os.makedirs(backup_dir, exist_ok=False)
+        write_json(os.path.join(backup_dir, 'before_state.json'), {'existing': state, 'other_store_fingerprints': fps, 'order_fingerprint': ofp, 'already_applied': False})
+        conn = connect()
+        try:
+            with conn, conn.cursor() as cur:
+                g, o = run_cleanup(cur, plan, rows, backup_dir)
+        except Exception as e:
+            print('정리 실패(롤백됨):', safe_error(e))
+            return 1
+        conn = connect()
+        with conn, conn.cursor() as cur:
+            ok_orders = order_fingerprint(cur) == ofp
+            ok_others = other_store_fingerprints(cur) == fps
+            cur.execute('select count(*) from public.menus where store_id = %s::uuid', (STORE_ID,))
+            menus_n = cur.fetchone()[0]
+        print(f'정리 완료: 그룹 {g}개·옵션 {o}개 삭제. 백업: {backup_dir}')
+        print(('PASS ' if ok_orders else 'FAIL ') + '주문·리뷰 스냅샷 지문 변경 없음')
+        print(('PASS ' if ok_others else 'FAIL ') + '다른 가게 변경 없음')
+        print(f'굽네 메뉴 수(삭제 없음): {menus_n}')
+        return 0 if ok_orders and ok_others else 1
+
     if args.backup or args.apply:
         # 백업은 절대 덮어쓰지 않는다(이름 충돌 시 실패). 이미 이 배치가 반영된 뒤의 상태는 '복구 기준'이 될 수 없어 표시해 둔다
         stamp = datetime.datetime.now().strftime('%Y%m%d-%H%M%S-%f')
-        backup_dir = os.path.join(HERE, 'backup', stamp)
+        backup_dir = os.path.join(BACKUP_ROOT, stamp)
         os.makedirs(backup_dir, exist_ok=False)
         own_ids = set(id_map(plan)['menus'].values())
         already = any(m['id'] in own_ids and m['id'] not in {l['existing_menu_id'] for l in plan['links']} for m in state['menus'])
@@ -915,7 +1125,7 @@ def main():
             with conn, conn.cursor() as cur:
                 apply_db(cur, plan, uploaded)
         except Exception as e:
-            print('DB 반영 실패(롤백됨):', e)
+            print('DB 반영 실패(롤백됨):', safe_error(e))
             return 1
         print('DB 반영 완료. 이어서 검증합니다.')
         conn = connect()

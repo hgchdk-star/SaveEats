@@ -40,3 +40,17 @@ python import_goobne.py --package $P --restore --yes-dev-project --backup-dir ba
 
 ## 검증 (--apply가 자동 수행, --verify로 재실행)
 가게·기존 메뉴 UUID 유지, 가격·옵션·선택 제한 일치, 가상 옵션 비활성(삭제 아님), 추천·인기·품절·활성 보존, 주문·리뷰 스냅샷 해시 불변, 다른 가게 해시 불변, 공개 출처 목록 불변, 소스 2개 = 1,400원과 (기본가+옵션 합)×메뉴 수량, anon `get_menu` 일치(가상 옵션이 함께 보이지 않음)와 사진 실제 내려받기.
+
+## 비밀값 보호
+- 모든 출력은 `redact()`를 거친다(환경변수의 DB 비밀번호·키와 그 조각, URL 안의 비밀번호, JWT 형태 키를 `***`로 가림). 처리되지 않은 예외도 가려진 한 줄과 위치만 출력한다(`sys.excepthook`).
+- DB 연결 문자열의 흔한 형식 오류(비밀번호를 감싼 `[ ]`, 비밀번호 안의 `@` 등)는 메모리에서만 바로잡는다. `.env.import` 파일은 바꾸지 않는다.
+- 시험: `python -m unittest test_redaction` (가짜 비밀값만 사용. 연결 시험에는 psycopg2 필요).
+
+## 기존 가상 옵션 물리 삭제 (`--cleanup`)
+```bash
+python import_goobne.py --package $P --cleanup                                  # 후보와 참조 건수만 보여 줌(점검 전용)
+python import_goobne.py --package $P --cleanup --execute --yes-dev-project      # 삭제(옵션 → 그룹, 한 트랜잭션, 삭제 행 전체를 backup/cleanup-<시각>/에 저장)
+python import_goobne.py --package $P --cleanup-restore --yes-dev-project --backup-dir backup/cleanup-<시각>
+```
+주문 옵션 스냅샷이 가리키는 옵션(과 그 그룹)은 기본으로 남긴다(`--include-referenced`로 포함 가능). 메뉴는 삭제하지 않는다. 전체 되돌리기(`--restore`)를 하려면 먼저 `--cleanup-restore`를 한다.
+테스트는 `GOOBNE_BACKUP_ROOT`로 임시 백업 폴더를 쓴다(실제 백업과 섞이지 않게).
