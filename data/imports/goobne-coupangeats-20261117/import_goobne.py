@@ -494,7 +494,7 @@ def render_report(plan, state):
     w('## 연결하지 않은 기존 메뉴')
     if plan['held']:
         for h in plan['held']:
-            w(f'- {h["existing_name"]}: 임의 삭제·엉뚱한 연결 없이 그대로 둔다. 후보 "{h.get("candidate_name")}"는 새 메뉴로 추가된다.')
+            w(f'- {h["existing_name"]}: 임의 삭제·엉뚱한 연결 없이 그대로 둔다. 후보 "{h.get("candidate_name")}"는 ' + ('이번 적용에서 제외한다(보류).' if h.get('skip_source_menu_id') else '새 메뉴로 추가된다.'))
             w(f'  - 근거: {h["evidence"]}')
     else:
         w('- 없음')
@@ -542,15 +542,46 @@ def render_report(plan, state):
 
 
 # ---------------------------------------------------------------- DB
+def normalize_database_url(url):
+    """연결 문자열의 흔한 형식 오류를 메모리에서만 바로잡는다(파일은 바꾸지 않는다, 값은 출력하지 않는다).
+    - 비밀번호를 감싼 [ ] 제거(대시보드 안내문의 자리표시 괄호)
+    - 비밀번호 안의 @ · : · / · ? · # · % · 공백 등을 퍼센트 인코딩(마지막 @ 를 호스트 구분으로 본다)"""
+    import re
+    from urllib.parse import quote, unquote
+    m = re.match(r'^([A-Za-z][A-Za-z0-9+.-]*)://([^:/@]+):(.*)@([^@/]+)(/.*)?$', url.strip())
+    if not m:
+        return url.strip()
+    scheme, user, pw, host, rest = m.group(1), m.group(2), m.group(3), m.group(4), m.group(5) or ''
+    if len(pw) >= 2 and pw[0] == '[' and pw[-1] == ']':
+        pw = pw[1:-1]
+    pw = quote(unquote(pw), safe='')
+    return f'{scheme}://{user}:{pw}@{host}{rest}'
+
+
 def connect():
     url = os.environ.get('DATABASE_URL')
     if not url:
-        sys.exit('DATABASE_URL이 필요합니다(Supabase 대시보드의 연결 문자열). 터미널 환경변수나 .env.import로 넣어 주세요. 값은 채팅에 적지 마세요.')
+        sys.exit('DATABASE_URL이 필요합니다(Supabase 대시보드의 연결 문자열). .env.import나 터미널 환경변수로 넣어 주세요. 값은 채팅에 적지 마세요.')
     try:
         import psycopg2
     except ImportError:
         sys.exit('psycopg2가 필요합니다: pip install psycopg2-binary')
-    return psycopg2.connect(url)
+    try:
+        return psycopg2.connect(normalize_database_url(url), connect_timeout=15)
+    except Exception as e:
+        # 오류 원문에는 연결 문자열 조각(비밀번호 포함)이 섞일 수 있어 출력하지 않는다
+        kind = type(e).__name__
+        hint = ''
+        text = str(e).lower()
+        if 'password authentication failed' in text or 'authentication' in text:
+            hint = ' 비밀번호가 맞는지(재설정했다면 새 값인지) 확인하세요.'
+        elif 'could not translate host' in text or 'name or service' in text:
+            hint = ' 주소 형식을 확인하세요(비밀번호에 @ 등이 있으면 인코딩이 필요합니다).'
+        elif 'timeout' in text or 'timed out' in text:
+            hint = ' 네트워크/방화벽을 확인하세요.'
+        elif 'tenant or user not found' in text:
+            hint = ' 사용자 이름(postgres.<프로젝트 ref>)과 pooler 지역을 확인하세요.'
+        sys.exit(f'DB 연결 실패({kind}). 원문 오류는 비밀이 섞일 수 있어 출력하지 않습니다.{hint}')
 
 
 def load_existing(cur):
