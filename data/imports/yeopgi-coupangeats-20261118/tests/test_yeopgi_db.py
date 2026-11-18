@@ -55,6 +55,12 @@ o = snap['_oio'][0]
 q("insert into public.order_item_options (order_item_id, source_group_id, source_option_id, group_name_snapshot, option_name_snapshot, additional_price_snapshot, sort_order) values (%s,%s,%s,%s,%s,%s,%s)",
   (OI, o['source_group_id'], o['source_option_id'], o['group_name_snapshot'], o['option_name_snapshot'], o['additional_price_snapshot'], o['sort_order']), replica=True)
 
+# 보고 이후 새 주문이 다른 가상 옵션(마라떡볶이 맵기 선택·순한맛)을 가리키게 된 상황: 승인 범위 밖이므로 보류돼야 한다
+MR = [g for g in snap['groups'] if g['menu_id'] == '374a1a7d-02bb-5a60-aba8-5e4c692c3c74' and g['name'] == '맵기 선택'][0]
+MRO = [o for o in snap['options'] if o['group_id'] == MR['id'] and o['name'] == '순한맛'][0]
+OI2 = str(uuid.uuid4())
+q("insert into public.order_items (id, order_id, store_id, menu_id, line_no, menu_name_snapshot, base_price_snapshot, option_total_snapshot, unit_price, quantity, line_total) values (%s,%s,%s,'374a1a7d-02bb-5a60-aba8-5e4c692c3c74',3,'마라떡볶이',16000,0,16000,1,16000)", (OI2, ORD, SID), replica=True)
+q("insert into public.order_item_options (order_item_id, source_group_id, source_option_id, group_name_snapshot, option_name_snapshot, additional_price_snapshot, sort_order) values (%s,%s,%s,'맵기 선택','순한맛',0,0)", (OI2, MR['id'], MRO['id']), replica=True)
 BK = tempfile.mkdtemp(prefix='yeopgi-test-backup-')
 env = dict(os.environ, DATABASE_URL=URI, YEOPGI_BACKUP_ROOT=BK, SUPABASE_URL='', EXPO_PUBLIC_SUPABASE_URL='', SUPABASE_PUBLISHABLE_KEY='', EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY='', SUPABASE_SERVICE_ROLE_KEY='')
 
@@ -79,7 +85,7 @@ fp_other = fp()
 
 # 1) 점검(읽기 전용)
 rc, out = run('--check')
-check('--check 오류 없음·보고서', rc == 0 and '오류: 없음' in out and '삭제 예정: 그룹 9개, 옵션 18개' in out and '비활성으로 보존: 그룹 1개, 옵션 2개' in out, out[:600])
+check('--check 오류 없음·보고서', rc == 0 and '오류: 없음' in out and '삭제 예정: 그룹 9개, 옵션 18개' in out and '주문 스냅샷이 원본 ID로 가리키는 것: 그룹 1개, 옵션 2개' in out and '삭제 보류(비활성 보존): 그룹 1개, 옵션 2개' in out and '의존성 점검: 통과' in out, out[:600])
 check('점검만으로 DB 변화 없음', q("select count(*) from public.menus where store_id=%s", (SID,))[0][0] == 5)
 # 2) 상한 미결정이면 적용 거절
 rc, out = run('--apply', '--yes-dev-project')
@@ -101,11 +107,16 @@ rc, out = run('--apply', '--yes-dev-project', extra=('--option-max-quantity', '1
 print(out[-2600:])
 check('--apply 성공(트랜잭션 안 검증 포함)', rc == 0 and '적용 완료' in out, out[-500:])
 check('활성 메뉴 35개, 2인 엽기떡볶이 삭제', q("select count(*) from public.menus where store_id=%s", (SID,))[0][0] == 35 and q("select count(*) from public.menus where id=%s", (RM,))[0][0] == 0)
-check('옵션 그룹 43 + 보존 비활성 1, 옵션 268 + 보존 2', q("select count(*) from public.menu_option_groups")[0][0] == 44 and q("select count(*) from public.menu_options")[0][0] == 270)
+check('옵션 그룹 43+보류 1, 옵션 268+보류 2(승인한 맵기 선택은 삭제, 새로 참조된 마라떡볶이 맵기 선택은 비활성 보존)', q("select count(*) from public.menu_option_groups")[0][0] == 44 and q("select count(*) from public.menu_options")[0][0] == 270
+      and q("select is_active from public.menu_option_groups where id=%s", (MR['id'],))[0][0] is False and q("select count(*) from public.menu_options where group_id=%s and not is_active", (MR['id'],))[0][0] == 2)
+check('스냅샷이 가리키던 원본 행 삭제됐고 주문 옵션 스냅샷 행은 그대로(원본 ID·이름·가격)', q("select count(*) from public.menu_options where id=%s", (snap['_oio'][0]['source_option_id'],))[0][0] == 0
+      and q("select source_option_id::text, option_name_snapshot, additional_price_snapshot from public.order_item_options")[0] == (snap['_oio'][0]['source_option_id'], snap['_oio'][0]['option_name_snapshot'], snap['_oio'][0]['additional_price_snapshot']))
+smap = json.load(open(os.path.join(BK, [d for d in sorted(os.listdir(BK)) if d not in pre_dirs][0], 'snapshot_source_id_map.json')))
+check('백업에 원본 ID ↔ 스냅샷 대응 기록', len(smap['snapshot_rows_referencing_deleted']) == 1 and snap['_oio'][0]['source_option_id'] in smap['deleted_options'], list(smap))
 check('수량 옵션 106개 상한 10, 나머지 수량 없음', q("select count(*) filter (where allow_quantity and max_quantity=10), count(*) filter (where allow_quantity), count(*) filter (where not allow_quantity and max_quantity is null) from public.menu_options where is_active")[0] == (106, 106, 162))
 check('원본 max 1000이 앱 상한으로 쓰이지 않음', q("select count(*) from public.menu_options where max_quantity > 10")[0][0] == 0)
 check('메뉴 그룹 7개·소속 35', q("select count(*) from public.store_menu_groups where store_id=%s", (SID,))[0][0] == 7 and q("select count(*) from public.store_menu_group_items where store_id=%s", (SID,))[0][0] == 35)
-check('주문·리뷰 스냅샷 보존(주문 항목·옵션 스냅샷 그대로)', q("select count(*) from public.order_items where store_id=%s", (SID,))[0][0] == 1 and q("select count(*) from public.order_item_options")[0][0] == 1)
+check('주문·리뷰 스냅샷 보존(주문 항목·옵션 스냅샷 그대로)', q("select count(*) from public.order_items where store_id=%s", (SID,))[0][0] == 2 and q("select count(*) from public.order_item_options")[0][0] == 2)
 check('다른 가게 불변', fp() == fp_other)
 check('엽기메뉴: 기존 UUID·인기·사진·설명 채움', q("select name, is_popular, popularity_score, image_ref, description is not null from public.menus where id=%s", (YM,))[0] == ('엽기메뉴', True, 60, 'menus/6bfda566-c644-5c1d-a75c-c03a5d315a62.png', True))
 
@@ -148,13 +159,23 @@ check('재실행 시점 백업으로는 복구 거절', rc != 0 and '복구 기�
 rc, out = run('--restore', '--yes-dev-project', '--backup-dir', first)
 print(out[-800:])
 check('복구 성공', rc == 0 and 'FAIL' not in out, out[-500:])
-check('복구 후: 원래 메뉴 5개·옵션 그룹 10·옵션 20', q("select count(*) from public.menus where store_id=%s", (SID,))[0][0] == 5 and q("select count(*) from public.menu_option_groups")[0][0] == 10 and q("select count(*) from public.menu_options")[0][0] == 20)
+check('복구 후: 원래 메뉴 5개·옵션 그룹 10·옵션 20(스냅샷이 가리키던 행 포함 복원)', q("select count(*) from public.menus where store_id=%s", (SID,))[0][0] == 5 and q("select count(*) from public.menu_option_groups")[0][0] == 10 and q("select count(*) from public.menu_options")[0][0] == 20)
 check('복구 후: 그룹·내부 기록 없음, 다른 가게 불변', q("select count(*) from public.store_menu_groups")[0][0] == 0 and q("select count(*) from private.store_source_records where load_batch like 'yeopgi%%'")[0][0] == 0 and fp() == fp_other)
 check('복구 후: 2인 엽기떡볶이와 그 옵션 복원', q("select count(*) from public.menus where id=%s", (RM,))[0][0] == 1 and q("select count(*) from public.menu_option_groups where menu_id=%s", (RM,))[0][0] == 2)
-# 9) 복구 후 재적용
+# 9) 다른 의존성이 생기면 참조된 가상 옵션만 보류(비활성 보존)하고 나머지는 진행
+q("create table public.zz_extra_dep (option_id uuid references public.menu_options(id))")
 rc, out = run('--apply', '--yes-dev-project', extra=('--option-max-quantity', '10'))
-check('복구 후 재적용 성공', rc == 0 and q("select count(*) from public.menus where store_id=%s", (SID,))[0][0] == 35, out[-300:])
-# 10) 비밀값이 출력에 없다
+hold_g = q("select count(*), bool_and(not is_active) from public.menu_option_groups where id=%s", (snap['_oio'][0]['source_group_id'],))[0]
+check('의존성 점검 실패 시: 참조된 가상 그룹·옵션만 비활성으로 보존, 나머지 삭제·적용 진행', rc == 0 and hold_g == (1, True)
+      and q("select count(*) from public.menus where store_id=%s", (SID,))[0][0] == 35 and q("select count(*) from public.menu_option_groups")[0][0] == 45 and q("select count(*) from public.menu_options")[0][0] == 272, out[-500:])
+bks2 = sorted(d for d in os.listdir(BK) if d not in pre_dirs and d not in bks)
+rc, out = run('--restore', '--yes-dev-project', '--backup-dir', os.path.join(BK, [d for d in bks2 if json.load(open(os.path.join(BK, d, 'backup.json')))['applied_before_backup'] == []][0]))
+check('보류 시나리오도 복구 성공', rc == 0 and 'FAIL' not in out, out[-400:])
+q("drop table public.zz_extra_dep")
+# 10) 복구 후 재적용
+rc, out = run('--apply', '--yes-dev-project', extra=('--option-max-quantity', '10'))
+check('복구 후 재적용 성공(가상 옵션 전부 삭제)', rc == 0 and q("select count(*) from public.menus where store_id=%s", (SID,))[0][0] == 35 and q("select count(*) from public.menu_option_groups")[0][0] == 44, out[-300:])
+# 11) 비밀값이 출력에 없다
 check('출력에 접속 문자열 없음', URI not in out)
 print(f'{sum(results)} / {len(results)} 통과')
 srv.cleanup(); shutil.rmtree(BK, ignore_errors=True)

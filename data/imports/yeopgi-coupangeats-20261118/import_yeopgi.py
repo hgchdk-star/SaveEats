@@ -112,8 +112,42 @@ def fk_refs(cur, table, ids, ignore=()):
     return out
 
 
+# 주문 스냅샷(order_item_options.source_option_id/source_group_id)은 FK 없이 원본 ID만 담는다. 가상 옵션·그룹을 지워도 스냅샷 행은 남는다.
+# 아래 기대값은 굽네 때 확인한 의존성과 같다. 하나라도 다르면 참조된 옵션·그룹은 삭제하지 않고 비활성으로 보존한다.
+EXPECTED_FKS = {('menu_options', 'menu_options_group_id_fkey', 'menu_option_groups', 'r')}
+EXPECTED_SRC_FUNCS = {'public.create_order'}
+EXPECTED_TRIGGERS = {('menu_options', 'menu_options_bump_menu_revision'), ('menu_option_groups', 'menu_option_groups_bump_menu_revision')}
+
+
+def snapshot_preflight(cur):
+    """라이브 DB에서 FK·조회 의존성을 다시 확인한다. 문제 목록을 돌려준다(비어 있으면 스냅샷이 가리키는 가상 옵션도 삭제해도 된다)."""
+    problems = []
+    cur.execute("""select conrelid::regclass::text, conname, confrelid::regclass::text, confdeltype::text
+                   from pg_constraint where contype = 'f' and confrelid in ('public.menu_options'::regclass, 'public.menu_option_groups'::regclass)""")
+    fks = {tuple(r) for r in cur.fetchall()}
+    if fks != EXPECTED_FKS:
+        problems.append(f'가상 옵션·그룹을 가리키는 FK가 예상과 다르다: {sorted(fks)}')
+    cur.execute("""select n.nspname || '.' || p.proname from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+                   where n.nspname in ('public', 'private') and (p.prosrc ilike '%source_option_id%' or p.prosrc ilike '%source_group_id%')""")
+    funcs = {r[0] for r in cur.fetchall()}
+    if funcs != EXPECTED_SRC_FUNCS:
+        problems.append(f'원본 옵션·그룹 id를 쓰는 함수가 예상과 다르다: {sorted(funcs)}')
+    cur.execute("""select count(*) from pg_views where definition ilike '%order_item_options%' or definition ilike '%source_option_id%' or definition ilike '%menu_options%'""")
+    if cur.fetchone()[0]:
+        problems.append('가상 옵션·주문 옵션 스냅샷을 쓰는 뷰가 있다')
+    cur.execute("""select c.relname, t.tgname from pg_trigger t join pg_class c on c.oid = t.tgrelid
+                   where not t.tgisinternal and c.relname in ('menu_options', 'menu_option_groups', 'order_item_options')""")
+    trg = {tuple(r) for r in cur.fetchall()}
+    if trg != EXPECTED_TRIGGERS:
+        problems.append(f'옵션·그룹·주문 옵션 테이블의 트리거가 예상과 다르다: {sorted(trg)}')
+    cur.execute("select count(*) from public.order_item_options oio left join public.order_items oi on oi.id = oio.order_item_id where oi.id is null")
+    if cur.fetchone()[0]:
+        problems.append('주문 항목이 없는 주문 옵션 스냅샷 행이 있다')
+    return problems
+
+
 # ---------------------------------------------------------------- 계획 (DB를 읽지 않고 existing 상태만 쓴다)
-def build_plan(package, existing, option_max_quantity=None, sold_out_mode='ignore', enable_option_quantity=True):
+def build_plan(package, existing, option_max_quantity=None, sold_out_mode='ignore', enable_option_quantity=True, delete_referenced=False):
     menus_src = read_json(os.path.join(package, 'menus.json'))
     groups_src = read_json(os.path.join(package, 'menu_option_groups.json'))
     options_src = read_json(os.path.join(package, 'menu_options.json'))
@@ -288,15 +322,21 @@ def build_plan(package, existing, option_max_quantity=None, sold_out_mode='ignor
     virt_groups = [g for g in existing.get('groups', []) if g['menu_id'] in (link_ids | rm_ids) and g['id'] not in planned_g]
     virt_group_ids = {g['id'] for g in virt_groups}
     virt_options = [o for o in existing.get('options', []) if o['group_id'] in virt_group_ids and o['id'] not in planned_o]
-    keep_groups = {g['id'] for g in virt_groups if g['id'] in snap_g or any(o['group_id'] == g['id'] and o['id'] in snap_o for o in virt_options)}
+    referenced_groups = {g['id'] for g in virt_groups if g['id'] in snap_g or any(o['group_id'] == g['id'] and o['id'] in snap_o for o in virt_options)}
+    # 서정 승인: 주문·리뷰·스냅샷을 보존하는 범위에서 의존성 점검을 통과하면 스냅샷이 가리키는 가상 옵션도 삭제한다(원본 ID 대응은 백업에 남긴다)
+    # 승인한 것은 보고한 그룹(엽기메뉴 '맵기 선택')뿐이다. 그 뒤 새 주문이 가리키게 된 다른 가상 옵션은 보고와 다르므로 삭제하지 않고 비활성으로 보존한다
+    approved = set(mapping.get('approved_snapshot_referenced_group_ids', []))
+    keep_groups = referenced_groups if not delete_referenced else {g for g in referenced_groups if g not in approved}
     # 삭제 메뉴의 가상 옵션은 스냅샷이 가리키면 삭제 자체가 불가(메뉴 삭제도 멈춘다)
     for r in removals:
-        if any(g['menu_id'] == r['existing_menu_id'] and g['id'] in keep_groups for g in virt_groups):
+        if any(g['menu_id'] == r['existing_menu_id'] and g['id'] in referenced_groups for g in virt_groups):
             issues.append(f'삭제 대상 메뉴의 옵션을 주문 스냅샷이 가리킨다: {r["existing_name"]}')
     virt_del_groups = [g for g in virt_groups if g['id'] not in keep_groups]
     virt_del_options = [o for o in virt_options if o['group_id'] not in keep_groups]
     virt_keep_groups = [g for g in virt_groups if g['id'] in keep_groups]
     virt_keep_options = [o for o in virt_options if o['group_id'] in keep_groups]
+    snapshot_referenced_groups = [g for g in virt_groups if g['id'] in referenced_groups and g['id'] not in keep_groups]
+    snapshot_referenced_options = [o for o in virt_options if o['group_id'] in referenced_groups and o['group_id'] not in keep_groups]
 
     # ---- 메뉴 그룹(앱 표시)
     mgroups, mitems = [], []
@@ -355,7 +395,9 @@ def build_plan(package, existing, option_max_quantity=None, sold_out_mode='ignor
     ref_note = '참조 URL은 수집 패키지의 source_endpoint(store.get_store_with_menu)와 source_store_id로 구성한 값이며 정확한 요청 주소는 미확인'
     records = []
     for r in menu_rows:
-        status = f'원본 판매 상태: {r["source_sale_status"]}'
+        status = f'원본 판매 상태: {r["source_sale_status"]}(수집 시점 2026-11-18)'
+        if r['source_sale_status'] == 'SOLD_OUT_TODAY' and not r['is_sold_out']:
+            status += ' — 수집 당시 오늘 품절이었으나 개발 카탈로그에서는 서정 결정으로 판매 가능으로 표시함(현재 지점에서 판매 가능하다고 확인된 사실이 아님)'
         if r['kind'] == 'LINK':
             note = f'가격 갱신(쿠팡이츠 홍제점 배달앱 가격 {r["base_price"]:,}원, 기존 {r["old_price"]:,}원). {status}. {ref_note}'
         else:
@@ -374,7 +416,9 @@ def build_plan(package, existing, option_max_quantity=None, sold_out_mode='ignor
     for g in virt_del_groups + virt_keep_groups:
         mname = ex_menus[g['menu_id']]['name']
         records.append({'url': ref, 'collected_for': 'OTHER', 'subject_label': f'{mname} / {g["name"]} (기존 가상 옵션 그룹)',
-                        'note': ('주문 스냅샷이 가리켜 비활성으로 보존' if g['id'] in keep_groups else '실제 옵션으로 교체하며 삭제(참조 없음 확인, 삭제 행은 백업)')})
+                        'note': ('주문 스냅샷이 가리켜 비활성으로 보존(의존성 점검에서 문제가 있어 삭제 보류)' if g['id'] in keep_groups else
+                                 ('주문 스냅샷이 원본 ID로 가리키던 가상 옵션 그룹을 삭제(스냅샷 행은 보존, 원본 ID 대응은 백업의 snapshot_source_id_map.json, 서정 승인)'
+                                  if g['id'] in referenced_groups else '실제 옵션으로 교체하며 삭제(참조 없음 확인, 삭제 행은 백업)'))})
     for rm in removals:
         records.append({'url': ref, 'collected_for': 'OTHER', 'subject_label': f'{rm["existing_name"]} (기존 가상 메뉴)', 'note': rm['reason']})
 
@@ -385,7 +429,8 @@ def build_plan(package, existing, option_max_quantity=None, sold_out_mode='ignor
         'links': [{'existing_menu_id': l['existing_menu_id'], 'existing_name': l['existing_name'], 'source_menu_id': sid, 'source_name': l['source_name'],
                    'basis': l['basis'], 'evidence': l['evidence']} for sid, l in links.items()],
         'removals': removals, 'virt_del_groups': virt_del_groups, 'virt_del_options': virt_del_options,
-        'virt_keep_groups': virt_keep_groups, 'virt_keep_options': virt_keep_options,
+        'virt_keep_groups': virt_keep_groups, 'virt_keep_options': virt_keep_options, 'delete_referenced': bool(delete_referenced),
+        'snapshot_referenced_groups': snapshot_referenced_groups, 'snapshot_referenced_options': snapshot_referenced_options,
         'kept_photos': kept, 'missing_photo_menus': missing_photo,
         'sold_out_mode': sold_out_mode, 'option_max_quantity': option_max_quantity, 'undecided': undecided,
         'sold_out_today': [r['name'] for r in menu_rows if r['source_sale_status'] == 'SOLD_OUT_TODAY'],
@@ -449,7 +494,9 @@ def render_report(plan, state):
     w('')
     w('## 기존 가상 옵션·그룹')
     w(f'- 삭제 예정: 그룹 {len(plan["virt_del_groups"])}개, 옵션 {len(plan["virt_del_options"])}개 (삭제할 행 전체를 백업에 저장)')
-    w(f'- 주문 스냅샷이 가리켜 비활성으로 보존: 그룹 {len(plan["virt_keep_groups"])}개, 옵션 {len(plan["virt_keep_options"])}개')
+    w(f'- 이 중 주문 스냅샷이 원본 ID로 가리키는 것: 그룹 {len(plan["snapshot_referenced_groups"])}개, 옵션 {len(plan["snapshot_referenced_options"])}개 (의존성 점검 통과 시에만 삭제, 스냅샷 행은 보존, 원본 ID 대응은 백업에 기록)')
+    w(f'- 삭제 보류(비활성 보존): 그룹 {len(plan["virt_keep_groups"])}개, 옵션 {len(plan["virt_keep_options"])}개')
+    w('- 의존성 점검: ' + ('통과(FK·함수·뷰·트리거 예상과 같음)' if not plan.get('preflight_problems') else '문제 있음 → ' + '; '.join(plan['preflight_problems'])))
     for g in plan['virt_keep_groups']:
         mname = next((m['name'] for m in state['menus'] if m['id'] == g['menu_id']), '?')
         w(f'  - {mname} / {g["name"]}')
@@ -494,6 +541,20 @@ def backup(plan, cur, backup_dir, skip_photos=False):
     deleted_groups = [r[0] for r in cur.fetchall()]
     cur.execute('select to_jsonb(o) from public.menu_options o where o.id = any(%s::uuid[])', (delete_o,))
     deleted_options = [r[0] for r in cur.fetchall()]
+    d_all_o = [o['id'] for o in plan['virt_del_options']]
+    d_all_g = [g['id'] for g in plan['virt_del_groups']]
+    cur.execute("""select jsonb_build_object('order_id', oi.order_id, 'order_item_id', oio.order_item_id, 'snapshot_row_id', oio.id,
+                          'source_group_id', oio.source_group_id, 'source_option_id', oio.source_option_id,
+                          'snapshot_group_name', oio.group_name_snapshot, 'snapshot_option_name', oio.option_name_snapshot,
+                          'snapshot_additional_price', oio.additional_price_snapshot, 'snapshot_quantity', oio.quantity_snapshot)
+                   from public.order_item_options oio join public.order_items oi on oi.id = oio.order_item_id
+                   where oio.source_option_id = any(%s::uuid[]) or oio.source_group_id = any(%s::uuid[]) order by oi.order_id, oio.id""", (d_all_o, d_all_g))
+    snap_rows = [r[0] for r in cur.fetchall()]
+    write_json(os.path.join(backup_dir, 'snapshot_source_id_map.json'),
+               {'note': '삭제한 가상 옵션·그룹의 원본 ID와 과거 주문 스냅샷의 원본 ID 대응. 비공개(인증정보 없음). 스냅샷의 이름·가격은 주문 행에 그대로 있다.',
+                'deleted_options': {o['id']: {'group': o['group_id'], 'name': o['name']} for o in plan['virt_del_options']},
+                'deleted_groups': {g['id']: {'menu': g['menu_id'], 'name': g['name']} for g in plan['virt_del_groups']},
+                'snapshot_rows_referencing_deleted': snap_rows})
     files = []
     if not skip_photos:
         refs = sorted({m['image_ref'] for m in state['menus'] if m['image_ref']})
@@ -509,7 +570,7 @@ def backup(plan, cur, backup_dir, skip_photos=False):
     data = {'batch': BATCH, 'created_at': datetime.datetime.now().isoformat(timespec='seconds'), 'store_id': STORE_ID,
             'applied_before_backup': applied_before, 'existing': state, 'order_fingerprint': order_fingerprint(cur),
             'other_store_fingerprints': other_store_fingerprints(cur), 'removed_menus': removed_menus,
-            'deleted_groups': deleted_groups, 'deleted_options': deleted_options, 'photo_files': files,
+            'deleted_groups': deleted_groups, 'deleted_options': deleted_options, 'photo_files': files, 'snapshot_rows_referencing_deleted': len(snap_rows),
             'note': '이 백업에는 접속 정보가 없다. 적용 전 상태 기준 복구에만 쓴다'}
     write_json(os.path.join(backup_dir, 'backup.json'), data)
     return data
@@ -565,8 +626,14 @@ def apply_db(cur, plan, uploaded):
         if r:
             raise RuntimeError(f'삭제 대상 가상 옵션을 가리키는 참조가 있다: {r}')
         cur.execute('select count(*) from public.order_item_options where source_option_id = any(%s::uuid[]) or source_group_id = any(%s::uuid[])', (do, dg))
-        if cur.fetchone()[0]:
-            raise RuntimeError('삭제 대상 가상 옵션을 주문 스냅샷이 가리킨다')
+        n_snap = cur.fetchone()[0]
+        allowed = len(plan['snapshot_referenced_options']) + len(plan['snapshot_referenced_groups'])
+        if n_snap and not allowed:
+            raise RuntimeError('삭제 대상 가상 옵션을 주문 스냅샷이 가리킨다(삭제 보류 상태)')
+        if allowed:
+            problems = snapshot_preflight(cur)
+            if problems:
+                raise RuntimeError('스냅샷이 가리키는 가상 옵션 삭제 전 의존성 점검 실패: ' + '; '.join(problems))
         cur.execute('delete from public.menu_options where id = any(%s::uuid[])', (do,))
         cur.execute('delete from public.menu_option_groups where id = any(%s::uuid[])', (dg,))
     if plan['virt_keep_options']:
@@ -675,7 +742,9 @@ def verify(plan, cur, before=None, photos_expected=True):
     check('기존 가상 옵션·그룹이 활성으로 남지 않았다', all((not g['is_active']) for gid, g in groups_db.items() if gid not in planned_g)
           and all((not o['is_active']) for oid, o in options_db.items() if o['group_id'] not in planned_g))
     check('삭제 예정 가상 옵션이 실제로 지워졌다', all(g['id'] not in groups_db for g in plan['virt_del_groups']) and all(o['id'] not in options_db for o in plan['virt_del_options']))
-    check('스냅샷이 가리키는 가상 옵션은 비활성으로 남았다', all(g['id'] in groups_db and not groups_db[g['id']]['is_active'] for g in plan['virt_keep_groups']))
+    check('삭제 보류한(스냅샷이 가리키고 점검 문제가 있는) 가상 옵션은 비활성으로 남았다', all(g['id'] in groups_db and not groups_db[g['id']]['is_active'] for g in plan['virt_keep_groups']))
+    check('스냅샷이 원본 ID로 가리키던 가상 옵션·그룹도 삭제됐다(스냅샷 행은 보존)', all(g['id'] not in groups_db for g in plan['snapshot_referenced_groups'])
+          and all(o['id'] not in options_db for o in plan['snapshot_referenced_options']))
     # 메뉴 그룹
     mg = {g['id']: g for g in now['menu_groups']}
     items = {}
@@ -822,7 +891,9 @@ def main():
         conn = G.connect()
         cur = conn.cursor()
         state = load_existing(cur)
-    plan = build_plan(a.package, state, a.option_max_quantity, a.sold_out_mode, not a.no_option_quantity)
+    preflight_problems = snapshot_preflight(cur) if cur else ['스냅샷 모드(DB 미연결)']
+    plan = build_plan(a.package, state, a.option_max_quantity, a.sold_out_mode, not a.no_option_quantity, delete_referenced=not preflight_problems)
+    plan['preflight_problems'] = preflight_problems
     write_json(os.path.join(HERE, 'id_map.json'), id_map(plan))
 
     if a.check or not (a.backup or a.apply or a.verify or a.restore):
