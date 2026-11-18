@@ -17,7 +17,7 @@ import { useSession } from '@/services/session';
 import { colors, spacing, text } from '@/theme';
 import { formatReviewDate } from '@/utils/date';
 
-import { REVIEW_SORT_OPTIONS, helpfulView, sortLabel } from './review-model';
+import { REVIEW_SORT_OPTIONS, helpfulView, liveReview, sortLabel } from './review-model';
 import { useReviewStore } from './review-store';
 import { useReviewDelete } from './use-review-delete';
 
@@ -84,6 +84,8 @@ export function ReviewListSection({ scope, reportEnabled, errorDescription }: Pr
   const { isMember } = useSession();
   const mutationVersion = useReviewStore((s) => s.mutationVersion);
   const overlay = useReviewStore((s) => s.helpfulOverlay);
+  // 도움돼요 응답은 byId에 반영된다. 목록에서 처음 받은 값(current.reviews)만 쓰면 옛 값이 다시 보인다
+  const byId = useReviewStore((s) => s.byId);
   const [sort, setSort] = useState<ReviewSort>('LATEST');
   const [photoOnly, setPhotoOnly] = useState(false);
   const [retry, setRetry] = useState(0);
@@ -163,7 +165,8 @@ export function ReviewListSection({ scope, reportEnabled, errorDescription }: Pr
       {current.reviews.length === 0 && photoOnly && current.summary.count > 0 ? <EmptyState icon="review" title={copy.noPhotoReviews} /> : null}
 
       <View>
-        {current.reviews.map((review) => {
+        {current.reviews.map((listed) => {
+          const review = liveReview(byId, listed);
           const helpful = helpfulView(review, overlay[review.reviewId]);
           const showReport = reportEnabled && !review.isMine;
           return (
