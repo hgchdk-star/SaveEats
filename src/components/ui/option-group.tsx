@@ -66,10 +66,12 @@ export function OptionGroup({ name, required, single, rule, full, options, onTog
                 onPress={() => onToggle(option.id)}
                 style={styles.row}>
                 <OptionControl single={single} selected={option.selected} locked={option.locked} />
-                <Text style={[styles.label, option.locked && styles.locked]}>{option.name}</Text>
+                {/* 이름 바로 뒤에 괄호로 개당 단가를 붙인다(수량을 바꿔도 단가는 그대로, 합계는 화면 아래 금액에 반영). 0원 표시는 기존대로 '+0원' */}
+                <Text style={[styles.label, option.locked && styles.locked]}>
+                  {option.name}
+                  <Text style={[styles.add, option.locked && styles.locked]}>{` (${option.additionalPrice ? `+${formatWon(option.additionalPrice)}` : '+0원'})`}</Text>
+                </Text>
                 {option.soldOut ? <Badge>품절</Badge> : null}
-                {/* 단가는 그대로 보여 준다. 수량을 곱한 합계는 화면 아래 금액에 반영된다 */}
-                <Text style={[styles.add, option.locked && styles.locked]}>{option.additionalPrice ? `+${formatWon(option.additionalPrice)}` : '+0원'}</Text>
               </Pressable>
               {adjustable ? (
                 <View style={styles.quantitySlot}>
@@ -197,7 +199,6 @@ const styles = StyleSheet.create({
     ...text.body1,
     fontSize: 15,
     lineHeight: 22,
-    flex: 1,
     flexShrink: 1,
     minWidth: 0,
     color: colors.ink,
@@ -206,8 +207,6 @@ const styles = StyleSheet.create({
     ...font('600'),
     ...tabularNums,
     fontSize: 14,
-    lineHeight: 22,
-    flexShrink: 0,
     color: colors.inkSecondary,
   },
   locked: {
