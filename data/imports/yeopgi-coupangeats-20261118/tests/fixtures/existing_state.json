@@ -1,0 +1,423 @@
+{
+ "refs": {
+  "orders": 5,
+  "order_items": 6,
+  "review_menus": 3,
+  "store_sources": 1,
+  "order_item_options": 1,
+  "store_source_records": 16
+ },
+ "menus": [
+  {
+   "id": "6bfda566-c644-5c1d-a75c-c03a5d315a62",
+   "name": "엽기메뉴",
+   "image_ref": "menus/6bfda566-c644-5c1d-a75c-c03a5d315a62.png",
+   "is_active": true,
+   "base_price": 14000,
+   "is_popular": true,
+   "sort_order": 1,
+   "description": null,
+   "is_sold_out": false,
+   "popularity_score": 60
+  },
+  {
+   "id": "f592d693-53c8-58e9-ae23-66826ce56071",
+   "name": "로제메뉴",
+   "image_ref": "menus/f592d693-53c8-58e9-ae23-66826ce56071.png",
+   "is_active": true,
+   "base_price": 16000,
+   "is_popular": false,
+   "sort_order": 2,
+   "description": null,
+   "is_sold_out": false,
+   "popularity_score": 0
+  },
+  {
+   "id": "374a1a7d-02bb-5a60-aba8-5e4c692c3c74",
+   "name": "마라떡볶이",
+   "image_ref": "menus/374a1a7d-02bb-5a60-aba8-5e4c692c3c74.png",
+   "is_active": true,
+   "base_price": 16000,
+   "is_popular": false,
+   "sort_order": 3,
+   "description": null,
+   "is_sold_out": false,
+   "popularity_score": 0
+  },
+  {
+   "id": "7efe2e36-da4c-5eb8-a7dd-9403946f9ecf",
+   "name": "마라로제떡볶이",
+   "image_ref": "menus/7efe2e36-da4c-5eb8-a7dd-9403946f9ecf.png",
+   "is_active": true,
+   "base_price": 18000,
+   "is_popular": false,
+   "sort_order": 4,
+   "description": null,
+   "is_sold_out": false,
+   "popularity_score": 0
+  },
+  {
+   "id": "95d7d9e9-7e35-5331-a202-2b18e309c1d1",
+   "name": "2인 엽기떡볶이",
+   "image_ref": "menus/95d7d9e9-7e35-5331-a202-2b18e309c1d1.png",
+   "is_active": true,
+   "base_price": 9000,
+   "is_popular": false,
+   "sort_order": 5,
+   "description": null,
+   "is_sold_out": false,
+   "popularity_score": 0
+  }
+ ],
+ "store": {
+  "id": "028512ff-e033-53c3-a30f-a3e7f18862f1",
+  "name": "동대문엽기떡볶이",
+  "is_open": true,
+  "image_ref": "stores/028512ff-e033-53c3-a30f-a3e7f18862f1.png",
+  "is_active": true,
+  "category_id": "10000000-0000-4000-8000-000000000002",
+  "is_recommended": true
+ },
+ "groups": [
+  {
+   "id": "79d2b210-5054-4e75-ad88-91838ea0b143",
+   "name": "맵기 선택",
+   "menu_id": "374a1a7d-02bb-5a60-aba8-5e4c692c3c74",
+   "is_active": true,
+   "max_select": 1,
+   "min_select": 1,
+   "sort_order": 1
+  },
+  {
+   "id": "b8ca80c4-fe73-48b1-a08a-fd0ab0a0ff54",
+   "name": "추가 토핑",
+   "menu_id": "374a1a7d-02bb-5a60-aba8-5e4c692c3c74",
+   "is_active": true,
+   "max_select": 2,
+   "min_select": 0,
+   "sort_order": 2
+  },
+  {
+   "id": "ac2f6c98-986b-4b24-a833-a17b3ebbbca2",
+   "name": "맵기 선택",
+   "menu_id": "6bfda566-c644-5c1d-a75c-c03a5d315a62",
+   "is_active": true,
+   "max_select": 1,
+   "min_select": 1,
+   "sort_order": 1
+  },
+  {
+   "id": "a60509d4-9142-491a-a415-a6299960ea41",
+   "name": "추가 토핑",
+   "menu_id": "6bfda566-c644-5c1d-a75c-c03a5d315a62",
+   "is_active": true,
+   "max_select": 2,
+   "min_select": 0,
+   "sort_order": 2
+  },
+  {
+   "id": "60763088-b164-4f72-abf3-98394986212c",
+   "name": "맵기 선택",
+   "menu_id": "7efe2e36-da4c-5eb8-a7dd-9403946f9ecf",
+   "is_active": true,
+   "max_select": 1,
+   "min_select": 1,
+   "sort_order": 1
+  },
+  {
+   "id": "8771f227-afac-4798-ae8c-e857e4e27cb0",
+   "name": "추가 토핑",
+   "menu_id": "7efe2e36-da4c-5eb8-a7dd-9403946f9ecf",
+   "is_active": true,
+   "max_select": 2,
+   "min_select": 0,
+   "sort_order": 2
+  },
+  {
+   "id": "d7be7437-e9c4-40bd-a0fb-f225771a1743",
+   "name": "맵기 선택",
+   "menu_id": "95d7d9e9-7e35-5331-a202-2b18e309c1d1",
+   "is_active": true,
+   "max_select": 1,
+   "min_select": 1,
+   "sort_order": 1
+  },
+  {
+   "id": "7beb4af0-8a0c-43d3-a477-cbe6b099ff8f",
+   "name": "추가 토핑",
+   "menu_id": "95d7d9e9-7e35-5331-a202-2b18e309c1d1",
+   "is_active": true,
+   "max_select": 2,
+   "min_select": 0,
+   "sort_order": 2
+  },
+  {
+   "id": "97370a32-6d9a-468e-a204-6c5d453618ef",
+   "name": "맵기 선택",
+   "menu_id": "f592d693-53c8-58e9-ae23-66826ce56071",
+   "is_active": true,
+   "max_select": 1,
+   "min_select": 1,
+   "sort_order": 1
+  },
+  {
+   "id": "b29f7d4b-74d7-4aa2-a662-c14c97690e77",
+   "name": "추가 토핑",
+   "menu_id": "f592d693-53c8-58e9-ae23-66826ce56071",
+   "is_active": true,
+   "max_select": 2,
+   "min_select": 0,
+   "sort_order": 2
+  }
+ ],
+ "totals": {
+  "groups_total": 502,
+  "menus_active": 259,
+  "orders_total": 38,
+  "options_total": 3476,
+  "stores_active": 16
+ },
+ "options": [
+  {
+   "id": "31543055-93c6-4c5d-a4ea-04ed65938c48",
+   "name": "순한맛",
+   "group_id": "60763088-b164-4f72-abf3-98394986212c",
+   "is_active": true,
+   "sort_order": 1,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 0
+  },
+  {
+   "id": "d2f02c20-88b4-474f-ad1b-e6fb0668b7ae",
+   "name": "매운맛",
+   "group_id": "60763088-b164-4f72-abf3-98394986212c",
+   "is_active": true,
+   "sort_order": 2,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 0
+  },
+  {
+   "id": "83bc273b-c3c9-47cb-a59c-f6911c0bba7b",
+   "name": "순한맛",
+   "group_id": "79d2b210-5054-4e75-ad88-91838ea0b143",
+   "is_active": true,
+   "sort_order": 1,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 0
+  },
+  {
+   "id": "4b543c39-04e5-44d0-a9d5-1bb849e5563e",
+   "name": "매운맛",
+   "group_id": "79d2b210-5054-4e75-ad88-91838ea0b143",
+   "is_active": true,
+   "sort_order": 2,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 0
+  },
+  {
+   "id": "21552639-dae3-48fa-a119-d56dfaf7aef3",
+   "name": "치즈 추가",
+   "group_id": "7beb4af0-8a0c-43d3-a477-cbe6b099ff8f",
+   "is_active": true,
+   "sort_order": 1,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 2000
+  },
+  {
+   "id": "91c7b60d-88a3-41a3-a90b-8d2a77c4782e",
+   "name": "삶은 달걀",
+   "group_id": "7beb4af0-8a0c-43d3-a477-cbe6b099ff8f",
+   "is_active": true,
+   "sort_order": 2,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 1000
+  },
+  {
+   "id": "40d57a79-b9c9-4292-a1a6-b94ce799a84b",
+   "name": "치즈 추가",
+   "group_id": "8771f227-afac-4798-ae8c-e857e4e27cb0",
+   "is_active": true,
+   "sort_order": 1,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 2000
+  },
+  {
+   "id": "4b2d46fc-75dc-4402-ae1e-c2cf78360c3f",
+   "name": "삶은 달걀",
+   "group_id": "8771f227-afac-4798-ae8c-e857e4e27cb0",
+   "is_active": true,
+   "sort_order": 2,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 1000
+  },
+  {
+   "id": "be4e9959-dd54-4f6e-adcb-42cda84fbcbf",
+   "name": "순한맛",
+   "group_id": "97370a32-6d9a-468e-a204-6c5d453618ef",
+   "is_active": true,
+   "sort_order": 1,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 0
+  },
+  {
+   "id": "66b2e18d-e08c-48bd-a593-3cbf56e6d862",
+   "name": "매운맛",
+   "group_id": "97370a32-6d9a-468e-a204-6c5d453618ef",
+   "is_active": true,
+   "sort_order": 2,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 0
+  },
+  {
+   "id": "db14c494-9234-4c44-a20a-60e36e841b43",
+   "name": "치즈 추가",
+   "group_id": "a60509d4-9142-491a-a415-a6299960ea41",
+   "is_active": true,
+   "sort_order": 1,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 2000
+  },
+  {
+   "id": "3b5247e0-f586-408d-a13e-b48b98f5e2e0",
+   "name": "삶은 달걀",
+   "group_id": "a60509d4-9142-491a-a415-a6299960ea41",
+   "is_active": true,
+   "sort_order": 2,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 1000
+  },
+  {
+   "id": "ec1d9aec-fe39-475e-aa2a-4fd6dd15cff1",
+   "name": "순한맛",
+   "group_id": "ac2f6c98-986b-4b24-a833-a17b3ebbbca2",
+   "is_active": true,
+   "sort_order": 1,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 0
+  },
+  {
+   "id": "fae455f2-966a-4478-ae7e-02bf55288cc5",
+   "name": "매운맛",
+   "group_id": "ac2f6c98-986b-4b24-a833-a17b3ebbbca2",
+   "is_active": true,
+   "sort_order": 2,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 0
+  },
+  {
+   "id": "62f259f7-8f92-4fd1-acad-1edc902a8439",
+   "name": "치즈 추가",
+   "group_id": "b29f7d4b-74d7-4aa2-a662-c14c97690e77",
+   "is_active": true,
+   "sort_order": 1,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 2000
+  },
+  {
+   "id": "e221567a-eac4-4571-a797-24a377d3877d",
+   "name": "삶은 달걀",
+   "group_id": "b29f7d4b-74d7-4aa2-a662-c14c97690e77",
+   "is_active": true,
+   "sort_order": 2,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 1000
+  },
+  {
+   "id": "e587a4f1-d168-4c61-af96-2364ee778200",
+   "name": "치즈 추가",
+   "group_id": "b8ca80c4-fe73-48b1-a08a-fd0ab0a0ff54",
+   "is_active": true,
+   "sort_order": 1,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 2000
+  },
+  {
+   "id": "c00ce921-2307-4d2a-a3c6-cf5e4c712753",
+   "name": "삶은 달걀",
+   "group_id": "b8ca80c4-fe73-48b1-a08a-fd0ab0a0ff54",
+   "is_active": true,
+   "sort_order": 2,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 1000
+  },
+  {
+   "id": "52388907-6bcb-4317-ac0a-4603941d9350",
+   "name": "순한맛",
+   "group_id": "d7be7437-e9c4-40bd-a0fb-f225771a1743",
+   "is_active": true,
+   "sort_order": 1,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 0
+  },
+  {
+   "id": "5adb15a0-0c62-4867-a2e0-500543a8a518",
+   "name": "매운맛",
+   "group_id": "d7be7437-e9c4-40bd-a0fb-f225771a1743",
+   "is_active": true,
+   "sort_order": 2,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 0
+  }
+ ],
+ "menu_groups": [],
+ "private_records": 0,
+ "menu_group_items": [],
+ "snapshot_group_ids": [
+  "ac2f6c98-986b-4b24-a833-a17b3ebbbca2"
+ ],
+ "snapshot_option_ids": [
+  "fae455f2-966a-4478-ae7e-02bf55288cc5"
+ ],
+ "source": "database",
+ "_oio": [
+  {
+   "sort_order": 1,
+   "order_item_id": "962760aa-84d7-459b-929e-7d559cd13ba7",
+   "source_group_id": "ac2f6c98-986b-4b24-a833-a17b3ebbbca2",
+   "source_option_id": "fae455f2-966a-4478-ae7e-02bf55288cc5",
+   "group_name_snapshot": "맵기 선택",
+   "option_name_snapshot": "매운맛",
+   "additional_price_snapshot": 0
+  }
+ ]
+}
