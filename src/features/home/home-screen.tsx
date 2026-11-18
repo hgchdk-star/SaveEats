@@ -9,6 +9,7 @@ import { FoodCategoryChip } from '@/components/ui/food-category-chip';
 import { IconButton } from '@/components/ui/icon-button';
 import { Screen } from '@/components/ui/screen';
 import { SearchBarButton } from '@/components/ui/search-bar';
+import { categoryImageUri } from '@/config/category-images';
 import { confirmedCopy } from '@/config/confirmed-copy';
 import { draftCopy } from '@/config/draft-copy';
 import { UNDECIDED } from '@/config/undecided';
@@ -90,7 +91,7 @@ export function HomeScreen() {
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} accessibilityRole="radiogroup" contentContainerStyle={styles.chipRow}>
                   <FoodCategoryChip label="전체" imageUri={null} selected={categoryCode === ALL} onPress={() => pickCategory(ALL)} />
                   {categories.data.map((c) => (
-                    <FoodCategoryChip key={c.id} label={c.name} imageUri={null} selected={categoryCode === c.code} onPress={() => pickCategory(c.code)} />
+                    <FoodCategoryChip key={c.id} label={c.name} imageUri={categoryImageUri(c.code)} selected={categoryCode === c.code} onPress={() => pickCategory(c.code)} />
                   ))}
                 </ScrollView>
               ) : null}

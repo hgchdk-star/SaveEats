@@ -10,6 +10,7 @@ import { PopularTermList } from '@/components/ui/popular-term-list';
 import { RecentSearchChip } from '@/components/ui/recent-search-chip';
 import { Screen } from '@/components/ui/screen';
 import { SearchBar } from '@/components/ui/search-bar';
+import { categoryImageUri } from '@/config/category-images';
 import { confirmedCopy } from '@/config/confirmed-copy';
 import { draftCopy } from '@/config/draft-copy';
 import { LIMITS } from '@/config/limits';
@@ -165,7 +166,7 @@ function InitialSections({ recent, onPick, onRemove, onClearAll }: InitialProps)
         {categories.status === 'ok' ? (
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoryRow}>
             {categories.data.map((c) => (
-              <FoodCategoryChip key={c.id} label={c.name} imageUri={null} selected={false} onPress={() => goCategoryStoreList(c.code)} />
+              <FoodCategoryChip key={c.id} label={c.name} imageUri={categoryImageUri(c.code)} selected={false} onPress={() => goCategoryStoreList(c.code)} />
             ))}
           </ScrollView>
         ) : null}
