@@ -59,11 +59,13 @@ const FOODS: Record<string, string> = {
     '<path d="M24 61q6-6 12 0t12 0 12 0 12 0 12 0 12 0v5H24Z" fill="#5C9A45"/><path d="M28 66H92L84 74L76 67L68 74L60 67L28 67Z" fill="#F2B33A"/>' +
     '<rect x="26" y="68" width="68" height="10" rx="5" fill="#5A3322"/><path d="M26 80H94V82a8 8 0 0 1-8 8H34a8 8 0 0 1-8-8Z" fill="#C98B45"/>' +
     '</g>',
-  // '전체' 칩: 숟가락과 젓가락(갈색). 접시 없이, 젓가락은 나란히 가지런하게
+  // '전체' 칩: 숟가락과 젓가락(갈색). 접시 없이, 통통하고 둥근 아이콘 모양. 젓가락은 나란히
   utensils:
-    '<rect width="120" height="120" fill="#E9D8C4"/>' +
-    '<ellipse cx="42" cy="40" rx="12" ry="16" fill="#8A5A3B"/><rect x="38.5" y="54" width="7" height="46" rx="3.5" fill="#8A5A3B"/>' +
-    '<rect x="68" y="20" width="6" height="80" rx="3" fill="#6B4429"/><rect x="80" y="20" width="6" height="80" rx="3" fill="#6B4429"/>',
+    '<rect width="120" height="120" fill="#E9D8C4"/><g transform="translate(4 0)">' +
+    '<circle cx="40" cy="42" r="18" fill="#8A5A3B"/><ellipse cx="33" cy="35" rx="6" ry="4.5" fill="#B07A55" transform="rotate(-30 33 35)"/><rect x="34.5" y="56" width="11" height="40" rx="5.5" fill="#8A5A3B"/>' +
+    '<rect x="66" y="22" width="10" height="74" rx="5" fill="#6B4429"/><rect x="81" y="22" width="10" height="74" rx="5" fill="#6B4429"/>' +
+    '<rect x="66" y="22" width="10" height="16" rx="5" fill="#D2432A"/><rect x="66" y="30" width="10" height="8" fill="#D2432A"/><rect x="81" y="22" width="10" height="16" rx="5" fill="#D2432A"/><rect x="81" y="30" width="10" height="8" fill="#D2432A"/>' +
+    '</g>',
 };
 
 /** 서버 카테고리 코드 → 그릴 음식 */
