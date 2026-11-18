@@ -56,6 +56,8 @@ const styles = StyleSheet.create({
   },
   sub: {
     ...text.body1,
+    fontSize: 15,
+    lineHeight: 22,
     color: colors.inkSecondary,
   },
 });

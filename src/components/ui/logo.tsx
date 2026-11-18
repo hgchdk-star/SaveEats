@@ -13,7 +13,7 @@ export function Logo() {
   return (
     <View accessibilityRole="image" accessibilityLabel={draftCopy.start.wordmark} style={styles.wrap}>
       <View style={styles.mark}>
-        <Icon name="plate" size={32} color={colors.onBrand} />
+        <Icon name="plate" size={44} color={colors.onBrand} />
       </View>
       <Text style={styles.word}>{draftCopy.start.wordmark}</Text>
     </View>
