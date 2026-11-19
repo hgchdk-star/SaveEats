@@ -1,0 +1,319 @@
+{
+ "refs": {
+  "orders": 2,
+  "order_items": 2,
+  "review_menus": 1,
+  "store_sources": 7,
+  "order_item_options": 0,
+  "store_source_records": 16
+ },
+ "menus": [
+  {
+   "id": "b4a1e906-23ef-53a9-ab94-0c7feea1ff7b",
+   "name": "인절미설빙",
+   "image_ref": "menus/b4a1e906-23ef-53a9-ab94-0c7feea1ff7b.png",
+   "is_active": true,
+   "base_price": 9900,
+   "is_popular": true,
+   "sort_order": 1,
+   "description": null,
+   "is_sold_out": false,
+   "popularity_score": 10
+  },
+  {
+   "id": "85a43d78-2857-5ffe-ae37-5e57a93c9cfe",
+   "name": "팥인절미설빙",
+   "image_ref": "menus/85a43d78-2857-5ffe-ae37-5e57a93c9cfe.png",
+   "is_active": true,
+   "base_price": 10900,
+   "is_popular": false,
+   "sort_order": 2,
+   "description": null,
+   "is_sold_out": false,
+   "popularity_score": 0
+  },
+  {
+   "id": "cf5bfca8-3816-52bf-ae6b-a562bf4f2a06",
+   "name": "애플망고치즈설빙",
+   "image_ref": "menus/cf5bfca8-3816-52bf-ae6b-a562bf4f2a06.png",
+   "is_active": true,
+   "base_price": 14500,
+   "is_popular": false,
+   "sort_order": 3,
+   "description": null,
+   "is_sold_out": false,
+   "popularity_score": 0
+  },
+  {
+   "id": "f149e85b-d3d8-5212-a1c3-e35dc109126c",
+   "name": "딥초코브라우니설빙",
+   "image_ref": "menus/f149e85b-d3d8-5212-a1c3-e35dc109126c.png",
+   "is_active": true,
+   "base_price": 13900,
+   "is_popular": false,
+   "sort_order": 4,
+   "description": null,
+   "is_sold_out": false,
+   "popularity_score": 0
+  },
+  {
+   "id": "8bc44a3d-1d36-51f1-a3c8-a89da08241c4",
+   "name": "순수요거블루베리설빙",
+   "image_ref": "menus/8bc44a3d-1d36-51f1-a3c8-a89da08241c4.png",
+   "is_active": true,
+   "base_price": 14500,
+   "is_popular": false,
+   "sort_order": 5,
+   "description": null,
+   "is_sold_out": false,
+   "popularity_score": 0
+  }
+ ],
+ "store": {
+  "id": "3ddc0b28-61f6-5531-a1c8-1a9f8d08404a",
+  "name": "설빙",
+  "is_open": true,
+  "image_ref": "stores/3ddc0b28-61f6-5531-a1c8-1a9f8d08404a.png",
+  "is_active": true,
+  "category_id": "10000000-0000-4000-8000-000000000008",
+  "is_recommended": true
+ },
+ "groups": [
+  {
+   "id": "8776dc46-d247-542e-a308-073a4160574b",
+   "name": "토핑 추가",
+   "menu_id": "85a43d78-2857-5ffe-ae37-5e57a93c9cfe",
+   "is_active": true,
+   "max_select": 3,
+   "min_select": 0,
+   "sort_order": 1
+  },
+  {
+   "id": "5193f00a-18dc-5776-a598-0b51fb9d7b10",
+   "name": "토핑 추가",
+   "menu_id": "8bc44a3d-1d36-51f1-a3c8-a89da08241c4",
+   "is_active": true,
+   "max_select": 3,
+   "min_select": 0,
+   "sort_order": 1
+  },
+  {
+   "id": "0a66c0bb-c561-5645-aec6-86aea02118fc",
+   "name": "토핑 추가",
+   "menu_id": "b4a1e906-23ef-53a9-ab94-0c7feea1ff7b",
+   "is_active": true,
+   "max_select": 3,
+   "min_select": 0,
+   "sort_order": 1
+  },
+  {
+   "id": "541afb6f-b3d8-5461-a250-fdc843b5dd70",
+   "name": "토핑 추가",
+   "menu_id": "cf5bfca8-3816-52bf-ae6b-a562bf4f2a06",
+   "is_active": true,
+   "max_select": 3,
+   "min_select": 0,
+   "sort_order": 1
+  },
+  {
+   "id": "ae5f3aa4-e3a9-56d6-ac37-b122ce27b731",
+   "name": "토핑 추가",
+   "menu_id": "f149e85b-d3d8-5212-a1c3-e35dc109126c",
+   "is_active": true,
+   "max_select": 3,
+   "min_select": 0,
+   "sort_order": 1
+  }
+ ],
+ "totals": {
+  "groups_total": 1597,
+  "menus_active": 784,
+  "orders_total": 47,
+  "options_total": 11939,
+  "stores_active": 16
+ },
+ "options": [
+  {
+   "id": "2c6ddf0f-b3f2-5d90-aa18-45bd8fce195a",
+   "name": "떡 추가",
+   "group_id": "0a66c0bb-c561-5645-aec6-86aea02118fc",
+   "is_active": true,
+   "sort_order": 1,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 1500
+  },
+  {
+   "id": "0eb46637-d5fe-5ccc-a300-161c6a66cb12",
+   "name": "팥 추가",
+   "group_id": "0a66c0bb-c561-5645-aec6-86aea02118fc",
+   "is_active": true,
+   "sort_order": 2,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 1500
+  },
+  {
+   "id": "6a8d3c68-9b0d-5941-a3f4-4616fb91f0bf",
+   "name": "바닐라 아이스크림",
+   "group_id": "0a66c0bb-c561-5645-aec6-86aea02118fc",
+   "is_active": true,
+   "sort_order": 3,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 2000
+  },
+  {
+   "id": "eb58052e-33d9-5e61-a0a6-a7181b6e604d",
+   "name": "떡 추가",
+   "group_id": "5193f00a-18dc-5776-a598-0b51fb9d7b10",
+   "is_active": true,
+   "sort_order": 1,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 1500
+  },
+  {
+   "id": "965656f3-3db8-5cdf-a6cc-24940326c3da",
+   "name": "팥 추가",
+   "group_id": "5193f00a-18dc-5776-a598-0b51fb9d7b10",
+   "is_active": true,
+   "sort_order": 2,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 1500
+  },
+  {
+   "id": "c7763572-d2f3-5bab-a97e-901b06b6c452",
+   "name": "바닐라 아이스크림",
+   "group_id": "5193f00a-18dc-5776-a598-0b51fb9d7b10",
+   "is_active": true,
+   "sort_order": 3,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 2000
+  },
+  {
+   "id": "4225c174-f62a-5405-aac9-1f7b1c9f2cdf",
+   "name": "떡 추가",
+   "group_id": "541afb6f-b3d8-5461-a250-fdc843b5dd70",
+   "is_active": true,
+   "sort_order": 1,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 1500
+  },
+  {
+   "id": "5c2a6a68-c964-5cb0-a2c8-baeb66ecb628",
+   "name": "팥 추가",
+   "group_id": "541afb6f-b3d8-5461-a250-fdc843b5dd70",
+   "is_active": true,
+   "sort_order": 2,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 1500
+  },
+  {
+   "id": "fb778269-a1a5-534e-ace2-4b711fc55e51",
+   "name": "바닐라 아이스크림",
+   "group_id": "541afb6f-b3d8-5461-a250-fdc843b5dd70",
+   "is_active": true,
+   "sort_order": 3,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 2000
+  },
+  {
+   "id": "a5118900-367d-5154-a32d-d64a4b1e7fe4",
+   "name": "떡 추가",
+   "group_id": "8776dc46-d247-542e-a308-073a4160574b",
+   "is_active": true,
+   "sort_order": 1,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 1500
+  },
+  {
+   "id": "105cb524-a299-5331-a9c2-26803aeaa124",
+   "name": "팥 추가",
+   "group_id": "8776dc46-d247-542e-a308-073a4160574b",
+   "is_active": true,
+   "sort_order": 2,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 1500
+  },
+  {
+   "id": "3319bed6-8f7e-5385-a2e9-90b661bf60c9",
+   "name": "바닐라 아이스크림",
+   "group_id": "8776dc46-d247-542e-a308-073a4160574b",
+   "is_active": true,
+   "sort_order": 3,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 2000
+  },
+  {
+   "id": "d4c95e96-3df9-5571-ae90-fe4d0df58521",
+   "name": "떡 추가",
+   "group_id": "ae5f3aa4-e3a9-56d6-ac37-b122ce27b731",
+   "is_active": true,
+   "sort_order": 1,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 1500
+  },
+  {
+   "id": "1d6ac1ef-90fb-5729-ab5a-7594ab9adad4",
+   "name": "팥 추가",
+   "group_id": "ae5f3aa4-e3a9-56d6-ac37-b122ce27b731",
+   "is_active": true,
+   "sort_order": 2,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 1500
+  },
+  {
+   "id": "f90d7077-46e2-5fe1-a671-b60e9499d6de",
+   "name": "바닐라 아이스크림",
+   "group_id": "ae5f3aa4-e3a9-56d6-ac37-b122ce27b731",
+   "is_active": true,
+   "sort_order": 3,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 2000
+  }
+ ],
+ "menu_groups": [],
+ "private_records": 0,
+ "menu_group_items": [],
+ "snapshot_group_ids": [],
+ "snapshot_option_ids": [],
+ "source": "database",
+ "_category": [
+  "cafe_dessert",
+  "카페·디저트"
+ ],
+ "_order_items": {
+  "b4a1e906-23ef-53a9-ab94-0c7feea1ff7b": 2
+ },
+ "_reviews": {
+  "b4a1e906-23ef-53a9-ab94-0c7feea1ff7b": 1
+ },
+ "_oio": []
+}

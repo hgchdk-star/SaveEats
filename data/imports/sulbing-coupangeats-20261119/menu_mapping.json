@@ -1,0 +1,53 @@
+{
+  "_comment": "기존 설빙 메뉴 ↔ 수집(홍제역점) 메뉴 대응표. 이름이 같고 기존 사진과 수집 사진이 같은 상품인 것만 연결한다. 가격은 수집 가격으로 갱신한다(서정 승인: 지점 가격을 대표값으로).",
+  "links": [
+    {
+      "existing_menu_id": "b4a1e906-23ef-53a9-ab94-0c7feea1ff7b",
+      "existing_name": "인절미설빙",
+      "source_menu_id": 117163444,
+      "source_name": "인절미설빙",
+      "status": "LINK",
+      "basis": "EXACT_NAME_PHOTO",
+      "evidence": "이름 동일('설빙' 그룹), 기존 사진과 수집 사진이 같은 상품(실제 파일 대조). 가격 9,900→11,400원. 같은 이름 접두의 다른 맛·크기 메뉴와 합치지 않는다. 주문 2건·리뷰 1건·인기 10점 유지"
+    },
+    {
+      "existing_menu_id": "85a43d78-2857-5ffe-ae37-5e57a93c9cfe",
+      "existing_name": "팥인절미설빙",
+      "source_menu_id": 117163443,
+      "source_name": "팥인절미설빙",
+      "status": "LINK",
+      "basis": "EXACT_NAME_PHOTO",
+      "evidence": "이름 동일('설빙' 그룹), 기존 사진과 수집 사진이 같은 상품(실제 파일 대조). 가격 10,900→12,400원. 같은 이름 접두의 다른 맛·크기 메뉴와 합치지 않는다."
+    },
+    {
+      "existing_menu_id": "cf5bfca8-3816-52bf-ae6b-a562bf4f2a06",
+      "existing_name": "애플망고치즈설빙",
+      "source_menu_id": 117163438,
+      "source_name": "애플망고치즈설빙",
+      "status": "LINK",
+      "basis": "EXACT_NAME_PHOTO",
+      "evidence": "이름 동일('설빙' 그룹), 기존 사진과 수집 사진이 같은 상품(실제 파일 대조). 가격 14,500→16,000원. 같은 이름 접두의 다른 맛·크기 메뉴와 합치지 않는다."
+    },
+    {
+      "existing_menu_id": "f149e85b-d3d8-5212-a1c3-e35dc109126c",
+      "existing_name": "딥초코브라우니설빙",
+      "source_menu_id": 117163441,
+      "source_name": "딥초코브라우니설빙",
+      "status": "LINK",
+      "basis": "EXACT_NAME_PHOTO",
+      "evidence": "이름 동일('설빙' 그룹), 기존 사진과 수집 사진이 같은 상품(실제 파일 대조). 가격 13,900→15,400원. 같은 이름 접두의 다른 맛·크기 메뉴와 합치지 않는다."
+    },
+    {
+      "existing_menu_id": "8bc44a3d-1d36-51f1-a3c8-a89da08241c4",
+      "existing_name": "순수요거블루베리설빙",
+      "source_menu_id": 117163448,
+      "source_name": "순수요거블루베리설빙",
+      "status": "LINK",
+      "basis": "EXACT_NAME_PHOTO",
+      "evidence": "이름 동일('설빙' 그룹), 기존 사진과 수집 사진이 같은 상품(실제 파일 대조). 가격 14,500→16,000원. 같은 이름 접두의 다른 맛·크기 메뉴와 합치지 않는다."
+    }
+  ],
+  "remove": [],
+  "approved_snapshot_referenced_group_ids": [],
+  "_approved_note": "기존 가상 옵션 그룹(5개, 주문 스냅샷 참조 없음)은 승인 뒤 삭제한다. 스냅샷이 가리키는 그룹이 생기면 서정 승인 뒤 여기에 그룹 id를 넣는다."
+}
