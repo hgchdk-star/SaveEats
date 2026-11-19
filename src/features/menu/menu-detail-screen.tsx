@@ -31,7 +31,9 @@ import { formatWon } from '@/utils/format';
 import {
   allowsQuantity,
   firstMissingRequired,
+  effectiveMaxQuantity,
   groupRuleKind,
+  groupTotalQuantity,
   isRequired,
   isSingle,
   pruneQuantities,
@@ -41,6 +43,7 @@ import {
   selectedOptionQuantities,
   setOptionQuantity,
   toggleOption,
+  totalLimitOf,
   unitPrice,
   type OptionQuantities,
   type Selection,
@@ -186,7 +189,12 @@ export function MenuDetailScreen({ menuId }: { menuId: string }) {
               const single = isSingle(group);
               const ruleKind = groupRuleKind(group, current.length);
               // 가득 참(더 못 고름)은 실제 제한이 있을 때만. 최대가 선택지 수 이상이면 잠그지 않는다
-              const full = ruleKind === 'limit-full';
+              const kindsFull = ruleKind === 'limit-full';
+              // 수량 합계 제한이 있는 그룹(예: 음료 합계 2개): 합계를 다 채우면 다른 옵션도 더 못 고른다
+              const totalLimit = totalLimitOf(group);
+              const totalNow = groupTotalQuantity(group, selection, pickedQuantities);
+              const totalFull = totalLimit !== null && totalNow >= totalLimit;
+              const full = kindsFull || totalFull;
               return (
                 <OptionGroup
                   key={group.id}
@@ -194,7 +202,7 @@ export function MenuDetailScreen({ menuId }: { menuId: string }) {
                   required={isRequired(group)}
                   single={single}
                   full={full}
-                  rule={ruleKind === 'single' ? draftCopy.menu.ruleSingle : ruleKind === 'limit-full' ? draftCopy.menu.ruleFull(group.maxSelect) : ruleKind === 'limit' ? draftCopy.menu.ruleMax(group.maxSelect) : ''}
+                  rule={totalLimit !== null ? (totalFull ? draftCopy.menu.ruleTotalFull(totalLimit) : draftCopy.menu.ruleTotal(totalLimit)) : ruleKind === 'single' ? draftCopy.menu.ruleSingle : ruleKind === 'limit-full' ? draftCopy.menu.ruleFull(group.maxSelect) : ruleKind === 'limit' ? draftCopy.menu.ruleMax(group.maxSelect) : ''}
                   options={group.options.map((o) => ({
                     id: o.id,
                     name: o.name,
@@ -203,11 +211,11 @@ export function MenuDetailScreen({ menuId }: { menuId: string }) {
                     selected: current.includes(o.id),
                     locked: o.isSoldOut || (full && !current.includes(o.id)),
                     // 수량을 허용하는 옵션만 수량 조절을 보여 준다. 나머지는 기존 그대로
-                    maxQuantity: allowsQuantity(o) ? (o.maxQuantity as number) : undefined,
+                    maxQuantity: allowsQuantity(o) ? effectiveMaxQuantity(group, o, selection, pickedQuantities) : undefined,
                     quantity: quantityOf(pickedQuantities, o.id),
                   }))}
                   onToggle={(optionId) => {
-                    const nextSelection = toggleOption(selection, group, optionId);
+                    const nextSelection = toggleOption(selection, group, optionId, pickedQuantities);
                     setSelection(nextSelection);
                     // 선택에서 빠진 옵션의 수량은 지운다
                     setOptionQuantities((prev) => pruneQuantities(menu, nextSelection, prev));

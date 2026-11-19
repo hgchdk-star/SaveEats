@@ -162,6 +162,12 @@ export interface MenuOptionGroupDto {
   /** 0이면 선택 그룹, 1 이상이면 필수 그룹 */
   minSelect: number;
   maxSelect: number;
+  /**
+   * 이 그룹에서 고른 옵션들의 '수량 합계' 상한(선택). 없거나 null이면 합계 제한이 없다(기존 그룹).
+   * minSelect·maxSelect는 계속 '고른 옵션 종류 수'다. 예: 합계 2 → 같은 음료 2개, 서로 다른 음료 1개씩은 가능, 3개는 불가.
+   * 서버가 주문 때 넘으면 INVALID_OPTIONS로 거절한다(조용히 줄이지 않는다). 구형 앱은 이 키를 무시한다.
+   */
+  maxTotalQuantity?: number | null;
   /** 활성 옵션만, 정렬 순서대로. 품절 옵션 포함 */
   options: MenuOptionDto[];
 }

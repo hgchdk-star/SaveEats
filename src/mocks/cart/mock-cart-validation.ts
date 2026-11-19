@@ -68,7 +68,7 @@ export async function mockValidateCart(input: ValidationInput): Promise<MockCart
 
     let result: MockCartItemValidation;
     if (!menu || !menu.isActive) result = { ...base, status: 'INACTIVE_ENTITY' };
-    else if (selected.some((o) => !o) || selected.some((o) => o && qtyOf(o.id) !== 1 && !(o.allowQuantity === true && typeof o.maxQuantity === 'number' && qtyOf(o.id) <= o.maxQuantity))) result = { ...base, status: 'OPTIONS_INVALID' };
+    else if (selected.some((o) => !o) || selected.some((o) => o && qtyOf(o.id) !== 1 && !(o.allowQuantity === true && typeof o.maxQuantity === 'number' && qtyOf(o.id) <= o.maxQuantity)) || (menu.optionGroups ?? []).some((g) => typeof g.maxTotalQuantity === 'number' && g.options.filter((o) => item.optionIds.includes(o.id)).reduce((sum, o) => sum + qtyOf(o.id), 0) > g.maxTotalQuantity)) result = { ...base, status: 'OPTIONS_INVALID' };
     else if (menu.isSoldOut) result = { ...base, status: 'MENU_SOLD_OUT' };
     else if (soldOutOption) result = { ...base, status: 'OPTION_SOLD_OUT', soldOutOptionName: soldOutOption.name };
     else if (currentUnitPrice !== item.acknowledgedUnitPrice) result = { ...base, status: 'PRICE_CHANGED' };

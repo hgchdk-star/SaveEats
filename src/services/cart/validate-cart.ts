@@ -55,7 +55,14 @@ export function createCatalogCartValidator(catalog: Pick<CatalogRepository, 'get
       });
 
       // 옵션 수량: 수량을 허용하지 않는 옵션은 1개뿐, 허용하는 옵션은 maxQuantity까지. 그룹 개수는 고른 옵션 종류 수 기준이다
-      const quantityOk = selected.every((o) => !o || qtyOf(o.id) === 1 || (o.allowQuantity === true && typeof o.maxQuantity === 'number' && qtyOf(o.id) <= o.maxQuantity));
+      const quantityOk =
+        selected.every((o) => !o || qtyOf(o.id) === 1 || (o.allowQuantity === true && typeof o.maxQuantity === 'number' && qtyOf(o.id) <= o.maxQuantity)) &&
+        // 그룹 수량 합계 상한(서버 INVALID_OPTIONS와 같다). 제한이 없는 그룹은 기존 그대로
+        menu.optionGroups.every((g) => {
+          if (typeof g.maxTotalQuantity !== 'number') return true;
+          const total = g.options.filter((o) => item.optionIds.includes(o.id)).reduce((sum, o) => sum + qtyOf(o.id), 0);
+          return total <= g.maxTotalQuantity;
+        });
 
       if (selected.some((o) => !o) || !groupsOk || !quantityOk) items[item.clientItemId] = { ...base, status: 'OPTIONS_INVALID' };
       else if (menu.isSoldOut) items[item.clientItemId] = { ...base, status: 'MENU_SOLD_OUT' };

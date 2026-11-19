@@ -36,6 +36,15 @@ export function groupRuleKind(group: MenuOptionGroupDto, pickedCount: number): G
   return pickedCount >= group.maxSelect ? 'limit-full' : 'limit';
 }
 
+/** 그룹의 수량 합계 상한. 제한이 없으면 null(기존 그룹) */
+export const totalLimitOf = (group: MenuOptionGroupDto): number | null =>
+  typeof group.maxTotalQuantity === 'number' && Number.isInteger(group.maxTotalQuantity) && group.maxTotalQuantity >= 1 ? group.maxTotalQuantity : null;
+
+/** 그룹에서 고른 옵션들의 수량 합계(수량을 정하지 않은 옵션은 1개) */
+export function groupTotalQuantity(group: MenuOptionGroupDto, selection: Selection, quantities: OptionQuantities = {}): number {
+  return (selection[group.id] ?? []).reduce((sum, id) => sum + (quantities[id] ?? 1), 0);
+}
+
 /** 수량을 조절할 수 있는 옵션인가. 2개 이상 고를 수 있어야 조절할 의미가 있다 */
 export const allowsQuantity = (option: MenuOptionDto): boolean => option.allowQuantity === true && typeof option.maxQuantity === 'number' && option.maxQuantity >= 2;
 
@@ -49,7 +58,7 @@ export const quantityOf = (quantities: OptionQuantities, optionId: Uuid): number
  * - 품절 옵션은 고를 수 없다
  * 그룹의 최대 개수는 '고른 옵션 종류 수'다. 같은 옵션의 수량은 세지 않는다.
  */
-export function toggleOption(selection: Selection, group: MenuOptionGroupDto, optionId: Uuid): Selection {
+export function toggleOption(selection: Selection, group: MenuOptionGroupDto, optionId: Uuid, quantities: OptionQuantities = {}): Selection {
   const option = group.options.find((o) => o.id === optionId);
   if (!option || option.isSoldOut) return selection;
 
@@ -61,6 +70,9 @@ export function toggleOption(selection: Selection, group: MenuOptionGroupDto, op
   } else if (on) {
     next = current.filter((id) => id !== optionId);
   } else if (current.length >= group.maxSelect) {
+    return selection;
+  } else if (totalLimitOf(group) !== null && groupTotalQuantity(group, selection, quantities) + 1 > (totalLimitOf(group) as number)) {
+    // 수량 합계가 이미 상한이면 다른 종류를 더 고를 수 없다(새 옵션은 1개부터 시작한다)
     return selection;
   } else {
     next = [...current, optionId];
@@ -79,19 +91,46 @@ export function pruneQuantities(menu: MenuDetailDto, selection: Selection, quant
       const clamped = Math.min(option.maxQuantity as number, Math.max(1, Math.trunc(q)));
       if (clamped >= 2) next[option.id] = clamped;
     }
+    // 그룹 수량 합계 상한을 넘으면 뒤쪽 옵션부터 1개까지 줄인다(앱 화면에서는 애초에 못 넘게 막는다. 서버는 넘으면 거절한다)
+    const limit = totalLimitOf(group);
+    if (limit !== null) {
+      let excess = groupTotalQuantity(group, selection, next) - limit;
+      for (const id of [...picked].reverse()) {
+        if (excess <= 0) break;
+        const q = next[id] ?? 1;
+        if (q <= 1) continue;
+        const cut = Math.min(excess, q - 1);
+        const left = q - cut;
+        if (left >= 2) next[id] = left;
+        else delete next[id];
+        excess -= cut;
+      }
+    }
   }
   return next;
 }
 
 /**
+ * 이 옵션에 지금 정할 수 있는 최대 수량 = min(옵션 자체 상한, 그룹 수량 합계 상한 − 다른 고른 옵션의 수량).
+ * 합계 제한이 없는 그룹은 옵션 자체 상한 그대로다. 화면의 +버튼 상한에 쓴다.
+ */
+export function effectiveMaxQuantity(group: MenuOptionGroupDto, option: MenuOptionDto, selection: Selection, quantities: OptionQuantities = {}): number {
+  const own = option.maxQuantity as number;
+  const limit = totalLimitOf(group);
+  if (limit === null) return own;
+  const others = (selection[group.id] ?? []).filter((id) => id !== option.id).reduce((sum, id) => sum + (quantities[id] ?? 1), 0);
+  return Math.max(1, Math.min(own, limit - others));
+}
+
+/**
  * 고른 옵션의 수량을 바꾼다. 고르지 않았거나 수량을 허용하지 않는 옵션이면 그대로 둔다.
- * 1 ~ 옵션의 maxQuantity 안으로 맞춘다. 상한은 서버가 옵션마다 정한 값이며 앱이 정하지 않는다.
+ * 1 ~ 옵션의 maxQuantity 안으로 맞춘다. 그룹에 수량 합계 상한이 있으면 그 남은 몫까지만. 상한은 서버가 정한 값이며 앱이 정하지 않는다.
  */
 export function setOptionQuantity(menu: MenuDetailDto, selection: Selection, quantities: OptionQuantities, optionId: Uuid, requested: number): OptionQuantities {
   const found = menu.optionGroups.flatMap((g) => g.options.map((o) => ({ group: g, option: o }))).find((x) => x.option.id === optionId);
   if (!found || !allowsQuantity(found.option) || !(selection[found.group.id] ?? []).includes(optionId)) return quantities;
   const next = { ...quantities };
-  const clamped = Math.min(found.option.maxQuantity as number, Math.max(1, Math.trunc(requested)));
+  const clamped = Math.min(effectiveMaxQuantity(found.group, found.option, selection, quantities), Math.max(1, Math.trunc(requested)));
   if (clamped >= 2) next[optionId] = clamped;
   else delete next[optionId];
   return next;

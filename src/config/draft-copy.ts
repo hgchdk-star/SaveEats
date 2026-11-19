@@ -593,6 +593,9 @@ export const draftCopy = {
     /** 그룹 최대 선택은 고른 옵션 종류 수 기준이다(옵션별 수량과 별개). 실제 제한이 있을 때만 보인다 */
     ruleMax: (max: number) => `최대 ${max}종 선택`,
     ruleFull: (max: number) => `${max}종 모두 골랐어요`,
+    /** 그룹 수량 합계 제한이 있을 때(예: 음료 합계 2개). 종류 수 제한과 별개다 */
+    ruleTotal: (max: number) => `수량 합계 최대 ${max}개`,
+    ruleTotalFull: (max: number) => `수량 ${max}개를 모두 골랐어요`,
     quantityHelp: (max: number) => `최대 ${max}개`,
     noteSoldOut: '품절된 메뉴라 지금은 담을 수 없어요',
     noteLoading: '옵션 정보를 불러온 뒤 담을 수 있어요',

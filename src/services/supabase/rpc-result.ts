@@ -186,6 +186,9 @@ export function parseMenuDetail(data: unknown): MenuDetailDto {
   const m = data as Obj;
   for (const g of m.optionGroups as unknown[]) {
     need(isObj(g) && isStr(g.id) && isStr(g.name) && isNum(g.minSelect) && isNum(g.maxSelect) && Array.isArray(g.options));
+    // 그룹 수량 합계 상한(없으면 제한 없음). 있으면 1 이상의 정수 또는 null
+    const total = (g as Obj).maxTotalQuantity;
+    need(total === undefined || total === null || (isNum(total) && Number.isInteger(total) && total >= 1));
     for (const o of (g as Obj).options as unknown[]) {
       need(isObj(o) && isStr(o.id) && isStr(o.name) && isNum(o.additionalPrice) && isBool(o.isSoldOut));
       // 옵션별 수량(없으면 수량 허용 안 함). 있으면 allowQuantity는 boolean, maxQuantity는 숫자 또는 null이어야 한다
