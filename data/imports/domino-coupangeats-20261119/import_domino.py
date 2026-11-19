@@ -1038,7 +1038,7 @@ def main():
         sys.exit('변환 검사 오류가 있어 적용하지 않습니다:\n- ' + '\n- '.join(plan['issues']))
     cur.execute("select 1 from information_schema.columns where table_schema = 'public' and table_name = 'menu_option_groups' and column_name = 'max_total_quantity'")
     if not cur.fetchone():
-        sys.exit('서버에 migration 20261120000000_option_group_total_quantity.sql(옵션 그룹 수량 합계 제한)이 아직 없어 적용하지 않습니다. 먼저 이 migration을 적용하세요.')
+        sys.exit('서버에 migration 20261119101123_option_group_total_quantity.sql(옵션 그룹 수량 합계 제한)이 아직 없어 적용하지 않습니다. 먼저 이 migration을 적용하세요.')
     if plan['undecided']:
         sys.exit('미결정 항목이 있어 적용하지 않습니다:\n- ' + '\n- '.join(plan['undecided']))
     d = new_backup_dir('-pre-apply')

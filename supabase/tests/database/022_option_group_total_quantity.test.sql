@@ -1,5 +1,5 @@
 -- 옵션 그룹 수량 합계 제한: menu_option_groups.max_total_quantity
--- 근거: supabase/migrations/20261120000000_option_group_total_quantity.sql 머리말. 테스트 데이터는 롤백으로 사라진다.
+-- 근거: supabase/migrations/20261119101123_option_group_total_quantity.sql 머리말. 테스트 데이터는 롤백으로 사라진다.
 -- 이 파일은 pgTAP의 is · ok · no_plan · finish만 쓴다.
 create extension if not exists pgtap with schema extensions;
 
