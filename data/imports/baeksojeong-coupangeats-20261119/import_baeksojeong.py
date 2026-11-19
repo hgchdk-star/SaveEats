@@ -308,6 +308,9 @@ def build_plan(package, existing, option_max_quantity=None, sold_out_mode=None, 
             issues.append(f'옵션 최소 수량이 1이 아니다: {key}')
         g = gkey[o['group_key']]
         allow = bool(o['quantity_changeable']) and enable_option_quantity
+        is_excl = none_mode == 'exclusive' and o['source_option_id'] in policy['none_option_source_ids']
+        if is_excl:
+            allow = False   # 단독 옵션은 수량 조절이 없다(서정 결정 2026-11-19, SaveEats 제품 결정이며 쿠팡이츠 확인 사실이 아님). 이름이 아니라 option_policy.json의 원본 ID로만 지정한다
         if none_mode == 'no-quantity' and o['source_option_id'] in policy['none_option_source_ids']:
             allow = False   # 원본 수량 변경 플래그를 쓰지 않고 1개 고정(서정 결정 시). 이름이 아니라 option_policy.json의 원본 ID로만 지정한다
         if o['quantity_changeable'] and g['source_type'] != 'SELECT_MULTI_QTY':
@@ -323,7 +326,7 @@ def build_plan(package, existing, option_max_quantity=None, sold_out_mode=None, 
             max_q = min(o['max_quantity'], option_max_quantity)
         option_rows.append({'id': uid('option', SOURCE_SYSTEM, source_store_id, g['source_menu_id'], g['source_group_id'], o['source_option_id']),
                             'group_id': group_uuid[o['group_key']], 'name': o['name'].strip(), 'additional_price': price, 'allow_quantity': allow,
-                            'max_quantity': max_q, 'source_max_quantity': o['max_quantity'], 'sort_order': int(o['sort_order']),
+                            'max_quantity': max_q, 'source_max_quantity': o['max_quantity'], 'sort_order': int(o['sort_order']), 'is_exclusive': is_excl,
                             'source_option_id': o['source_option_id'], 'group_key': o['group_key'], 'source_menu_id': g['source_menu_id'],
                             'source_group_id': g['source_group_id']})
     undecided = []
@@ -454,6 +457,11 @@ def build_plan(package, existing, option_max_quantity=None, sold_out_mode=None, 
         os_ = [o for o in option_rows if o['source_menu_id'] == g and o['allow_quantity']]
         records.append({'url': ref, 'collected_for': 'OTHER', 'subject_label': f'{by_id[g]["name"]} 옵션 수량 조절 {len(os_)}개',
                         'note': f'원본 quantityChangeable=true 선택지 {len(os_)}개. 원본 maxQuantity={sorted({o["source_max_quantity"] for o in os_})}는 보존하고 앱 허용 상한은 {sorted({o["max_quantity"] for o in os_}, key=str)}(서정 확정 값). 원본 값의 의미는 미확인'})
+    xs = [o for o in option_rows if o['is_exclusive']]
+    if xs:
+        records.append({'url': ref, 'collected_for': 'OTHER', 'subject_label': f'단독 옵션 {len(xs)}개(선택안함)',
+                        'note': '원본: 선택안함에도 수량 변경 플래그(1~8)가 있고 다른 선택지와의 관계는 자료에 없다. SaveEats 적용: 수량 조절 없이 1개, 같은 그룹의 다른 옵션과 함께 고를 수 없는 단독 옵션(is_exclusive). '
+                                '이 규칙은 서정의 SaveEats 제품 결정(2026-11-19)이며 쿠팡이츠에서 실제 동작을 확인한 사실이 아니다'})
     tg = [g for g in group_rows if g['max_total_quantity'] is not None]
     if tg:
         records.append({'url': ref, 'collected_for': 'OTHER', 'subject_label': f'옵션 그룹 수량 합계 제한 {len(tg)}개',
@@ -719,11 +727,11 @@ def apply_db(cur, plan, uploaded):
         on conflict (id) do update set name = excluded.name, min_select = excluded.min_select, max_select = excluded.max_select,
           sort_order = excluded.sort_order, is_active = excluded.is_active, max_total_quantity = excluded.max_total_quantity""",
         [(g['id'], g['menu_id'], g['name'], g['min_select'], g['max_select'], g['sort_order'], g['is_active'], g['max_total_quantity']) for g in plan['groups']], page_size=500)
-    execute_values(cur, """insert into public.menu_options (id, group_id, name, additional_price, allow_quantity, max_quantity, sort_order, is_active, is_sold_out)
+    execute_values(cur, """insert into public.menu_options (id, group_id, name, additional_price, allow_quantity, max_quantity, sort_order, is_active, is_sold_out, is_exclusive)
         values %s
         on conflict (id) do update set name = excluded.name, additional_price = excluded.additional_price, allow_quantity = excluded.allow_quantity,
-          max_quantity = excluded.max_quantity, sort_order = excluded.sort_order, is_active = true""",
-        [(o['id'], o['group_id'], o['name'], o['additional_price'], o['allow_quantity'], o['max_quantity'], o['sort_order'], True, False) for o in plan['options']],
+          max_quantity = excluded.max_quantity, sort_order = excluded.sort_order, is_active = true, is_exclusive = excluded.is_exclusive""",
+        [(o['id'], o['group_id'], o['name'], o['additional_price'], o['allow_quantity'], o['max_quantity'], o['sort_order'], True, False, o['is_exclusive']) for o in plan['options']],
         page_size=500)
     # 5) 가게 안 메뉴 그룹 (이 가게의 이 배치 그룹만 다시 만든다. 메뉴 본체는 건드리지 않는다)
     gids = [g['id'] for g in plan['menu_groups']]
@@ -816,6 +824,9 @@ def verify(plan, cur, before=None, photos_expected=True):
                                           == (o['additional_price'], o['allow_quantity'], o['max_quantity']) and options_db[o['id']]['is_active'] for o in plan['options']))
     cur.execute('select g.id::text, g.max_total_quantity from public.menu_option_groups g join public.menus m on m.id = g.menu_id where m.store_id = %s', (STORE_ID,))
     tot_db = {r[0]: r[1] for r in cur.fetchall()}
+    cur.execute('select o.id::text, o.is_exclusive from public.menu_options o join public.menu_option_groups g on g.id = o.group_id join public.menus m on m.id = g.menu_id where m.store_id = %s', (STORE_ID,))
+    ex_db = {r[0]: r[1] for r in cur.fetchall()}
+    check('단독 옵션 표시 일치(선택안함 지정 옵션만 true, 나머지는 false)', all(ex_db.get(o['id']) == o['is_exclusive'] for o in plan['options']))
     check('옵션 그룹 수량 합계 상한 일치(제한 없는 그룹은 null)', all(tot_db.get(g['id']) == g['max_total_quantity'] for g in plan['groups']))
     planned_g = {g['id'] for g in plan['groups']}
     hidden_menus = {r['existing_menu_id'] for r in plan['removals'] if r['action'] == 'DEACTIVATE'}  # 숨김 보존 메뉴의 기존 옵션은 메뉴째 앱에 보이지 않는다
@@ -882,6 +893,29 @@ def verify(plan, cur, before=None, photos_expected=True):
         check(f'음료 {dopts[0]["name"]} {lim}개(같은 음료 합계 {lim}): 서버 통과', try_lines([(dopts[0], lim)]) == 'OK')
         check('서로 다른 음료 1개씩: 서버 통과', try_lines([(dopts[0], 1), (dopts[1], 1)]) == 'OK')
         check(f'음료 합계 {lim + 1}개(같은 음료 {lim} + 다른 음료 1): 서버 INVALID_OPTIONS', 'INVALID_OPTIONS' in try_lines([(dopts[0], lim), (dopts[1], 1)]))
+    # 단독 옵션 규칙(서버 주문 검증, 읽기 전용 함수): 단독 옵션만 선택은 통과, 같은 그룹의 다른 옵션과 함께는 INVALID_OPTIONS
+    xo = next((o for o in plan['options'] if o['is_exclusive']), None)
+    if xo is not None:
+        xg = next(g for g in plan['groups'] if g['id'] == xo['group_id'])
+        xmenu = next(m for m in plan['menus'] if m['id'] == xg['menu_id'])
+        others = sorted((o for o in plan['options'] if o['group_id'] == xg['id'] and not o['is_exclusive']), key=lambda x: (x['sort_order'], x['id']))
+
+        def try_x(picked):
+            picked = sorted(picked, key=lambda t: t[0]['id'])
+            unit = xmenu['base_price'] + sum(o['additional_price'] * q for o, q in picked)
+            line = [{'menuId': xmenu['id'], 'optionIds': [o['id'] for o, _ in picked], 'optionQuantities': [q for _, q in picked], 'quantity': 1, 'approvedUnitPrice': unit}]
+            cur.execute('savepoint xq')
+            try:
+                cur.execute('select private.validate_order_catalog(%s::uuid, %s::jsonb, %s::bigint, false)', (STORE_ID, json.dumps(line), unit))
+                cur.fetchone()
+                cur.execute('release savepoint xq')
+                return 'OK'
+            except Exception as e:
+                cur.execute('rollback to savepoint xq')
+                return getattr(e, 'pgerror', str(e)).splitlines()[0]
+        check(f'{xo["name"]}만 선택: 서버 통과(필수 충족)', try_x([(xo, 1)]) == 'OK')
+        check(f'{xo["name"]} + {others[0]["name"]}: 서버 INVALID_OPTIONS', 'INVALID_OPTIONS' in try_x([(xo, 1), (others[0], 1)]))
+        check(f'{others[0]["name"]} + {others[1]["name"]}(일반 토핑 여러 종류): 서버 통과', try_x([(others[0], 1), (others[1], 2)]) == 'OK')
     fails = [r for r in results if not r[1]]
     print(f'{len(results) - len(fails)} / {len(results)} 통과')
     return not fails
@@ -929,8 +963,8 @@ def anon_verify(plan):
             continue
         if dto['price'] != m['base_price']:
             bad.append((m['name'], f'가격 {dto["price"]} != {m["base_price"]}'))
-        want = {g['id']: sorted((o['id'], o['additional_price'], o['allow_quantity'], o['max_quantity']) for o in og.get(g['id'], [])) for g in gm.get(m['id'], [])}
-        got = {g['id']: sorted((o['id'], o['additionalPrice'], o.get('maxQuantity') is not None, o.get('maxQuantity')) for o in g['options']) for g in dto['optionGroups']}
+        want = {g['id']: sorted((o['id'], o['additional_price'], o['allow_quantity'], o['max_quantity'], o['is_exclusive']) for o in og.get(g['id'], [])) for g in gm.get(m['id'], [])}
+        got = {g['id']: sorted((o['id'], o['additionalPrice'], o.get('maxQuantity') is not None, o.get('maxQuantity'), o.get('isExclusive') is True) for o in g['options']) for g in dto['optionGroups']}
         if want != got:
             bad.append((m['name'], '옵션 그룹·선택지·추가금·수량 상한이 다름(가상 옵션이 함께 보이는 경우 포함)'))
         if {g['id']: (g['minSelect'], g['maxSelect'], g.get('maxTotalQuantity')) for g in dto['optionGroups']} != {g['id']: (g['min_select'], g['max_select'], g['max_total_quantity']) for g in gm.get(m['id'], [])}:
@@ -983,7 +1017,7 @@ def main():
     ap.add_argument('--yes-dev-project', action='store_true', help=f'개발 프로젝트({DEV_REF})임을 확인했다')
     ap.add_argument('--option-max-quantity', type=int, help='서정이 정한 옵션 수량 앱 허용 상한(적용에 필수)')
     ap.add_argument('--sold-out-mode', choices=['ignore', 'source'], help='수집 당시 "오늘 품절"을 반영할지(ignore=판매 가능으로 표시, source=품절로 표시). 적용에 필수')
-    ap.add_argument('--none-option-mode', choices=['source', 'no-quantity'], help='"선택안함" 옵션: source=원본 수량 변경 플래그 그대로, no-quantity=수량 조절 없이 1개(option_policy.json의 원본 ID만). 적용에 필수')
+    ap.add_argument('--none-option-mode', choices=['source', 'no-quantity', 'exclusive'], help='"선택안함" 옵션: source=원본 수량 변경 플래그 그대로, no-quantity=수량 조절 없이 1개, exclusive=수량 조절 없이 1개 + 같은 그룹의 다른 옵션과 함께 고를 수 없는 단독 옵션(is_exclusive). option_policy.json의 원본 ID만. 적용에 필수')
     ap.add_argument('--review-event-groups', choices=['import', 'hidden'], help='쿠팡이츠 "리뷰이벤트" 옵션 그룹: import=앱에 노출, hidden=행은 보존하고 앱에는 숨김. 적용에 필수')
     ap.add_argument('--group-total-mode', choices=['none', 'source-max'], help='원본 그룹 최대가 1000 미만인 수량형 그룹: none=수량 합계 제한 없음, source-max=그룹 최대를 수량 합계 상한으로. 적용에 필수')
     ap.add_argument('--group-names', choices=['source', 'proposed'], help='메뉴 그룹 표시명: source=원본 그대로, proposed=menu_group_display.json 제안. 적용에 필수')
@@ -1066,6 +1100,9 @@ def main():
     cur.execute("select 1 from information_schema.columns where table_schema = 'public' and table_name = 'menu_option_groups' and column_name = 'max_total_quantity'")
     if not cur.fetchone():
         sys.exit('서버에 migration 20261119101123_option_group_total_quantity.sql(옵션 그룹 수량 합계 제한)이 아직 없어 적용하지 않습니다. 먼저 이 migration을 적용하세요.')
+    cur.execute("select 1 from information_schema.columns where table_schema = 'public' and table_name = 'menu_options' and column_name = 'is_exclusive'")
+    if not cur.fetchone():
+        sys.exit('서버에 migration option_exclusive(menu_options.is_exclusive)가 아직 없어 적용하지 않습니다. 먼저 이 migration을 적용하세요.')
     if plan['undecided']:
         sys.exit('미결정 항목이 있어 적용하지 않습니다:\n- ' + '\n- '.join(plan['undecided']))
     d = new_backup_dir('-pre-apply')

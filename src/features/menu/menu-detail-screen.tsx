@@ -34,6 +34,7 @@ import {
   effectiveMaxQuantity,
   groupRuleKind,
   groupTotalQuantity,
+  isExclusiveOption,
   isRequired,
   isSingle,
   pruneQuantities,
@@ -195,6 +196,7 @@ export function MenuDetailScreen({ menuId }: { menuId: string }) {
               const totalNow = groupTotalQuantity(group, selection, pickedQuantities);
               const totalFull = totalLimit !== null && totalNow >= totalLimit;
               const full = kindsFull || totalFull;
+              const hasExclusive = group.options.some(isExclusiveOption);
               return (
                 <OptionGroup
                   key={group.id}
@@ -202,14 +204,15 @@ export function MenuDetailScreen({ menuId }: { menuId: string }) {
                   required={isRequired(group)}
                   single={single}
                   full={full}
-                  rule={totalLimit !== null ? (totalFull ? draftCopy.menu.ruleTotalFull(totalLimit) : draftCopy.menu.ruleTotal(totalLimit)) : ruleKind === 'single' ? draftCopy.menu.ruleSingle : ruleKind === 'limit-full' ? draftCopy.menu.ruleFull(group.maxSelect) : ruleKind === 'limit' ? draftCopy.menu.ruleMax(group.maxSelect) : ''}
+                  rule={[hasExclusive ? draftCopy.menu.ruleExclusive(group.options.filter(isExclusiveOption).map((o) => o.name).join(', ')) : '', totalLimit !== null ? (totalFull ? draftCopy.menu.ruleTotalFull(totalLimit) : draftCopy.menu.ruleTotal(totalLimit)) : ruleKind === 'single' ? draftCopy.menu.ruleSingle : ruleKind === 'limit-full' ? draftCopy.menu.ruleFull(group.maxSelect) : ruleKind === 'limit' ? draftCopy.menu.ruleMax(group.maxSelect) : ''].filter(Boolean).join(' · ')}
                   options={group.options.map((o) => ({
                     id: o.id,
                     name: o.name,
                     additionalPrice: o.additionalPrice,
                     soldOut: o.isSoldOut,
                     selected: current.includes(o.id),
-                    locked: o.isSoldOut || (full && !current.includes(o.id)),
+                    // 단독 옵션(선택안함)은 다른 선택을 해제하며 고르는 것이라 가득 참으로 잠그지 않는다
+                    locked: o.isSoldOut || (full && !current.includes(o.id) && !isExclusiveOption(o)),
                     // 수량을 허용하는 옵션만 수량 조절을 보여 준다. 나머지는 기존 그대로
                     maxQuantity: allowsQuantity(o) ? effectiveMaxQuantity(group, o, selection, pickedQuantities) : undefined,
                     quantity: quantityOf(pickedQuantities, o.id),

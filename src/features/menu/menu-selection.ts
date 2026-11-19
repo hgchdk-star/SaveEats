@@ -45,6 +45,9 @@ export function groupTotalQuantity(group: MenuOptionGroupDto, selection: Selecti
   return (selection[group.id] ?? []).reduce((sum, id) => sum + (quantities[id] ?? 1), 0);
 }
 
+/** 단독 옵션인가. 옵션 이름이 아니라 서버가 내려준 isExclusive 필드로만 판단한다(없으면 false) */
+export const isExclusiveOption = (option: MenuOptionDto): boolean => option.isExclusive === true;
+
 /** 수량을 조절할 수 있는 옵션인가. 2개 이상 고를 수 있어야 조절할 의미가 있다 */
 export const allowsQuantity = (option: MenuOptionDto): boolean => option.allowQuantity === true && typeof option.maxQuantity === 'number' && option.maxQuantity >= 2;
 
@@ -64,18 +67,25 @@ export function toggleOption(selection: Selection, group: MenuOptionGroupDto, op
 
   const current = selection[group.id] ?? [];
   const on = current.includes(optionId);
+  const exclusiveIds = new Set(group.options.filter(isExclusiveOption).map((o) => o.id));
   let next: Uuid[];
   if (isSingle(group)) {
     next = on ? (isRequired(group) ? current : []) : [optionId];
   } else if (on) {
     next = current.filter((id) => id !== optionId);
-  } else if (current.length >= group.maxSelect) {
-    return selection;
-  } else if (totalLimitOf(group) !== null && groupTotalQuantity(group, selection, quantities) + 1 > (totalLimitOf(group) as number)) {
-    // 수량 합계가 이미 상한이면 다른 종류를 더 고를 수 없다(새 옵션은 1개부터 시작한다)
-    return selection;
+  } else if (isExclusiveOption(option)) {
+    // 단독 옵션(선택안함)을 고르면 같은 그룹의 다른 선택은 모두 해제된다(수량 상태는 호출한 쪽이 pruneQuantities로 정리한다)
+    next = [optionId];
   } else {
-    next = [...current, optionId];
+    // 일반 옵션을 고르면 단독 옵션은 해제된다. 종류 수·수량 합계 제한은 해제 뒤의 선택으로 센다
+    const base = current.filter((id) => !exclusiveIds.has(id));
+    if (base.length >= group.maxSelect) return selection;
+    const limit = totalLimitOf(group);
+    if (limit !== null && groupTotalQuantity(group, { ...selection, [group.id]: base }, quantities) + 1 > limit) {
+      // 수량 합계가 이미 상한이면 다른 종류를 더 고를 수 없다(새 옵션은 1개부터 시작한다)
+      return selection;
+    }
+    next = [...base, optionId];
   }
   return { ...selection, [group.id]: next };
 }

@@ -36,6 +36,10 @@ function verify(request: CreateOrderRequest) {
     if (picked.some((p) => p.quantity !== 1 && !(p.option?.allowQuantity === true && typeof p.option.maxQuantity === 'number' && p.quantity <= p.option.maxQuantity))) {
       throw new ServiceError('INVALID_OPTIONS');
     }
+    // 단독 옵션(서버와 같다): 같은 그룹의 다른 옵션과 함께 보내면 거절
+    if (menu.optionGroups.some((g) => g.options.some((o) => o.isExclusive === true && picked.some((p) => p.option?.id === o.id)) && picked.filter((p) => g.options.some((o) => o.id === p.option?.id)).length > 1)) {
+      throw new ServiceError('INVALID_OPTIONS');
+    }
     // 그룹 수량 합계 상한(서버와 같다): 넘으면 줄이지 않고 거절
     if (menu.optionGroups.some((g) => typeof g.maxTotalQuantity === 'number' && picked.filter((p) => g.options.some((o) => o.id === p.option?.id)).reduce((sum, p) => sum + p.quantity, 0) > g.maxTotalQuantity)) {
       throw new ServiceError('INVALID_OPTIONS');

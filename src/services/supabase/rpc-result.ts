@@ -194,6 +194,7 @@ export function parseMenuDetail(data: unknown): MenuDetailDto {
       // 옵션별 수량(없으면 수량 허용 안 함). 있으면 allowQuantity는 boolean, maxQuantity는 숫자 또는 null이어야 한다
       const opt = o as Obj;
       need(opt.allowQuantity === undefined || isBool(opt.allowQuantity));
+      need(opt.isExclusive === undefined || isBool(opt.isExclusive));   // 단독 옵션(없으면 false)
       need(opt.maxQuantity === undefined || opt.maxQuantity === null || (isNum(opt.maxQuantity) && Number.isInteger(opt.maxQuantity) && opt.maxQuantity >= 1));
     }
   }

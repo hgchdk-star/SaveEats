@@ -60,7 +60,7 @@ for mid in snap['_reviews']:
 
 BK = tempfile.mkdtemp(prefix='baek-test-backup-')
 env = dict(os.environ, DATABASE_URL=URI, BAEK_BACKUP_ROOT=BK, SUPABASE_URL='', EXPO_PUBLIC_SUPABASE_URL='', SUPABASE_PUBLISHABLE_KEY='', EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY='', SUPABASE_SERVICE_ROLE_KEY='')
-FLAGS = ('--option-max-quantity', '10', '--group-names', 'proposed', '--group-total-mode', 'source-max', '--none-option-mode', 'no-quantity', '--review-event-groups', 'hidden')
+FLAGS = ('--option-max-quantity', '10', '--group-names', 'proposed', '--group-total-mode', 'source-max', '--none-option-mode', 'exclusive', '--review-event-groups', 'hidden')
 
 def run(*args, flags=FLAGS):
     p = subprocess.run([sys.executable, TOOL, '--package', PKG, '--skip-photos', *flags, *args], env=env, capture_output=True, text=True)
@@ -81,7 +81,7 @@ Y = "from public.menus where store_id=%s"
 rc, out = run('--check', flags=())
 check('--check: 미결정 4개와 삭제 1·숨김 0, 연결 4', rc == 0 and out.count('(--') >= 3 and '삭제 1개, 숨김 보존 0개' in out and '기존 UUID 유지 갱신 4개 + 새로 추가 62개' in out, out[-700:])
 check('점검만으로 DB 변화 없음', q("select count(*) " + Y, (SID,))[0][0] == 5)
-base = {'--option-max-quantity': '10', '--group-names': 'proposed', '--group-total-mode': 'source-max', '--none-option-mode': 'no-quantity', '--review-event-groups': 'hidden'}
+base = {'--option-max-quantity': '10', '--group-names': 'proposed', '--group-total-mode': 'source-max', '--none-option-mode': 'exclusive', '--review-event-groups': 'hidden'}
 for drop, label in (('--group-total-mode', '수량 합계'), ('--none-option-mode', '선택안함'), ('--review-event-groups', '리뷰이벤트'), ('--group-names', '표시명'), ('--option-max-quantity', '수량 상한')):
     fl = tuple(x for k, v in base.items() if k != drop for x in (k, v))
     rc, out = run('--apply', '--yes-dev-project', flags=fl)
@@ -114,6 +114,8 @@ check('Guest get_store: menus 66개(중복 없음), 그룹 소속 합 69', len(d
 idm = json.load(open(TOOLDIR + '/id_map.json'))
 kc = anon('select public.get_menu(%s::uuid)', (idm['menus']['124518679'],))
 req = [g for g in kc['optionGroups'] if g['minSelect'] >= 1]
+check('선택안함 5개만 단독 옵션(is_exclusive), 단독 옵션은 수량 조절 없음', q("select count(*) filter (where is_exclusive), count(*) filter (where is_exclusive and name = '선택안함' and not allow_quantity and max_quantity is null) from public.menu_options")[0] == (5, 5))
+check('키소카레 응답: 선택안함만 isExclusive=true(필드로 전달)', [(o['name'], o['isExclusive']) for o in req[0]['options']] == [('선택안함', True), ('대파', False), ('마늘양파후레이크', False), ('눈꽃치즈', False)] if req else False)
 check('키소카레: 필수 그룹 1개(종류 1~8·합계 8), 선택안함은 수량 조절 없음, 나머지 3종은 상한 8', len(req) == 1 and req[0]['maxSelect'] == 8 and req[0]['maxTotalQuantity'] == 8
       and [(o['name'], o.get('maxQuantity')) for o in req[0]['options']] == [('선택안함', None), ('대파', 8), ('마늘양파후레이크', 8), ('눈꽃치즈', 8)], [(o['name'], o.get('maxQuantity')) for o in req[0]['options']])
 check('리뷰이벤트 그룹은 앱 응답에 없다', not any(g['name'].startswith('리뷰이벤트') for g in kc['optionGroups']), [g['name'] for g in kc['optionGroups']])
@@ -143,7 +145,7 @@ check('복구 후: 원래 메뉴 5개·옵션 그룹 2·옵션 5, 그룹·내부
 # 6) 다른 결정: 원본 그대로(선택안함 수량 20개, 합계 제한 없음, 리뷰이벤트 노출)
 rc, out = run('--apply', '--yes-dev-project', flags=('--option-max-quantity', '10', '--group-names', 'source', '--group-total-mode', 'none', '--none-option-mode', 'source', '--review-event-groups', 'import'))
 check('원본 그대로 모드: 수량 20개·합계 제한 없음·리뷰이벤트 노출·그룹명 원본', rc == 0 and q("select count(*) filter (where allow_quantity) from public.menu_options")[0][0] == 20
-      and q("select count(*) from public.menu_option_groups where max_total_quantity is not null")[0][0] == 0 and q("select count(*) from public.menu_option_groups where not is_active")[0][0] == 0
+      and q("select count(*) from public.menu_options where is_exclusive")[0][0] == 0 and q("select count(*) from public.menu_option_groups where max_total_quantity is not null")[0][0] == 0 and q("select count(*) from public.menu_option_groups where not is_active")[0][0] == 0
       and q("select name from public.store_menu_groups where sort_order=4")[0][0] == '세트 메뉴 [최대 1,500원 할인]', out[-400:])
 check('출력에 접속 문자열 없음', URI not in out)
 print(f'{sum(results)} / {len(results)} 통과')

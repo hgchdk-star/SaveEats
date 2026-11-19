@@ -596,6 +596,8 @@ export const draftCopy = {
     /** 그룹 수량 합계 제한이 있을 때(예: 음료 합계 2개). 종류 수 제한과 별개다 */
     ruleTotal: (max: number) => `수량 합계 최대 ${max}개`,
     ruleTotalFull: (max: number) => `수량 ${max}개를 모두 골랐어요`,
+    /** 단독 옵션(예: 선택안함)이 있는 그룹: 다른 옵션과 함께 고를 수 없다 */
+    ruleExclusive: (names: string) => `단독 선택: ${names}`,
     quantityHelp: (max: number) => `최대 ${max}개`,
     noteSoldOut: '품절된 메뉴라 지금은 담을 수 없어요',
     noteLoading: '옵션 정보를 불러온 뒤 담을 수 있어요',

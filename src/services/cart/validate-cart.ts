@@ -51,7 +51,9 @@ export function createCatalogCartValidator(catalog: Pick<CatalogRepository, 'get
       const soldOutOption = selected.find((o) => o?.isSoldOut);
       const groupsOk = menu.optionGroups.every((g) => {
         const count = g.options.filter((o) => item.optionIds.includes(o.id)).length;
-        return count >= g.minSelect && count <= g.maxSelect;
+        // 단독 옵션(isExclusive)은 같은 그룹의 다른 옵션과 함께 담을 수 없다. 오래된 장바구니의 잘못된 조합은 몰래 고치지 않고 OPTIONS_INVALID로 알린다
+        const exclusiveOk = !g.options.some((o) => o.isExclusive === true && item.optionIds.includes(o.id)) || count <= 1;
+        return count >= g.minSelect && count <= g.maxSelect && exclusiveOk;
       });
 
       // 옵션 수량: 수량을 허용하지 않는 옵션은 1개뿐, 허용하는 옵션은 maxQuantity까지. 그룹 개수는 고른 옵션 종류 수 기준이다

@@ -154,6 +154,11 @@ export interface MenuOptionDto {
   allowQuantity?: boolean;
   /** allowQuantity=true일 때 고를 수 있는 최대 수량(1 이상). 옵션마다 데이터로 정한다. 허용하지 않으면 null */
   maxQuantity?: number | null;
+  /**
+   * 단독 옵션인가(예: '선택안함'). true이면 같은 그룹의 다른 옵션과 함께 고를 수 없고 수량은 항상 1이다(수량 조절 없음).
+   * 서버는 함께 보내면 INVALID_OPTIONS로 거절한다. 옵션 이름이 아니라 이 필드로만 판단한다. 없으면 false(구형 응답 호환).
+   */
+  isExclusive?: boolean;
 }
 
 export interface MenuOptionGroupDto {
