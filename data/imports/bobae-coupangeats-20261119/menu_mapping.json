@@ -1,0 +1,50 @@
+{
+  "_comment": "기존 보배반점 메뉴 ↔ 수집(응암점) 메뉴 대응표. 이름이 같고(또는 띄어쓰기만 다르고) 기존 사진과 수집 사진이 같은 상품인 것만 연결한다. 가격은 수집 가격으로 갱신한다(서정 승인: 지점 가격을 대표값으로).",
+  "links": [
+    {
+      "existing_menu_id": "58bb9517-8ec8-5100-a9f3-f55169348eb0",
+      "existing_name": "보배짬뽕",
+      "source_menu_id": 113003382,
+      "source_name": "보배짬뽕",
+      "status": "LINK",
+      "basis": "EXACT_NAME_PRICE_PHOTO",
+      "evidence": "이름 동일('식사류(면)'), 기존 10,500원 = 수집 10,500원, 같은 상품(해물 보배짬뽕). '보배짬뽕 밥'은 별개 메뉴로 따로 추가. 인기 30점 유지"
+    },
+    {
+      "existing_menu_id": "791d911f-130e-551a-a95e-dbcca09e1f27",
+      "existing_name": "소고기짬뽕",
+      "source_menu_id": 113003384,
+      "source_name": "소고기짬뽕",
+      "status": "LINK",
+      "basis": "EXACT_NAME_PHOTO",
+      "evidence": "이름 동일, 같은 상품(소고기 짬뽕). 가격 13,000→14,000. '소고기짬뽕 밥'은 별개 메뉴로 따로 추가"
+    },
+    {
+      "existing_menu_id": "6c43a032-8e63-520d-a120-e18c556bad5c",
+      "existing_name": "크림짬뽕",
+      "source_menu_id": 113003388,
+      "source_name": "크림짬뽕",
+      "status": "LINK",
+      "basis": "EXACT_NAME_PHOTO",
+      "evidence": "이름 동일, 같은 상품(크림 짬뽕, 새우·메추리알). 가격 14,000→15,000. 주문 1건·리뷰 1건 유지"
+    },
+    {
+      "existing_menu_id": "131d83bc-cc1c-5039-a2d0-ff120e30d0cb",
+      "existing_name": "보배짜장면",
+      "source_menu_id": 113003378,
+      "source_name": "보배 짜장면",
+      "status": "LINK",
+      "basis": "NAME_SPACING_PRICE_PHOTO",
+      "evidence": "띄어쓰기만 다르고('보배짜장면' ↔ '보배 짜장면') 기존 8,500원 = 수집 8,500원, 같은 상품(수제 짜장면, 무순·메추리알). 표시 이름은 기존을 유지한다(수집본 표기로 바꿀지는 서정 결정)"
+    }
+  ],
+  "remove": [
+    {
+      "existing_menu_id": "538c494a-0187-5d7c-a626-c25970068023",
+      "existing_name": "보배간짜장",
+      "reason": "수집 목록에 동일 상품이 없다: 수집본에 간짜장 메뉴가 없다. 실제 존재 여부는 확인하지 않았다. 개발용 기존 메뉴(12,000원)로 보고 처리한다(참조 없음 확인 후 삭제)"
+    }
+  ],
+  "approved_snapshot_referenced_group_ids": [],
+  "_approved_note": "주문 스냅샷이 원본 ID로 가리키는 기존 가상 옵션 그룹(크림짬뽕의 양 선택, 옵션 2개)은 서정이 삭제를 승인한 뒤 여기에 그룹 id를 넣는다. 그 전에는 삭제하지 않고 비활성으로 보존한다."
+}

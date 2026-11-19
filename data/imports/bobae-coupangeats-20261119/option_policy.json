@@ -1,0 +1,142 @@
+{
+  "_comment": "원본 그룹 소속으로 지정한 숨김 대상(리뷰이벤트 그룹 1개 메뉴, 주류 그룹 18개 메뉴). 메뉴 이름만 보고 고르지 않는다. 원본은 보존하고 앱에서만 숨긴다.",
+  "hidden_menu_source_ids": [
+    113003502,
+    113003432,
+    113003433,
+    113003434,
+    113003435,
+    113003436,
+    113003437,
+    113003438,
+    113003439,
+    113003441,
+    113003442,
+    113003443,
+    113003444,
+    113003445,
+    113003446,
+    113003447,
+    113003448,
+    113003449,
+    113003450
+  ],
+  "hidden_menu_reference": [
+    {
+      "source_menu_id": 113003502,
+      "name": "포토 리뷰 이벤트 참여",
+      "group": "리뷰이벤트",
+      "price": 0
+    },
+    {
+      "source_menu_id": 113003432,
+      "name": "참이슬 후레쉬 360ml",
+      "group": "주류",
+      "price": 5000
+    },
+    {
+      "source_menu_id": 113003433,
+      "name": "참이슬 오리지널 360ml",
+      "group": "주류",
+      "price": 5000
+    },
+    {
+      "source_menu_id": 113003434,
+      "name": "처음처럼 360ml",
+      "group": "주류",
+      "price": 5000
+    },
+    {
+      "source_menu_id": 113003435,
+      "name": "진로이즈백 360ml",
+      "group": "주류",
+      "price": 5000
+    },
+    {
+      "source_menu_id": 113003436,
+      "name": "청하 300ml",
+      "group": "주류",
+      "price": 5000
+    },
+    {
+      "source_menu_id": 113003437,
+      "name": "새로 360ml",
+      "group": "주류",
+      "price": 5000
+    },
+    {
+      "source_menu_id": 113003438,
+      "name": "카스",
+      "group": "주류",
+      "price": 5000
+    },
+    {
+      "source_menu_id": 113003439,
+      "name": "테라",
+      "group": "주류",
+      "price": 5000
+    },
+    {
+      "source_menu_id": 113003441,
+      "name": "이과두주 125ml",
+      "group": "주류",
+      "price": 4000
+    },
+    {
+      "source_menu_id": 113003442,
+      "name": "림해설원 450ml",
+      "group": "주류",
+      "price": 18000
+    },
+    {
+      "source_menu_id": 113003443,
+      "name": "공부가주 250ml",
+      "group": "주류",
+      "price": 20000
+    },
+    {
+      "source_menu_id": 113003444,
+      "name": "연태고량주 250ml",
+      "group": "주류",
+      "price": 20000
+    },
+    {
+      "source_menu_id": 113003445,
+      "name": "연태고량주 500ml",
+      "group": "주류",
+      "price": 35000
+    },
+    {
+      "source_menu_id": 113003446,
+      "name": "보배고량주 150ml",
+      "group": "주류",
+      "price": 11000
+    },
+    {
+      "source_menu_id": 113003447,
+      "name": "보배고량주 280ml",
+      "group": "주류",
+      "price": 22000
+    },
+    {
+      "source_menu_id": 113003448,
+      "name": "보배고량주 500ml",
+      "group": "주류",
+      "price": 35000
+    },
+    {
+      "source_menu_id": 113003449,
+      "name": "칭타오",
+      "group": "주류",
+      "price": 7000
+    },
+    {
+      "source_menu_id": 113003450,
+      "name": "하얼빈",
+      "group": "주류",
+      "price": 7000
+    }
+  ],
+  "none_option_source_ids": [],
+  "review_event_source_group_ids": []
+}

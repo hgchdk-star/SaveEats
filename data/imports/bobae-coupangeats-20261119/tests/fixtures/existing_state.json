@@ -1,0 +1,362 @@
+{
+ "refs": {
+  "orders": 1,
+  "order_items": 1,
+  "review_menus": 1,
+  "store_sources": 2,
+  "order_item_options": 1,
+  "store_source_records": 21
+ },
+ "menus": [
+  {
+   "id": "58bb9517-8ec8-5100-a9f3-f55169348eb0",
+   "name": "보배짬뽕",
+   "image_ref": "menus/58bb9517-8ec8-5100-a9f3-f55169348eb0.png",
+   "is_active": true,
+   "base_price": 10500,
+   "is_popular": true,
+   "sort_order": 1,
+   "description": "고기와 해물을 넣은 얼큰한 짬뽕.",
+   "is_sold_out": false,
+   "popularity_score": 30
+  },
+  {
+   "id": "791d911f-130e-551a-a95e-dbcca09e1f27",
+   "name": "소고기짬뽕",
+   "image_ref": "menus/791d911f-130e-551a-a95e-dbcca09e1f27.png",
+   "is_active": true,
+   "base_price": 13000,
+   "is_popular": false,
+   "sort_order": 2,
+   "description": "소고기와 오징어를 넣은 짬뽕.",
+   "is_sold_out": false,
+   "popularity_score": 0
+  },
+  {
+   "id": "6c43a032-8e63-520d-a120-e18c556bad5c",
+   "name": "크림짬뽕",
+   "image_ref": "menus/6c43a032-8e63-520d-a120-e18c556bad5c.png",
+   "is_active": true,
+   "base_price": 14000,
+   "is_popular": false,
+   "sort_order": 3,
+   "description": "크림 풍미를 더한 짬뽕.",
+   "is_sold_out": false,
+   "popularity_score": 0
+  },
+  {
+   "id": "131d83bc-cc1c-5039-a2d0-ff120e30d0cb",
+   "name": "보배짜장면",
+   "image_ref": "menus/131d83bc-cc1c-5039-a2d0-ff120e30d0cb.png",
+   "is_active": true,
+   "base_price": 8500,
+   "is_popular": false,
+   "sort_order": 4,
+   "description": "짜장 소스와 면, 무순·메추리알 구성.",
+   "is_sold_out": false,
+   "popularity_score": 0
+  },
+  {
+   "id": "538c494a-0187-5d7c-a626-c25970068023",
+   "name": "보배간짜장",
+   "image_ref": "menus/538c494a-0187-5d7c-a626-c25970068023.png",
+   "is_active": true,
+   "base_price": 12000,
+   "is_popular": false,
+   "sort_order": 5,
+   "description": "볶은 짜장과 계란프라이 구성.",
+   "is_sold_out": false,
+   "popularity_score": 0
+  }
+ ],
+ "store": {
+  "id": "ae4676a3-d07e-59c2-ac08-26dd7e8193fa",
+  "name": "보배반점",
+  "is_open": true,
+  "image_ref": "stores/ae4676a3-d07e-59c2-ac08-26dd7e8193fa.png",
+  "is_active": true,
+  "category_id": "10000000-0000-4000-8000-000000000005",
+  "is_recommended": true
+ },
+ "groups": [
+  {
+   "id": "51d298c4-335c-5f6c-af88-0b1309ef1feb",
+   "name": "양 선택",
+   "menu_id": "131d83bc-cc1c-5039-a2d0-ff120e30d0cb",
+   "is_active": true,
+   "max_select": 1,
+   "min_select": 1,
+   "sort_order": 1
+  },
+  {
+   "id": "cb044525-5bfb-55a3-acad-52638fc18f9e",
+   "name": "양 선택",
+   "menu_id": "538c494a-0187-5d7c-a626-c25970068023",
+   "is_active": true,
+   "max_select": 1,
+   "min_select": 1,
+   "sort_order": 1
+  },
+  {
+   "id": "da10b0ca-7bb9-56e6-a253-91c1e6131974",
+   "name": "양 선택",
+   "menu_id": "58bb9517-8ec8-5100-a9f3-f55169348eb0",
+   "is_active": true,
+   "max_select": 1,
+   "min_select": 1,
+   "sort_order": 1
+  },
+  {
+   "id": "9a992d91-e73d-51b8-a62b-21955b656a3e",
+   "name": "맵기 선택",
+   "menu_id": "58bb9517-8ec8-5100-a9f3-f55169348eb0",
+   "is_active": true,
+   "max_select": 1,
+   "min_select": 1,
+   "sort_order": 2
+  },
+  {
+   "id": "bcec585a-5921-5ee4-a526-490739b1ded9",
+   "name": "양 선택",
+   "menu_id": "6c43a032-8e63-520d-a120-e18c556bad5c",
+   "is_active": true,
+   "max_select": 1,
+   "min_select": 1,
+   "sort_order": 1
+  },
+  {
+   "id": "e6b3db0c-3fa8-5b30-a12c-7f0526fe318b",
+   "name": "양 선택",
+   "menu_id": "791d911f-130e-551a-a95e-dbcca09e1f27",
+   "is_active": true,
+   "max_select": 1,
+   "min_select": 1,
+   "sort_order": 1
+  },
+  {
+   "id": "25c726fb-39a7-5c71-a714-bc7a6bb973b5",
+   "name": "맵기 선택",
+   "menu_id": "791d911f-130e-551a-a95e-dbcca09e1f27",
+   "is_active": true,
+   "max_select": 1,
+   "min_select": 1,
+   "sort_order": 2
+  }
+ ],
+ "totals": {
+  "groups_total": 1540,
+  "menus_active": 727,
+  "orders_total": 47,
+  "options_total": 11715,
+  "stores_active": 16
+ },
+ "options": [
+  {
+   "id": "9cfce9da-6bb9-5e01-a204-5cce3bb148d5",
+   "name": "순한맛",
+   "group_id": "25c726fb-39a7-5c71-a714-bc7a6bb973b5",
+   "is_active": true,
+   "sort_order": 1,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 0
+  },
+  {
+   "id": "43097814-d556-524a-afde-cc396081d34c",
+   "name": "기본맛",
+   "group_id": "25c726fb-39a7-5c71-a714-bc7a6bb973b5",
+   "is_active": true,
+   "sort_order": 2,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 0
+  },
+  {
+   "id": "02eea6b9-a8fc-5876-aa01-6f60a51919d9",
+   "name": "매운맛",
+   "group_id": "25c726fb-39a7-5c71-a714-bc7a6bb973b5",
+   "is_active": true,
+   "sort_order": 3,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 0
+  },
+  {
+   "id": "9e02d722-c061-5b9a-a584-5b8cdd286470",
+   "name": "보통",
+   "group_id": "51d298c4-335c-5f6c-af88-0b1309ef1feb",
+   "is_active": true,
+   "sort_order": 1,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 0
+  },
+  {
+   "id": "b4f39673-cdb4-5af6-adb1-78e5cdac4eea",
+   "name": "곱빼기",
+   "group_id": "51d298c4-335c-5f6c-af88-0b1309ef1feb",
+   "is_active": true,
+   "sort_order": 2,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 1500
+  },
+  {
+   "id": "81922812-2cc4-56ca-a238-0760b92a7806",
+   "name": "순한맛",
+   "group_id": "9a992d91-e73d-51b8-a62b-21955b656a3e",
+   "is_active": true,
+   "sort_order": 1,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 0
+  },
+  {
+   "id": "d3c9c3e0-f4c7-5c64-ad69-9b179101fd78",
+   "name": "기본맛",
+   "group_id": "9a992d91-e73d-51b8-a62b-21955b656a3e",
+   "is_active": true,
+   "sort_order": 2,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 0
+  },
+  {
+   "id": "d8c466ee-a00d-5ffb-a6b1-350c9e8bbadc",
+   "name": "매운맛",
+   "group_id": "9a992d91-e73d-51b8-a62b-21955b656a3e",
+   "is_active": true,
+   "sort_order": 3,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 0
+  },
+  {
+   "id": "67790f54-881d-5865-abe0-fec280bb1e64",
+   "name": "보통",
+   "group_id": "bcec585a-5921-5ee4-a526-490739b1ded9",
+   "is_active": true,
+   "sort_order": 1,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 0
+  },
+  {
+   "id": "39ac3348-827b-5ae3-a15a-aec35684d846",
+   "name": "곱빼기",
+   "group_id": "bcec585a-5921-5ee4-a526-490739b1ded9",
+   "is_active": true,
+   "sort_order": 2,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 1500
+  },
+  {
+   "id": "612c1e93-182c-5daa-ade1-c44e96db2776",
+   "name": "보통",
+   "group_id": "cb044525-5bfb-55a3-acad-52638fc18f9e",
+   "is_active": true,
+   "sort_order": 1,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 0
+  },
+  {
+   "id": "e5bdbeba-df33-56f0-a7a8-f331fd7d9d4e",
+   "name": "곱빼기",
+   "group_id": "cb044525-5bfb-55a3-acad-52638fc18f9e",
+   "is_active": true,
+   "sort_order": 2,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 1500
+  },
+  {
+   "id": "4ff91e5d-7b69-530b-aba7-04b1668558f2",
+   "name": "보통",
+   "group_id": "da10b0ca-7bb9-56e6-a253-91c1e6131974",
+   "is_active": true,
+   "sort_order": 1,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 0
+  },
+  {
+   "id": "f2939638-985c-5f6c-a664-f1b7cf3a7468",
+   "name": "곱빼기",
+   "group_id": "da10b0ca-7bb9-56e6-a253-91c1e6131974",
+   "is_active": true,
+   "sort_order": 2,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 1500
+  },
+  {
+   "id": "9733fa75-65a5-55c5-aaf2-1c4f047287d0",
+   "name": "보통",
+   "group_id": "e6b3db0c-3fa8-5b30-a12c-7f0526fe318b",
+   "is_active": true,
+   "sort_order": 1,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 0
+  },
+  {
+   "id": "27a1be91-c1b6-522a-a860-5c8198075998",
+   "name": "곱빼기",
+   "group_id": "e6b3db0c-3fa8-5b30-a12c-7f0526fe318b",
+   "is_active": true,
+   "sort_order": 2,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 1500
+  }
+ ],
+ "menu_groups": [],
+ "private_records": 0,
+ "menu_group_items": [],
+ "snapshot_group_ids": [
+  "bcec585a-5921-5ee4-a526-490739b1ded9"
+ ],
+ "snapshot_option_ids": [
+  "67790f54-881d-5865-abe0-fec280bb1e64"
+ ],
+ "source": "database",
+ "_category": [
+  "chinese",
+  "중식"
+ ],
+ "_order_items": {
+  "6c43a032-8e63-520d-a120-e18c556bad5c": 1
+ },
+ "_reviews": {
+  "6c43a032-8e63-520d-a120-e18c556bad5c": 1
+ },
+ "_oio": [
+  {
+   "menu_id": "6c43a032-8e63-520d-a120-e18c556bad5c",
+   "source_group_id": "bcec585a-5921-5ee4-a526-490739b1ded9",
+   "source_option_id": "67790f54-881d-5865-abe0-fec280bb1e64",
+   "group_name_snapshot": "양 선택",
+   "option_name_snapshot": "보통",
+   "additional_price_snapshot": 0,
+   "sort_order": 1
+  }
+ ]
+}
