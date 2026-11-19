@@ -483,6 +483,16 @@ def build_plan(package, existing, option_max_quantity=None, sold_out_mode=None, 
         records.append({'url': ref, 'collected_for': 'MENU_PRICE', 'subject_label': r['name'], 'note': note})
         if r['description'] and (r['kind'] == 'NEW' or r['fills_description']):
             records.append({'url': ref, 'collected_for': 'MENU_DESCRIPTION', 'subject_label': r['name'], 'note': '쿠팡이츠 앱 설명 원문, 권리 미확인'})
+    # 서로 다른 메뉴가 같은 원본 사진 파일을 대표로 쓰면 임의로 고치지 않고 '원본 이미지 중복, 상품별 정확성 미확인'으로 남긴다
+    by_sha = {}
+    for r in photo_rows:
+        by_sha.setdefault(r['sha256'], []).append(r)
+    for sha, rs in by_sha.items():
+        if len({x['menu_id'] for x in rs}) > 1:
+            names = ', '.join(sorted(x['menu_name'] for x in rs))
+            for x in rs:
+                records.append({'url': x['source_url'], 'collected_for': 'OTHER', 'subject_label': f'{x["menu_name"]} (사진 중복)',
+                                'note': f'원본 이미지 중복, 상품별 정확성 미확인: 같은 원본 사진 파일({sha[:8]})이 {names}에 연결돼 있다. 원본 그대로 반영하고 고치거나 대체하지 않았다'})
     for r in photo_rows:
         records.append({'url': r['source_url'], 'collected_for': 'IMAGE_PAGE', 'subject_label': r['menu_name'], 'note': f'사진 원본 URL, 권리 상태 {r["rights_status"]}'})
     for g in sorted({(o['source_menu_id']) for o in option_rows if o['allow_quantity']}):
