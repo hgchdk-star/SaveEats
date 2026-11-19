@@ -1,0 +1,416 @@
+{
+ "refs": {
+  "orders": 5,
+  "order_items": 5,
+  "review_menus": 1,
+  "store_sources": 2,
+  "order_item_options": 0,
+  "store_source_records": 19
+ },
+ "menus": [
+  {
+   "id": "14db58a7-7c06-54ce-ad95-3b4551000ab1",
+   "name": "포테이토 (M)",
+   "image_ref": "menus/14db58a7-7c06-54ce-ad95-3b4551000ab1.jpg",
+   "is_active": true,
+   "base_price": 20500,
+   "is_popular": true,
+   "sort_order": 1,
+   "description": "M 사이즈 기본 시작가 기준.",
+   "is_sold_out": false,
+   "popularity_score": 50
+  },
+  {
+   "id": "3115a3ef-d067-581c-abe7-c79062276f10",
+   "name": "리얼불고기 (M)",
+   "image_ref": "menus/3115a3ef-d067-581c-abe7-c79062276f10.jpg",
+   "is_active": true,
+   "base_price": 22500,
+   "is_popular": false,
+   "sort_order": 2,
+   "description": "M 사이즈 기본 시작가 기준. 불고기를 올린 피자.",
+   "is_sold_out": false,
+   "popularity_score": 0
+  },
+  {
+   "id": "52adc2b0-0030-528e-a79a-eb2496af0f02",
+   "name": "슈퍼디럭스 (M)",
+   "image_ref": "menus/52adc2b0-0030-528e-a79a-eb2496af0f02.jpg",
+   "is_active": true,
+   "base_price": 21500,
+   "is_popular": false,
+   "sort_order": 3,
+   "description": "M 사이즈 기본 시작가 기준.",
+   "is_sold_out": false,
+   "popularity_score": 0
+  },
+  {
+   "id": "9b001e30-d66d-5df0-ad6f-63f49cc26777",
+   "name": "페퍼로니 (M)",
+   "image_ref": "menus/9b001e30-d66d-5df0-ad6f-63f49cc26777.jpg",
+   "is_active": true,
+   "base_price": 18500,
+   "is_popular": false,
+   "sort_order": 4,
+   "description": "M 사이즈 기본 시작가 기준. 페퍼로니를 올린 피자.",
+   "is_sold_out": false,
+   "popularity_score": 0
+  },
+  {
+   "id": "29298716-db5b-525a-aafb-1c21628ec532",
+   "name": "치즈 (M)",
+   "image_ref": "menus/29298716-db5b-525a-aafb-1c21628ec532.jpg",
+   "is_active": true,
+   "base_price": 16500,
+   "is_popular": false,
+   "sort_order": 5,
+   "description": "M 사이즈 기본 시작가 기준. 토마토 소스와 모차렐라 구성.",
+   "is_sold_out": false,
+   "popularity_score": 0
+  }
+ ],
+ "store": {
+  "id": "9d5acc03-45c5-581b-a657-22ee8773b28c",
+  "name": "도미노피자",
+  "is_open": true,
+  "image_ref": "stores/9d5acc03-45c5-581b-a657-22ee8773b28c.jpg",
+  "is_active": true,
+  "category_id": "10000000-0000-4000-8000-000000000003",
+  "is_recommended": true
+ },
+ "groups": [
+  {
+   "id": "a323d934-a043-5c1b-a462-63201c4d907f",
+   "name": "크기 선택",
+   "menu_id": "14db58a7-7c06-54ce-ad95-3b4551000ab1",
+   "is_active": true,
+   "max_select": 1,
+   "min_select": 1,
+   "sort_order": 1
+  },
+  {
+   "id": "dc89a422-e68e-5843-a4d7-d046c2da1680",
+   "name": "엣지 선택",
+   "menu_id": "14db58a7-7c06-54ce-ad95-3b4551000ab1",
+   "is_active": true,
+   "max_select": 1,
+   "min_select": 1,
+   "sort_order": 2
+  },
+  {
+   "id": "8d8c6c87-36ca-56e5-a237-72ce12ae3585",
+   "name": "크기 선택",
+   "menu_id": "29298716-db5b-525a-aafb-1c21628ec532",
+   "is_active": true,
+   "max_select": 1,
+   "min_select": 1,
+   "sort_order": 1
+  },
+  {
+   "id": "e353672c-404b-5279-adfb-753a0d8fcf30",
+   "name": "엣지 선택",
+   "menu_id": "29298716-db5b-525a-aafb-1c21628ec532",
+   "is_active": true,
+   "max_select": 1,
+   "min_select": 1,
+   "sort_order": 2
+  },
+  {
+   "id": "a903be5d-37b5-5a10-ab1c-13315b16baff",
+   "name": "크기 선택",
+   "menu_id": "3115a3ef-d067-581c-abe7-c79062276f10",
+   "is_active": true,
+   "max_select": 1,
+   "min_select": 1,
+   "sort_order": 1
+  },
+  {
+   "id": "cccfa2b0-3603-536f-a89d-a946f6faa269",
+   "name": "엣지 선택",
+   "menu_id": "3115a3ef-d067-581c-abe7-c79062276f10",
+   "is_active": true,
+   "max_select": 1,
+   "min_select": 1,
+   "sort_order": 2
+  },
+  {
+   "id": "1442c606-dba5-5b8a-ad2f-4d812b95874f",
+   "name": "크기 선택",
+   "menu_id": "52adc2b0-0030-528e-a79a-eb2496af0f02",
+   "is_active": true,
+   "max_select": 1,
+   "min_select": 1,
+   "sort_order": 1
+  },
+  {
+   "id": "4b7e4586-5cfc-5669-af57-716f2da95535",
+   "name": "엣지 선택",
+   "menu_id": "52adc2b0-0030-528e-a79a-eb2496af0f02",
+   "is_active": true,
+   "max_select": 1,
+   "min_select": 1,
+   "sort_order": 2
+  },
+  {
+   "id": "63c02e5d-06c1-58c4-ac7e-78b066b2d2f3",
+   "name": "크기 선택",
+   "menu_id": "9b001e30-d66d-5df0-ad6f-63f49cc26777",
+   "is_active": true,
+   "max_select": 1,
+   "min_select": 1,
+   "sort_order": 1
+  },
+  {
+   "id": "1cda0422-fbc9-5d89-ac54-1a15ebcb015d",
+   "name": "엣지 선택",
+   "menu_id": "9b001e30-d66d-5df0-ad6f-63f49cc26777",
+   "is_active": true,
+   "max_select": 1,
+   "min_select": 1,
+   "sort_order": 2
+  }
+ ],
+ "totals": {
+  "groups_total": 537,
+  "menus_active": 289,
+  "orders_total": 47,
+  "options_total": 3728,
+  "stores_active": 16
+ },
+ "options": [
+  {
+   "id": "68608e3b-400c-58ae-af54-499594231a78",
+   "name": "미디엄",
+   "group_id": "1442c606-dba5-5b8a-ad2f-4d812b95874f",
+   "is_active": true,
+   "sort_order": 1,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 0
+  },
+  {
+   "id": "4f4d12d3-bdd9-5660-afd1-b5f6042c876e",
+   "name": "라지",
+   "group_id": "1442c606-dba5-5b8a-ad2f-4d812b95874f",
+   "is_active": true,
+   "sort_order": 2,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 6000
+  },
+  {
+   "id": "4205fd0a-85b8-5d7b-a18b-1d987943ff15",
+   "name": "기본 엣지",
+   "group_id": "1cda0422-fbc9-5d89-ac54-1a15ebcb015d",
+   "is_active": true,
+   "sort_order": 1,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 0
+  },
+  {
+   "id": "5449d6b8-aaf0-5b11-a421-dd42013d2744",
+   "name": "치즈 엣지",
+   "group_id": "1cda0422-fbc9-5d89-ac54-1a15ebcb015d",
+   "is_active": true,
+   "sort_order": 2,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 3000
+  },
+  {
+   "id": "a5fd3f77-79cf-5185-a2c7-f85e11a4307f",
+   "name": "기본 엣지",
+   "group_id": "4b7e4586-5cfc-5669-af57-716f2da95535",
+   "is_active": true,
+   "sort_order": 1,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 0
+  },
+  {
+   "id": "a4f12f63-3585-56a0-a24e-12343eb2a99e",
+   "name": "치즈 엣지",
+   "group_id": "4b7e4586-5cfc-5669-af57-716f2da95535",
+   "is_active": true,
+   "sort_order": 2,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 3000
+  },
+  {
+   "id": "25889b76-8b25-5333-a955-a1c5b6c14396",
+   "name": "미디엄",
+   "group_id": "63c02e5d-06c1-58c4-ac7e-78b066b2d2f3",
+   "is_active": true,
+   "sort_order": 1,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 0
+  },
+  {
+   "id": "f8f80e49-76b0-5a97-abc4-87307372d878",
+   "name": "라지",
+   "group_id": "63c02e5d-06c1-58c4-ac7e-78b066b2d2f3",
+   "is_active": true,
+   "sort_order": 2,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 6000
+  },
+  {
+   "id": "87343cb5-e332-59ab-aa50-ab6f2b8e1048",
+   "name": "미디엄",
+   "group_id": "8d8c6c87-36ca-56e5-a237-72ce12ae3585",
+   "is_active": true,
+   "sort_order": 1,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 0
+  },
+  {
+   "id": "46ad3af5-0626-52ad-ab70-2bfe0cd04a14",
+   "name": "라지",
+   "group_id": "8d8c6c87-36ca-56e5-a237-72ce12ae3585",
+   "is_active": true,
+   "sort_order": 2,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 6000
+  },
+  {
+   "id": "151b94ba-1383-58ea-a85b-df34ae2fdbaa",
+   "name": "미디엄",
+   "group_id": "a323d934-a043-5c1b-a462-63201c4d907f",
+   "is_active": true,
+   "sort_order": 1,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 0
+  },
+  {
+   "id": "b4bffda5-7deb-5ef4-ab41-51dbe08a8016",
+   "name": "라지",
+   "group_id": "a323d934-a043-5c1b-a462-63201c4d907f",
+   "is_active": true,
+   "sort_order": 2,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 6000
+  },
+  {
+   "id": "69e14915-5afd-5b9c-ac19-14ae4d49a9ea",
+   "name": "미디엄",
+   "group_id": "a903be5d-37b5-5a10-ab1c-13315b16baff",
+   "is_active": true,
+   "sort_order": 1,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 0
+  },
+  {
+   "id": "f7191a17-8f26-5c54-a6d4-57a05c9bc0db",
+   "name": "라지",
+   "group_id": "a903be5d-37b5-5a10-ab1c-13315b16baff",
+   "is_active": true,
+   "sort_order": 2,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 6000
+  },
+  {
+   "id": "eb0e3e6e-c413-5316-af77-a30f1ff037c9",
+   "name": "기본 엣지",
+   "group_id": "cccfa2b0-3603-536f-a89d-a946f6faa269",
+   "is_active": true,
+   "sort_order": 1,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 0
+  },
+  {
+   "id": "034b8e64-2db0-53a6-a3d8-a1f35dea4227",
+   "name": "치즈 엣지",
+   "group_id": "cccfa2b0-3603-536f-a89d-a946f6faa269",
+   "is_active": true,
+   "sort_order": 2,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 3000
+  },
+  {
+   "id": "83566d0c-90f0-5b25-ac76-33f5f592df04",
+   "name": "기본 엣지",
+   "group_id": "dc89a422-e68e-5843-a4d7-d046c2da1680",
+   "is_active": true,
+   "sort_order": 1,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 0
+  },
+  {
+   "id": "f41b94f7-80e3-5e04-a234-63a2c9d841e8",
+   "name": "치즈 엣지",
+   "group_id": "dc89a422-e68e-5843-a4d7-d046c2da1680",
+   "is_active": true,
+   "sort_order": 2,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 3000
+  },
+  {
+   "id": "71425df3-7d88-5816-a409-75713c9cc51e",
+   "name": "기본 엣지",
+   "group_id": "e353672c-404b-5279-adfb-753a0d8fcf30",
+   "is_active": true,
+   "sort_order": 1,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 0
+  },
+  {
+   "id": "72018b5b-af7a-5166-a089-77f1b3e6b85d",
+   "name": "치즈 엣지",
+   "group_id": "e353672c-404b-5279-adfb-753a0d8fcf30",
+   "is_active": true,
+   "sort_order": 2,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 3000
+  }
+ ],
+ "menu_groups": [],
+ "private_records": 0,
+ "menu_group_items": [],
+ "snapshot_group_ids": [],
+ "snapshot_option_ids": [],
+ "source": "database",
+ "_category": [
+  "pizza",
+  "피자"
+ ],
+ "_order_items": {
+  "14db58a7-7c06-54ce-ad95-3b4551000ab1": 4,
+  "52adc2b0-0030-528e-a79a-eb2496af0f02": 1
+ }
+}
