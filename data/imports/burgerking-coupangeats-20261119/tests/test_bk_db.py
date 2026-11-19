@@ -103,10 +103,11 @@ pre_dirs = set(os.listdir(BK))
 rc, out = run('--apply', '--yes-dev-project')
 check('--apply 성공(트랜잭션 안 검증 포함)', rc == 0 and '적용 완료' in out, out[-700:])
 check('고유 활성 메뉴 122개(연결 5 + 새 117), 삭제·숨김 메뉴 없음', q("select count(*) filter (where is_active), count(*) " + Y, (SID,))[0] == (122, 122))
-check('연결 5개: UUID·가격·사진·인기 유지, 설명 채움', q("select base_price, image_ref, is_popular, popularity_score, description is not null from public.menus where id='7bcddf4a-f183-5df8-a833-b0c9e5cf0e16'")[0] == (8400, 'menus/7bcddf4a-f183-5df8-a833-b0c9e5cf0e16.png', True, 70, True)
-      and q("select name from public.menus where id='103fc0c0-de4b-5368-a662-c864ef8b26b4'")[0][0] == '치즈와퍼 세트')
-check('옵션 그룹 138 + 보류 2, 옵션 1076 + 보류 5(스냅샷 참조 가상 옵션은 승인 전이라 비활성 보존)', q("select count(*) from public.menu_option_groups")[0][0] == 140 and q("select count(*) from public.menu_options")[0][0] == 1081
-      and q("select count(*) from public.menu_option_groups where not is_active")[0][0] == 2)
+check('연결 5개: UUID·가격·사진·인기 유지, 설명 채움, 치즈와퍼 세트는 수집본 이름으로 맞추고 과거 주문 스냅샷 이름은 그대로', q("select base_price, image_ref, is_popular, popularity_score, description is not null from public.menus where id='7bcddf4a-f183-5df8-a833-b0c9e5cf0e16'")[0] == (8400, 'menus/7bcddf4a-f183-5df8-a833-b0c9e5cf0e16.png', True, 70, True)
+      and q("select name from public.menus where id='103fc0c0-de4b-5368-a662-c864ef8b26b4'")[0][0] == '치즈와퍼세트'
+      and q("select count(*) from public.order_items where menu_name_snapshot='치즈와퍼 세트'")[0][0] == 5)
+check('승인된 매핑: 옵션 그룹 138·옵션 1076(가상 그룹 4·선택지 10 삭제, 스냅샷 참조분 포함), 보류 없음, 스냅샷 행은 그대로', q("select count(*) from public.menu_option_groups")[0][0] == 138 and q("select count(*) from public.menu_options")[0][0] == 1076
+      and q("select count(*) from public.menu_option_groups where not is_active")[0][0] == 0 and q("select count(*) from public.order_item_options")[0][0] == 2)
 check('수량 조절 0개, maxQuantity=1000 없음, 단독 옵션·합계 제한 없음', q("select count(*) filter (where allow_quantity), count(*) filter (where max_quantity is not null), count(*) filter (where is_exclusive) from public.menu_options")[0] == (0, 0, 0)
       and q("select count(*) from public.menu_option_groups where max_total_quantity is not null")[0][0] == 0)
 check('필수 그룹 76개(세트 38개), 선택 그룹은 필수 아님', q("select count(*) filter (where min_select >= 1), count(distinct menu_id) filter (where min_select >= 1) from public.menu_option_groups where is_active and menu_id in (select id from public.menus where store_id=%s)", (SID,))[0] == (76, 38))
@@ -141,6 +142,8 @@ bks = sorted(x for x in os.listdir(BK) if x not in pre_dirs)
 first = os.path.join(BK, bks[0])
 bkj = json.load(open(first + '/backup.json'))
 check('첫 적용 전 백업은 복구 기준, 재실행 백업은 기준 아님', bkj['applied_before_backup'] == [] and json.load(open(os.path.join(BK, bks[-1]) + '/backup.json'))['applied_before_backup'] != [])
+smap = json.load(open(first + '/snapshot_source_id_map.json'))
+check('백업에 원본 ID ↔ 스냅샷 대응 기록(스냅샷 행 2건, 삭제 그룹 4)', len(smap['snapshot_rows_referencing_deleted']) == 2 and len(smap['deleted_groups']) == 4, list(smap))
 bt = open(first + '/backup.json').read()
 check('백업에 접속 정보·키 없음', URI not in bt and 'postgresql://' not in bt and 'eyJ' not in bt and 'sb_secret' not in bt)
 rc, out = run('--restore', '--yes-dev-project', '--backup-dir', first)
@@ -150,15 +153,12 @@ check('복구 후: 원래 메뉴 5개·옵션 그룹 4·옵션 10, 그룹·내�
 
 # 6) 서정 승인 뒤: 스냅샷이 가리키는 가상 그룹도 삭제(원본 ID 대응 백업), 나머지는 같음
 mp = json.load(open(os.path.join(TOOLCOPY, 'menu_mapping.json'), encoding='utf-8'))
-mp['approved_snapshot_referenced_group_ids'] = REF_GROUPS
+mp['approved_snapshot_referenced_group_ids'] = []   # 승인 전 상태: 스냅샷 참조 가상 그룹은 삭제하지 않고 비활성으로 보존
 json.dump(mp, open(os.path.join(TOOLCOPY, 'menu_mapping.json'), 'w', encoding='utf-8'), ensure_ascii=False)
 pre2 = set(os.listdir(BK))
 rc, out = run('--apply', '--yes-dev-project', tool=os.path.join(TOOLCOPY, 'import_burgerking.py'))
-check('승인된 스냅샷 참조 가상 그룹 삭제: 옵션 그룹 138·옵션 1076, 보류 없음, 스냅샷 행은 그대로', rc == 0 and q("select count(*) from public.menu_option_groups")[0][0] == 138 and q("select count(*) from public.menu_options")[0][0] == 1076
-      and q("select count(*) from public.order_item_options")[0][0] == 2 and q("select count(*) from public.menu_option_groups where not is_active")[0][0] == 0, out[-500:])
-new_dirs = sorted(x for x in os.listdir(BK) if x not in pre2)
-smap = json.load(open(os.path.join(BK, new_dirs[0], 'snapshot_source_id_map.json')))
-check('백업에 원본 ID ↔ 스냅샷 대응 기록', len(smap['snapshot_rows_referencing_deleted']) == 2, list(smap))
+check('승인 전 매핑: 참조 없는 가상 그룹은 삭제, 스냅샷 참조 그룹 2·선택지 5는 비활성 보존(옵션 그룹 140·옵션 1081), 스냅샷 행은 그대로', rc == 0 and q("select count(*) from public.menu_option_groups")[0][0] == 140 and q("select count(*) from public.menu_options")[0][0] == 1081
+      and q("select count(*) from public.order_item_options")[0][0] == 2 and q("select count(*) from public.menu_option_groups where not is_active")[0][0] == 2, out[-500:])
 check('출력에 접속 문자열 없음', URI not in out)
 print(f'{sum(results)} / {len(results)} 통과')
 srv.cleanup(); shutil.rmtree(BK, ignore_errors=True); shutil.rmtree(TOOLPARENT, ignore_errors=True)
