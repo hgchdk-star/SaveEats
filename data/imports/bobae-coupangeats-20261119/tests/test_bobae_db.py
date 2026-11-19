@@ -109,12 +109,13 @@ check('메뉴 81개(연결 4 + 새 77), 보배간짜장 삭제, 앱에 보이는
       and q("select count(*) from public.menus where id='538c494a-0187-5d7c-a626-c25970068023'")[0][0] == 0)
 check('숨김 19개 = 리뷰이벤트 1 + 주류 18(그룹 소속 기준), 판매 상태는 품절 아님', q("select count(*) from public.menus where store_id=%s and not is_active and not is_sold_out and name = '포토 리뷰 이벤트 참여'", (SID,))[0][0] == 1
       and q("select count(*) from public.menus where store_id=%s and not is_active and base_price between 4000 and 35000 and id in (select menu_id from public.store_menu_group_items i join public.store_menu_groups g on g.id=i.group_id where g.source_name='주류')", (SID,))[0][0] == 18)
-check('연결 4개: UUID·사진·인기 유지, 가격 갱신(소고기짬뽕 14,000·크림짬뽕 15,000), 보배짜장면 이름 유지', q("select base_price, image_ref, is_popular, popularity_score from public.menus where id='58bb9517-8ec8-5100-a9f3-f55169348eb0'")[0] == (10500, 'menus/58bb9517-8ec8-5100-a9f3-f55169348eb0.png', True, 30)
+check('연결 4개: UUID·사진·인기 유지, 가격 갱신(소고기짬뽕 14,000·크림짬뽕 15,000), 보배짜장면은 수집본 이름(보배 짜장면)으로 맞춤, 과거 주문 스냅샷 이름은 그대로', q("select base_price, image_ref, is_popular, popularity_score from public.menus where id='58bb9517-8ec8-5100-a9f3-f55169348eb0'")[0] == (10500, 'menus/58bb9517-8ec8-5100-a9f3-f55169348eb0.png', True, 30)
       and q("select base_price from public.menus where id='791d911f-130e-551a-a95e-dbcca09e1f27'")[0][0] == 14000 and q("select base_price from public.menus where id=%s", (CM,))[0][0] == 15000
-      and q("select name from public.menus where id='131d83bc-cc1c-5039-a2d0-ff120e30d0cb'")[0][0] == '보배짜장면')
+      and q("select name from public.menus where id='131d83bc-cc1c-5039-a2d0-ff120e30d0cb'")[0][0] == '보배 짜장면'
+      and q("select count(*) from public.order_items where menu_name_snapshot='크림짬뽕'")[0][0] == 1)
 check('연결 메뉴 설명은 수집 설명으로 교체(source 모드)', q("select description from public.menus where id='58bb9517-8ec8-5100-a9f3-f55169348eb0'")[0][0].startswith('진한 보배짬뽕 육수'))
-check('옵션 그룹 64 + 보류 1, 옵션 240 + 보류 2(크림짬뽕 양 선택: 스냅샷 참조라 승인 전 비활성 보존)', q("select count(*) from public.menu_option_groups")[0][0] == 65 and q("select count(*) from public.menu_options")[0][0] == 242
-      and q("select count(*) from public.menu_option_groups where not is_active")[0][0] == 1)
+check('승인된 매핑: 옵션 그룹 64·옵션 240(가상 그룹 7·선택지 16 삭제, 크림짬뽕 양 선택 포함), 보류 없음, 스냅샷 행은 그대로', q("select count(*) from public.menu_option_groups")[0][0] == 64 and q("select count(*) from public.menu_options")[0][0] == 240
+      and q("select count(*) from public.menu_option_groups where not is_active")[0][0] == 0 and q("select count(*) from public.order_item_options")[0][0] == 1)
 check('수량 조절·단독·합계 제한 0개, 필수 그룹 63개(메뉴 44개)', q("select count(*) filter (where allow_quantity), count(*) filter (where max_quantity is not null), count(*) filter (where is_exclusive) from public.menu_options")[0] == (0, 0, 0)
       and q("select count(*) from public.menu_option_groups where max_total_quantity is not null")[0][0] == 0
       and q("select count(*), count(distinct menu_id) from public.menu_option_groups where is_active and min_select >= 1 and menu_id in (select id from public.menus where store_id=%s)", (SID,))[0] == (63, 44))
@@ -147,6 +148,8 @@ bks = sorted(x for x in os.listdir(BK) if x not in pre_dirs)
 first = os.path.join(BK, bks[0])
 bkj = json.load(open(first + '/backup.json'))
 check('첫 적용 전 백업은 복구 기준, 재실행 백업은 기준 아님', bkj['applied_before_backup'] == [] and json.load(open(os.path.join(BK, bks[-1]) + '/backup.json'))['applied_before_backup'] != [])
+smap = json.load(open(first + '/snapshot_source_id_map.json'))
+check('백업에 원본 ID ↔ 스냅샷 대응 기록(스냅샷 행 1건, 삭제 그룹 7)', len(smap['snapshot_rows_referencing_deleted']) == 1 and len(smap['deleted_groups']) == 7, list(smap))
 bt = open(first + '/backup.json').read()
 check('백업에 접속 정보·키 없음', URI not in bt and 'postgresql://' not in bt and 'eyJ' not in bt and 'sb_secret' not in bt)
 rc, out = run('--restore', '--yes-dev-project', '--backup-dir', first)
@@ -157,16 +160,13 @@ check('복구 후: 원래 메뉴 5개(전부 활성)·옵션 그룹 7·옵션 16
 
 # 6) 설명 keep + 서정 승인 뒤 스냅샷 참조 가상 그룹도 삭제
 mp = json.load(open(os.path.join(TOOLCOPY, 'menu_mapping.json'), encoding='utf-8'))
-mp['approved_snapshot_referenced_group_ids'] = REF_GROUPS
+mp['approved_snapshot_referenced_group_ids'] = []   # 승인 전 상태: 스냅샷 참조 가상 그룹은 삭제하지 않고 비활성으로 보존
 json.dump(mp, open(os.path.join(TOOLCOPY, 'menu_mapping.json'), 'w', encoding='utf-8'), ensure_ascii=False)
 pre2 = set(os.listdir(BK))
 rc, out = run('--apply', '--yes-dev-project', flags=('--hide-menus', 'import', '--link-descriptions', 'keep'), tool=os.path.join(TOOLCOPY, 'import_bobae.py'))
-check('승인 + import·keep 모드: 숨김 없이 81개 노출, 설명 유지, 옵션 그룹 64·옵션 240(스냅샷 참조 가상 그룹 삭제), 스냅샷 행은 그대로', rc == 0 and q("select count(*) filter (where is_active), count(*) " + Y, (SID,))[0] == (81, 81)
-      and q("select description from public.menus where id='58bb9517-8ec8-5100-a9f3-f55169348eb0'")[0][0] == '고기와 해물을 넣은 얼큰한 짬뽕.' and q("select count(*) from public.menu_option_groups")[0][0] == 64 and q("select count(*) from public.menu_options")[0][0] == 240
-      and q("select count(*) from public.order_item_options")[0][0] == 1 and q("select count(*) from public.menu_option_groups where not is_active")[0][0] == 0, out[-500:])
-new_dirs = sorted(x for x in os.listdir(BK) if x not in pre2)
-smap = json.load(open(os.path.join(BK, new_dirs[0], 'snapshot_source_id_map.json')))
-check('백업에 원본 ID ↔ 스냅샷 대응 기록', len(smap['snapshot_rows_referencing_deleted']) == 1, list(smap))
+check('승인 전 매핑 + import·keep 모드: 숨김 없이 81개 노출, 설명 유지, 스냅샷 참조 가상 그룹 1·선택지 2는 비활성 보존(옵션 그룹 65·옵션 242), 스냅샷 행은 그대로', rc == 0 and q("select count(*) filter (where is_active), count(*) " + Y, (SID,))[0] == (81, 81)
+      and q("select description from public.menus where id='58bb9517-8ec8-5100-a9f3-f55169348eb0'")[0][0] == '고기와 해물을 넣은 얼큰한 짬뽕.' and q("select count(*) from public.menu_option_groups")[0][0] == 65 and q("select count(*) from public.menu_options")[0][0] == 242
+      and q("select count(*) from public.order_item_options")[0][0] == 1 and q("select count(*) from public.menu_option_groups where not is_active")[0][0] == 1, out[-500:])
 check('출력에 접속 문자열 없음', URI not in out)
 print(f'{sum(results)} / {len(results)} 통과')
 srv.cleanup(); shutil.rmtree(BK, ignore_errors=True); shutil.rmtree(TOOLPARENT, ignore_errors=True)
