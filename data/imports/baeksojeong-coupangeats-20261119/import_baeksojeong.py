@@ -183,7 +183,7 @@ def build_plan(package, existing, option_max_quantity=None, sold_out_mode=None, 
         if old is None:
             issues.append(f'대응표의 기존 메뉴가 서버에 없다: {ln["existing_name"]}')
             continue
-        if old['name'] != ln['existing_name']:
+        if old['name'] != ln['existing_name'] and not (ln.get('rename_to_source') and old['name'] == ln['source_name']):   # 이미 수집본 이름으로 맞춘 뒤 다시 돌려도 된다
             issues.append(f'기존 메뉴 이름이 대응표와 다르다: {ln["existing_name"]} / {old["name"]}')
         if ln['source_menu_id'] in links:
             issues.append(f'수집 메뉴가 두 기존 메뉴에 연결됨: {ln["source_menu_id"]}')
@@ -239,7 +239,7 @@ def build_plan(package, existing, option_max_quantity=None, sold_out_mode=None, 
         sold = sold_out_mode == 'source' and m.get('sale_status') == 'SOLD_OUT_TODAY'
         if link:
             old = ex_menus[link['existing_menu_id']]
-            row = {'kind': 'LINK', 'id': old['id'], 'name': old['name'], 'old_price': old['base_price'], 'old_description': old['description'],
+            row = {'kind': 'LINK', 'id': old['id'], 'name': (m['name'].strip() if link.get('rename_to_source') else old['name']), 'old_name': old['name'], 'old_price': old['base_price'], 'old_description': old['description'],
                    'description': old['description'] or desc, 'fills_description': old['description'] is None and desc is not None,
                    'is_active': old['is_active'], 'is_sold_out': old['is_sold_out'], 'old_sort_order': old['sort_order']}
         else:
@@ -275,6 +275,8 @@ def build_plan(package, existing, option_max_quantity=None, sold_out_mode=None, 
             issues.append(f'필수 표시와 min_select가 다르다: {g["group_key"]}')
         if g.get('default_option_id') is not None:
             notes.append(f'원본 기본 선택값이 있는 그룹(자동 선택하지 않는다): {g["group_key"]}')
+        if review_mode == 'hidden' and g['source_group_id'] in policy['review_event_source_group_ids'] and g['min_select'] >= 1:
+            issues.append(f'숨기려는 리뷰이벤트 그룹이 필수 선택이다(숨기면 담기가 불가능해진다): {g["group_key"]}')
         gid = uid('group', SOURCE_SYSTEM, source_store_id, g['source_menu_id'], g['source_group_id'])
         group_uuid[g['group_key']] = gid
         group_rows.append({'id': gid, 'menu_id': menu_uuid[g['source_menu_id']], 'name': name, 'min_select': g['min_select'], 'max_select': g['max_select'],
@@ -540,7 +542,7 @@ def render_report(plan, state):
     w('## 가격 변화 (연결 메뉴)')
     for m in menus:
         if m['kind'] == 'LINK':
-            w(f'- {m["name"]}: {m["old_price"]:,}원 → {m["base_price"]:,}원' + (' (설명 채움)' if m['fills_description'] else ''))
+            w(f'- {m["name"]}: {m["old_price"]:,}원 → {m["base_price"]:,}원' + (' (설명 채움)' if m['fills_description'] else '') + (f' (표시 이름 "{m["old_name"]}" → "{m["name"]}")' if m['name'] != m['old_name'] else ''))
     w('')
     w('## 기존 가상 옵션·그룹')
     w(f'- 삭제 예정: 그룹 {len(plan["virt_del_groups"])}개, 옵션 {len(plan["virt_del_options"])}개 (삭제할 행 전체를 백업에 저장)')
@@ -684,8 +686,9 @@ def apply_db(cur, plan, uploaded):
         [(m['id'], STORE_ID, m['name'], m['description'], m['base_price'], m['image_ref'] if m['image_ref'] in uploaded else None,
           m['sort_order'], m['is_active'], m['is_sold_out']) for m in new])
     for m in linked:
-        cur.execute("""update public.menus set base_price = %s, description = coalesce(description, %s), sort_order = %s
-                       where id = %s and store_id = %s""", (m['base_price'], m['description'], m['sort_order'], m['id'], STORE_ID))
+        # 표시 이름만 수집본에 맞춘다(rename_to_source). UUID·주문·리뷰·인기 참조는 그대로이고, 과거 주문 스냅샷의 이름(order_items.menu_name_snapshot)은 바꾸지 않는다
+        cur.execute("""update public.menus set name = %s, base_price = %s, description = coalesce(description, %s), sort_order = %s
+                       where id = %s and store_id = %s""", (m['name'], m['base_price'], m['description'], m['sort_order'], m['id'], STORE_ID))
         if cur.rowcount != 1:
             raise RuntimeError(f'기존 메뉴를 갱신하지 못했다: {m["name"]}')
     # 3) 기존 가상 옵션: 참조 재확인 후 삭제(스냅샷이 가리키는 것은 비활성으로 보존)
@@ -762,7 +765,7 @@ def restore_db(cur, plan, bk):
             cur.execute(f'insert into public.{table} select * from jsonb_populate_recordset(null::public.{table}, %s::jsonb) on conflict (id) do nothing', (json.dumps(rows),))
     before = bk['existing']
     for m in before['menus']:
-        cur.execute('update public.menus set base_price = %s, description = %s, sort_order = %s, is_active = %s where id = %s', (m['base_price'], m['description'], m['sort_order'], m['is_active'], m['id']))
+        cur.execute('update public.menus set name = %s, base_price = %s, description = %s, sort_order = %s, is_active = %s where id = %s', (m['name'], m['base_price'], m['description'], m['sort_order'], m['is_active'], m['id']))
     for g in before['groups']:
         cur.execute('update public.menu_option_groups set is_active = %s where id = %s', (g['is_active'], g['id']))
     for o in before['options']:
@@ -789,6 +792,7 @@ def verify(plan, cur, before=None, photos_expected=True):
     check('참조가 있어 보존한 기존 메뉴는 숨김(비활성)이다', all(r['existing_menu_id'] in menus_db and not menus_db[r['existing_menu_id']]['is_active'] for r in plan['removals'] if r['action'] == 'DEACTIVATE'))
     n_deact = sum(1 for r in plan['removals'] if r['action'] == 'DEACTIVATE')
     check('서버 메뉴 수 = 수집 메뉴 수 + 숨김 보존 메뉴(남는 기존 활성 메뉴 없음)', len(menus_db) == len(plan['menus']) + n_deact and sum(1 for m in menus_db.values() if m['is_active']) == len(plan['menus']), f'{len(menus_db)} / {len(plan["menus"])}+{n_deact}')
+    check('메뉴 이름 일치(연결 메뉴는 수집본 표시 이름으로 맞춤, 새 메뉴는 원본 이름 그대로)', all(menus_db[m['id']]['name'] == m['name'] for m in plan['menus'] if m['id'] in menus_db))
     check('메뉴 가격 일치', all(menus_db[m['id']]['base_price'] == m['base_price'] for m in plan['menus'] if m['id'] in menus_db))
     check('메뉴 순서(sort_order) 일치', all(menus_db[m['id']]['sort_order'] == m['sort_order'] for m in plan['menus'] if m['id'] in menus_db))
     if photos_expected:
@@ -798,7 +802,7 @@ def verify(plan, cur, before=None, photos_expected=True):
     if before is not None:
         check('가게 대표사진 유지', now['store']['image_ref'] == before['existing']['store']['image_ref'])
         check('추천·인기·활성 보존(연결 메뉴)', all(menus_db[i]['is_popular'] == m['is_popular'] and menus_db[i]['popularity_score'] == m['popularity_score']
-                                          and menus_db[i]['is_active'] == m['is_active'] and menus_db[i]['name'] == m['name']
+                                          and menus_db[i]['is_active'] == m['is_active']
                                           for i, m in {m['id']: m for m in before['existing']['menus']}.items() if i in menus_db and i not in {r['existing_menu_id'] for r in plan['removals']}))
         check('주문·리뷰 스냅샷 해시 변경 없음', order_fingerprint(cur) == before['order_fingerprint'])
         check('다른 가게 변경 없음', other_store_fingerprints(cur) == before['other_store_fingerprints'])
