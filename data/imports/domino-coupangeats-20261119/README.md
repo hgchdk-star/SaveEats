@@ -10,9 +10,9 @@
 - 필수(min_select≥1) 옵션 그룹이 하나도 없다 → 모든 메뉴가 목록에서 바로 담긴다.
 - **사진은 메뉴마다 `menus/<메뉴 UUID>.jpg`로 올린다**(Storage 경로 정책: 메뉴 UUID 기준). 같은 원본 파일 65개가 257개 메뉴에 연결되므로 257개 복사본(약 4.5MiB)이 생긴다. 사진 없는 8개는 비운다.
 
-## 결정이 필요한 값 (적용에 필수 플래그, 없으면 `--apply`가 거절)
+## 결정값 (적용에 필수 플래그, 없으면 `--apply`가 거절)
+- **음료 "(최대 2개 가능)" 그룹은 수량 합계 최대 2개**(서정 제품 결정 2026-11-19, 쿠팡이츠 실제 동작을 확인한 사실이 아님). 원본 그룹 최대가 1000 미만인 수량형 그룹의 값이 `max_total_quantity`가 된다. 서버에 migration `20261119101123_option_group_total_quantity.sql`이 먼저 있어야 한다(없으면 `--apply`가 거절).
 - `--option-max-quantity N`: 원본 수량 1000인 선택지의 앱 상한. 원본이 2인 선택지는 min(원본, N)이라 2로 남는다(전부 N으로 덮어쓰지 않는다).
-- `--drink-limit-mode source|conservative`: 음료 "(최대 2개 가능)" 수량형 그룹. 원본이 그룹 최대 2·옵션당 최대 2인데, 2가 *종류 수*인지 *수량 합계*인지 원본 자료로 알 수 없다. 앱·서버는 종류 수만 센다. `source`=원본 값 그대로(종류 최대 2, 옵션당 최대 2 → 합계 최대 4 가능), `conservative`=종류 최대 2·옵션당 1개(합계 2 보장, 같은 음료 2개는 불가).
 - `--sold-out-mode ignore|source`: 수집 당시 "오늘 품절" 39개를 판매 가능으로 표시(`ignore`)할지 품절로 표시(`source`)할지. 원본 상태와 수집 시점은 내부 기록에 남긴다.
 - `--group-names source|proposed`: 첫 메뉴 그룹 "[와우전용] 이츠셰프컬렉션" → 표시명 "셰프컬렉션" 제안(`menu_group_display.json`). 원본 이름은 DB `source_name`에 보존.
 
@@ -22,7 +22,7 @@ pip install psycopg2-binary
 # 값은 채팅에 적지 말고 터미널 환경변수나 .env.import(저장소 제외)로만 넣는다
 export DATABASE_URL='...' SUPABASE_URL='https://<ref>.supabase.co' SUPABASE_SERVICE_ROLE_KEY='...' EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY='...'
 P=/path/to/domino-coupangeats-20261119
-F="--option-max-quantity 10 --drink-limit-mode source --sold-out-mode ignore --group-names proposed"   # 승인된 값으로
+F="--option-max-quantity 10 --sold-out-mode ignore --group-names proposed"   # 승인된 값으로
 python import_domino.py --package $P --check $F                                  # 읽기 전용 보고서(out/check_report.md)
 python import_domino.py --package $P --backup --yes-dev-project $F               # 적용 전 백업(backup/<시각>/)
 python import_domino.py --package $P --apply --yes-dev-project $F                # 백업 → 사진 257개 → DB 한 트랜잭션(안에서 검증) → Guest 검증
@@ -35,7 +35,7 @@ python import_domino.py --package $P --restore --yes-dev-project $F --backup-dir
 - 복구: 새 메뉴·그룹·옵션·메뉴 그룹·내부 기록·새 사진을 지우고, 삭제했던 메뉴·옵션을 되살리고, 숨겼던 메뉴를 다시 활성으로 돌린다. 새 메뉴·옵션을 가리키는 주문이 있으면 멈춘다.
 
 ## 시험
-`tests/test_domino_db.py`(38개): 임시 Postgres에 저장소 migration 전체와 실서버 스냅샷을 재현해 미결정 거절·삭제/숨김 분기·적용·Guest 응답·메뉴별 그룹 분리·재실행·복구·음료 보수안·품절 source 모드를 확인한다.
+`tests/test_domino_db.py`(40개): 임시 Postgres에 저장소 migration 전체와 실서버 스냅샷을 재현해 미결정 거절·삭제/숨김 분기·적용·Guest 응답·메뉴별 그룹 분리·재실행·복구·음료 수량 합계·품절 source 모드를 확인한다.
 ```bash
 pip install pgserver psycopg2-binary
 DOMINO_PACKAGE=/path/to/domino-coupangeats-20261119 python tests/test_domino_db.py
