@@ -1,0 +1,5 @@
+{
+  "_comment": "원본 ID로 지정하는 옵션 정책 대상. 버거킹은 단독 옵션·리뷰이벤트 숨김 대상이 없다(이름만 보고 지정하지 않는다).",
+  "none_option_source_ids": [],
+  "review_event_source_group_ids": []
+}

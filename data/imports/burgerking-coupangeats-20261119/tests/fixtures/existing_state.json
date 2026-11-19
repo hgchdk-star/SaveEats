@@ -1,0 +1,286 @@
+{
+ "refs": {
+  "orders": 8,
+  "order_items": 13,
+  "review_menus": 7,
+  "store_sources": 1,
+  "order_item_options": 2,
+  "store_source_records": 16
+ },
+ "menus": [
+  {
+   "id": "7bcddf4a-f183-5df8-a833-b0c9e5cf0e16",
+   "name": "와퍼",
+   "image_ref": "menus/7bcddf4a-f183-5df8-a833-b0c9e5cf0e16.png",
+   "is_active": true,
+   "base_price": 8400,
+   "is_popular": true,
+   "sort_order": 1,
+   "description": null,
+   "is_sold_out": false,
+   "popularity_score": 70
+  },
+  {
+   "id": "96a0df38-c23a-5598-a729-3c2a85867bb9",
+   "name": "와퍼 세트",
+   "image_ref": "menus/96a0df38-c23a-5598-a729-3c2a85867bb9.png",
+   "is_active": true,
+   "base_price": 11100,
+   "is_popular": false,
+   "sort_order": 2,
+   "description": null,
+   "is_sold_out": false,
+   "popularity_score": 0
+  },
+  {
+   "id": "ea9026dd-0856-52ff-a913-e617ebd5a447",
+   "name": "치즈와퍼",
+   "image_ref": "menus/ea9026dd-0856-52ff-a913-e617ebd5a447.png",
+   "is_active": true,
+   "base_price": 9000,
+   "is_popular": false,
+   "sort_order": 3,
+   "description": null,
+   "is_sold_out": false,
+   "popularity_score": 0
+  },
+  {
+   "id": "103fc0c0-de4b-5368-a662-c864ef8b26b4",
+   "name": "치즈와퍼 세트",
+   "image_ref": "menus/103fc0c0-de4b-5368-a662-c864ef8b26b4.png",
+   "is_active": true,
+   "base_price": 11700,
+   "is_popular": false,
+   "sort_order": 4,
+   "description": null,
+   "is_sold_out": false,
+   "popularity_score": 0
+  },
+  {
+   "id": "5f81ab2a-a8b1-58dc-a471-534f0153ebc4",
+   "name": "불고기와퍼",
+   "image_ref": "menus/5f81ab2a-a8b1-58dc-a471-534f0153ebc4.png",
+   "is_active": true,
+   "base_price": 8400,
+   "is_popular": false,
+   "sort_order": 5,
+   "description": null,
+   "is_sold_out": false,
+   "popularity_score": 0
+  }
+ ],
+ "store": {
+  "id": "f754f737-104b-5eb1-a6d9-274023d60a64",
+  "name": "버거킹",
+  "is_open": true,
+  "image_ref": "stores/f754f737-104b-5eb1-a6d9-274023d60a64.png",
+  "is_active": true,
+  "category_id": "10000000-0000-4000-8000-000000000007",
+  "is_recommended": true
+ },
+ "groups": [
+  {
+   "id": "e57c9ab0-6254-41ff-ac6a-29efcfbdbd31",
+   "name": "사이드 선택",
+   "menu_id": "103fc0c0-de4b-5368-a662-c864ef8b26b4",
+   "is_active": true,
+   "max_select": 1,
+   "min_select": 1,
+   "sort_order": 1
+  },
+  {
+   "id": "a9361945-c2a1-4bb8-a735-06d741fd5aa2",
+   "name": "음료 선택",
+   "menu_id": "103fc0c0-de4b-5368-a662-c864ef8b26b4",
+   "is_active": true,
+   "max_select": 1,
+   "min_select": 1,
+   "sort_order": 2
+  },
+  {
+   "id": "fe08bab6-2b98-44dc-aa48-45fe1c062f9a",
+   "name": "사이드 선택",
+   "menu_id": "96a0df38-c23a-5598-a729-3c2a85867bb9",
+   "is_active": true,
+   "max_select": 1,
+   "min_select": 1,
+   "sort_order": 1
+  },
+  {
+   "id": "2cacb928-f90b-44d6-a8b1-40515cdca882",
+   "name": "음료 선택",
+   "menu_id": "96a0df38-c23a-5598-a729-3c2a85867bb9",
+   "is_active": true,
+   "max_select": 1,
+   "min_select": 1,
+   "sort_order": 2
+  }
+ ],
+ "totals": {
+  "groups_total": 1406,
+  "menus_active": 610,
+  "orders_total": 47,
+  "options_total": 10649,
+  "stores_active": 16
+ },
+ "options": [
+  {
+   "id": "99ea5a8f-d701-442a-adfc-3db6660013f7",
+   "name": "콜라",
+   "group_id": "2cacb928-f90b-44d6-a8b1-40515cdca882",
+   "is_active": true,
+   "sort_order": 1,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 0
+  },
+  {
+   "id": "751de46d-60b5-4d70-a09a-a1be8716fa24",
+   "name": "제로 콜라",
+   "group_id": "2cacb928-f90b-44d6-a8b1-40515cdca882",
+   "is_active": true,
+   "sort_order": 2,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 0
+  },
+  {
+   "id": "ea387bb1-ea2f-4d9b-a82d-b5d12999aa3e",
+   "name": "사이다",
+   "group_id": "2cacb928-f90b-44d6-a8b1-40515cdca882",
+   "is_active": true,
+   "sort_order": 3,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 0
+  },
+  {
+   "id": "9aeb0207-0f0a-4362-abbd-c35874a15e87",
+   "name": "콜라",
+   "group_id": "a9361945-c2a1-4bb8-a735-06d741fd5aa2",
+   "is_active": true,
+   "sort_order": 1,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 0
+  },
+  {
+   "id": "9002410c-3f08-4dcf-a40a-43281e18c46a",
+   "name": "제로 콜라",
+   "group_id": "a9361945-c2a1-4bb8-a735-06d741fd5aa2",
+   "is_active": true,
+   "sort_order": 2,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 0
+  },
+  {
+   "id": "96ee5cf7-8b5c-4b68-a470-7dc753a0d5d3",
+   "name": "사이다",
+   "group_id": "a9361945-c2a1-4bb8-a735-06d741fd5aa2",
+   "is_active": true,
+   "sort_order": 3,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 0
+  },
+  {
+   "id": "474af505-722f-4de5-a1dc-ce37967d9dac",
+   "name": "기본 감자튀김",
+   "group_id": "e57c9ab0-6254-41ff-ac6a-29efcfbdbd31",
+   "is_active": true,
+   "sort_order": 1,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 0
+  },
+  {
+   "id": "a2f654bd-45b3-49ac-ae99-9fc476d13afa",
+   "name": "치즈 감자튀김",
+   "group_id": "e57c9ab0-6254-41ff-ac6a-29efcfbdbd31",
+   "is_active": true,
+   "sort_order": 2,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 1000
+  },
+  {
+   "id": "61b84b8e-4ae4-49a9-ab8e-be3c9e303d91",
+   "name": "기본 감자튀김",
+   "group_id": "fe08bab6-2b98-44dc-aa48-45fe1c062f9a",
+   "is_active": true,
+   "sort_order": 1,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 0
+  },
+  {
+   "id": "57512de0-7c87-4dc1-a722-c8cde6ffda25",
+   "name": "치즈 감자튀김",
+   "group_id": "fe08bab6-2b98-44dc-aa48-45fe1c062f9a",
+   "is_active": true,
+   "sort_order": 2,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 1000
+  }
+ ],
+ "menu_groups": [],
+ "private_records": 0,
+ "menu_group_items": [],
+ "snapshot_group_ids": [
+  "a9361945-c2a1-4bb8-a735-06d741fd5aa2",
+  "e57c9ab0-6254-41ff-ac6a-29efcfbdbd31"
+ ],
+ "snapshot_option_ids": [
+  "474af505-722f-4de5-a1dc-ce37967d9dac",
+  "9aeb0207-0f0a-4362-abbd-c35874a15e87"
+ ],
+ "source": "database",
+ "_category": [
+  "burger",
+  "버거"
+ ],
+ "_order_items": {
+  "103fc0c0-de4b-5368-a662-c864ef8b26b4": 5,
+  "5f81ab2a-a8b1-58dc-a471-534f0153ebc4": 3,
+  "7bcddf4a-f183-5df8-a833-b0c9e5cf0e16": 4,
+  "ea9026dd-0856-52ff-a913-e617ebd5a447": 1
+ },
+ "_reviews": {
+  "103fc0c0-de4b-5368-a662-c864ef8b26b4": 3,
+  "5f81ab2a-a8b1-58dc-a471-534f0153ebc4": 2,
+  "7bcddf4a-f183-5df8-a833-b0c9e5cf0e16": 1,
+  "ea9026dd-0856-52ff-a913-e617ebd5a447": 1
+ },
+ "_oio": [
+  {
+   "menu_id": "103fc0c0-de4b-5368-a662-c864ef8b26b4",
+   "source_group_id": "e57c9ab0-6254-41ff-ac6a-29efcfbdbd31",
+   "source_option_id": "474af505-722f-4de5-a1dc-ce37967d9dac",
+   "group_name_snapshot": "사이드 선택",
+   "option_name_snapshot": "기본 감자튀김",
+   "additional_price_snapshot": 0,
+   "sort_order": 1
+  },
+  {
+   "menu_id": "103fc0c0-de4b-5368-a662-c864ef8b26b4",
+   "source_group_id": "a9361945-c2a1-4bb8-a735-06d741fd5aa2",
+   "source_option_id": "9aeb0207-0f0a-4362-abbd-c35874a15e87",
+   "group_name_snapshot": "음료 선택",
+   "option_name_snapshot": "콜라",
+   "additional_price_snapshot": 0,
+   "sort_order": 2
+  }
+ ]
+}

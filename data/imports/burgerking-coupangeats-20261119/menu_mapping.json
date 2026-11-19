@@ -1,0 +1,53 @@
+{
+  "_comment": "기존 버거킹 메뉴 ↔ 수집(홍제역점) 메뉴 대응표. 이름과 가격이 같고 기존 사진과 수집 사진이 같은 상품인 것만 연결한다. 세트/단품·크기·소스 구성이 다른 비슷한 이름은 연결하지 않는다.",
+  "links": [
+    {
+      "existing_menu_id": "7bcddf4a-f183-5df8-a833-b0c9e5cf0e16",
+      "existing_name": "와퍼",
+      "source_menu_id": 22086391,
+      "source_name": "와퍼",
+      "status": "LINK",
+      "basis": "EXACT_NAME_PRICE_PHOTO",
+      "evidence": "이름 동일, 기존 8,400원 = 수집 8,400원, 같은 상품(와퍼 단품). 와퍼주니어·세트와 합치지 않는다. 주문 4건·리뷰 1건·인기 70점 유지"
+    },
+    {
+      "existing_menu_id": "96a0df38-c23a-5598-a729-3c2a85867bb9",
+      "existing_name": "와퍼 세트",
+      "source_menu_id": 22086362,
+      "source_name": "와퍼 세트",
+      "status": "LINK",
+      "basis": "EXACT_NAME_PRICE_PHOTO",
+      "evidence": "이름 동일, 기존 11,100원 = 수집 11,100원, 같은 상품(와퍼 + 감자튀김 + 콜라 세트)"
+    },
+    {
+      "existing_menu_id": "ea9026dd-0856-52ff-a913-e617ebd5a447",
+      "existing_name": "치즈와퍼",
+      "source_menu_id": 22086392,
+      "source_name": "치즈와퍼",
+      "status": "LINK",
+      "basis": "EXACT_NAME_PRICE_PHOTO",
+      "evidence": "이름 동일, 기존 9,000원 = 수집 9,000원, 같은 상품(치즈와퍼 단품). 주문 1건·리뷰 1건 유지"
+    },
+    {
+      "existing_menu_id": "103fc0c0-de4b-5368-a662-c864ef8b26b4",
+      "existing_name": "치즈와퍼 세트",
+      "source_menu_id": 22086363,
+      "source_name": "치즈와퍼세트",
+      "status": "LINK",
+      "basis": "NAME_SPACING_PRICE_PHOTO",
+      "evidence": "띄어쓰기만 다르고('치즈와퍼 세트' ↔ '치즈와퍼세트') 기존 11,700원 = 수집 11,700원, 같은 상품(치즈와퍼 + 감자튀김 + 콜라). 주문 5건·리뷰 3건 유지. 표시 이름은 기존을 유지한다(수집본 표기로 바꿀지는 서정 결정)"
+    },
+    {
+      "existing_menu_id": "5f81ab2a-a8b1-58dc-a471-534f0153ebc4",
+      "existing_name": "불고기와퍼",
+      "source_menu_id": 22828300,
+      "source_name": "불고기와퍼",
+      "status": "LINK",
+      "basis": "EXACT_NAME_PRICE_PHOTO",
+      "evidence": "이름 동일, 기존 8,400원 = 수집 8,400원, 같은 상품(불고기와퍼 단품). 주문 3건·리뷰 2건 유지"
+    }
+  ],
+  "remove": [],
+  "approved_snapshot_referenced_group_ids": [],
+  "_approved_note": "주문 스냅샷이 원본 ID로 가리키는 기존 가상 옵션 그룹(치즈와퍼 세트의 사이드 선택·음료 선택, 옵션 2개가 스냅샷에 기록됨)은 서정이 삭제를 승인한 뒤 여기에 그룹 id를 넣는다. 그 전에는 삭제하지 않고 비활성으로 보존한다."
+}
