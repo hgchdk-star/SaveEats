@@ -1,0 +1,182 @@
+{
+ "refs": {
+  "orders": 8,
+  "order_items": 8,
+  "review_menus": 1,
+  "store_sources": 2,
+  "order_item_options": 0,
+  "store_source_records": 16
+ },
+ "menus": [
+  {
+   "id": "f040c9aa-6d3b-5173-a61c-f74746c07ee7",
+   "name": "냉소바+돈카츠",
+   "image_ref": "menus/f040c9aa-6d3b-5173-a61c-f74746c07ee7.png",
+   "is_active": true,
+   "base_price": 14900,
+   "is_popular": true,
+   "sort_order": 1,
+   "description": null,
+   "is_sold_out": false,
+   "popularity_score": 20
+  },
+  {
+   "id": "a13207c1-8f43-5715-aace-18c280244712",
+   "name": "마제소바+돈카츠",
+   "image_ref": "menus/a13207c1-8f43-5715-aace-18c280244712.png",
+   "is_active": true,
+   "base_price": 15900,
+   "is_popular": false,
+   "sort_order": 2,
+   "description": null,
+   "is_sold_out": false,
+   "popularity_score": 0
+  },
+  {
+   "id": "ffdc79f1-4c52-5ce1-aad2-3b3d4ecbec36",
+   "name": "스페셜가츠동",
+   "image_ref": "menus/ffdc79f1-4c52-5ce1-aad2-3b3d4ecbec36.png",
+   "is_active": true,
+   "base_price": 14900,
+   "is_popular": false,
+   "sort_order": 3,
+   "description": null,
+   "is_sold_out": false,
+   "popularity_score": 0
+  },
+  {
+   "id": "a20ccb38-f475-5f66-abc6-9020d1e52ad7",
+   "name": "에비텐어묵우동+돈카츠",
+   "image_ref": "menus/a20ccb38-f475-5f66-abc6-9020d1e52ad7.png",
+   "is_active": true,
+   "base_price": 15500,
+   "is_popular": false,
+   "sort_order": 4,
+   "description": null,
+   "is_sold_out": false,
+   "popularity_score": 0
+  },
+  {
+   "id": "10182e20-f953-543b-a5e0-f0d0b3b345fe",
+   "name": "돈카츠(등심카츠)",
+   "image_ref": "menus/10182e20-f953-543b-a5e0-f0d0b3b345fe.png",
+   "is_active": true,
+   "base_price": 11500,
+   "is_popular": false,
+   "sort_order": 5,
+   "description": null,
+   "is_sold_out": false,
+   "popularity_score": 0
+  }
+ ],
+ "store": {
+  "id": "80b4c10d-a815-51d9-add1-e10cc962cf37",
+  "name": "백소정",
+  "is_open": true,
+  "image_ref": "stores/80b4c10d-a815-51d9-add1-e10cc962cf37.png",
+  "is_active": true,
+  "category_id": "10000000-0000-4000-8000-000000000006",
+  "is_recommended": true
+ },
+ "groups": [
+  {
+   "id": "59918437-324a-487d-ae5c-b9ed27dda3ca",
+   "name": "맛 선택",
+   "menu_id": "a13207c1-8f43-5715-aace-18c280244712",
+   "is_active": true,
+   "max_select": 1,
+   "min_select": 1,
+   "sort_order": 1
+  },
+  {
+   "id": "055ff935-8eee-471a-a782-352d22f0c93c",
+   "name": "맛 선택",
+   "menu_id": "a20ccb38-f475-5f66-abc6-9020d1e52ad7",
+   "is_active": true,
+   "max_select": 1,
+   "min_select": 1,
+   "sort_order": 1
+  }
+ ],
+ "totals": {
+  "groups_total": 1263,
+  "menus_active": 549,
+  "orders_total": 47,
+  "options_total": 9576,
+  "stores_active": 16
+ },
+ "options": [
+  {
+   "id": "fbb44747-72d8-49bf-a586-2378c699202e",
+   "name": "일반맛",
+   "group_id": "055ff935-8eee-471a-a782-352d22f0c93c",
+   "is_active": true,
+   "sort_order": 1,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 0
+  },
+  {
+   "id": "1596967f-f18a-4254-ac9c-330295decdff",
+   "name": "매운맛",
+   "group_id": "055ff935-8eee-471a-a782-352d22f0c93c",
+   "is_active": true,
+   "sort_order": 2,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 0
+  },
+  {
+   "id": "d29bdc84-64b2-4ce7-a008-a28225ac5a9f",
+   "name": "일반맛",
+   "group_id": "59918437-324a-487d-ae5c-b9ed27dda3ca",
+   "is_active": true,
+   "sort_order": 1,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 0
+  },
+  {
+   "id": "3b729b65-8542-4fd2-a8fc-33f6cd68c616",
+   "name": "매운맛",
+   "group_id": "59918437-324a-487d-ae5c-b9ed27dda3ca",
+   "is_active": true,
+   "sort_order": 2,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 0
+  },
+  {
+   "id": "10384d95-9f60-4c8c-a677-650c7a5ca299",
+   "name": "마라맛",
+   "group_id": "59918437-324a-487d-ae5c-b9ed27dda3ca",
+   "is_active": true,
+   "sort_order": 3,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 0
+  }
+ ],
+ "menu_groups": [],
+ "private_records": 0,
+ "menu_group_items": [],
+ "snapshot_group_ids": [],
+ "snapshot_option_ids": [],
+ "source": "database",
+ "_category": [
+  "japanese",
+  "일식"
+ ],
+ "_order_items": {
+  "f040c9aa-6d3b-5173-a61c-f74746c07ee7": 1,
+  "a20ccb38-f475-5f66-abc6-9020d1e52ad7": 7
+ },
+ "_reviews": {
+  "a20ccb38-f475-5f66-abc6-9020d1e52ad7": 1
+ }
+}
