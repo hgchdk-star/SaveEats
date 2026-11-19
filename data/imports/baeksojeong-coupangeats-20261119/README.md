@@ -13,7 +13,7 @@
 ## 결정이 필요한 값 (적용에 필수 플래그, 없으면 `--apply`가 거절)
 - `--option-max-quantity N`: 앱 수량 상한(10). 원본 1~8 선택지는 min(8, N)=8로 남는다(10으로 덮어쓰지 않는다).
 - `--group-total-mode none|source-max`: 필수 수량형 그룹 "키소카레 전용 옵션 (최소 1개 ~ 8개)". 원본은 그룹 최소 1·최대 8, 선택지 4종(선택안함·대파·마늘양파후레이크·눈꽃치즈) 모두 수량 1~8. 선택지가 4종뿐이라 그룹 최대 8은 '종류 수'일 수 없고 이름의 "최소 1개 ~ 8개"와 같이 '수량 합계'로 읽히나, 쿠팡이츠 응답에 명시된 필드는 없다. `source-max`=기존 `maxTotalQuantity`(합계 8)로 적용(서버 변경 없음), `none`=종류 수 1~8만(합계 제한 없음, 최대 4종×8개).
-- `--none-option-mode source|no-quantity`: '선택안함'(0원)의 원본 수량 변경 플래그. `source`=원본 그대로, `no-quantity`=수량 조절 없이 1개(`option_policy.json`의 원본 ID로만 지정, 이름 규칙 아님). 선택안함과 다른 선택지를 함께 고를 수 있는지는 자료로 알 수 없어 어느 쪽도 막지 않는다.
+- `--none-option-mode source|no-quantity|exclusive`: '선택안함'(0원)의 원본 수량 변경 플래그. `source`=원본 그대로, `no-quantity`=수량 조절 없이 1개, `exclusive`=수량 조절 없이 1개 + 같은 그룹의 다른 옵션과 함께 고를 수 없는 단독 옵션(`menu_options.is_exclusive`, 서정 결정 2026-11-19, 쿠팡이츠 확인 사실이 아님). 모두 `option_policy.json`의 원본 ID로만 지정하며 이름 규칙이 아니다. 서버에 migration `20261119113501_option_exclusive.sql`이 먼저 있어야 한다.
 - `--review-event-groups import|hidden`: 쿠팡이츠 "리뷰이벤트 (최대 1개 가능)" 옵션 그룹 54개(옵션: 괜찮아요·이미 골랐어요·수제 왕새우 튀김·음료 등). SaveEats에 없는 혜택으로 보일 수 있어 `hidden`=행은 보존하고 앱에는 숨김을 권장.
 - `--group-names source|proposed`: 신메뉴·최대 할인 표현이 든 그룹 4개의 표시명 정리안(`menu_group_display.json`). 원본 이름은 DB `source_name`과 내부 기록에 보존.
 - `--sold-out-mode`: 수집 당시 품절 메뉴가 없어 필요 없다.
@@ -24,7 +24,7 @@ pip install psycopg2-binary
 # 값은 채팅에 적지 말고 터미널 환경변수나 .env.import(저장소 제외)로만 넣는다
 export DATABASE_URL='...' SUPABASE_URL='https://<ref>.supabase.co' SUPABASE_SERVICE_ROLE_KEY='...' EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY='...'
 P=/path/to/baeksojeong-coupangeats-20261119
-F="--option-max-quantity 10 --group-names proposed --group-total-mode source-max --none-option-mode no-quantity --review-event-groups hidden"   # 승인된 값으로
+F="--option-max-quantity 10 --group-names proposed --group-total-mode source-max --none-option-mode exclusive --review-event-groups hidden"   # 승인된 값으로
 python import_baeksojeong.py --package $P --check $F                       # 읽기 전용 보고서(out/check_report.md)
 python import_baeksojeong.py --package $P --backup --yes-dev-project $F    # 적용 전 백업(backup/<시각>/)
 python import_baeksojeong.py --package $P --apply --yes-dev-project $F     # 백업 → 사진 62개 → DB 한 트랜잭션(안에서 검증) → Guest 검증
@@ -36,7 +36,7 @@ python import_baeksojeong.py --package $P --restore --yes-dev-project $F --backu
 엽떡·도미노와 같다. 삭제 예정 행 전체와 기존 사진 파일을 백업하고, 적용 뒤에 만든 백업은 복구 기준이 아니다(`--restore`가 거절). 복구는 새 메뉴·그룹·옵션·메뉴 그룹·내부 기록·새 사진을 지우고 삭제한 행을 되살리며 연결 메뉴의 가격·설명·순서를 되돌린다.
 
 ## 시험
-`tests/test_baek_db.py`(31개): 임시 Postgres에 저장소 migration 전체와 실서버 스냅샷을 재현해 미결정 거절·적용·Guest 응답·중복 소속·필수 수량형 그룹·재실행·복구·원본 그대로 모드를 확인한다.
+`tests/test_baek_db.py`(33개): 임시 Postgres에 저장소 migration 전체와 실서버 스냅샷을 재현해 미결정 거절·적용·Guest 응답·중복 소속·필수 수량형 그룹·재실행·복구·원본 그대로 모드를 확인한다.
 ```bash
 pip install pgserver psycopg2-binary
 BAEK_PACKAGE=/path/to/baeksojeong-coupangeats-20261119 python tests/test_baek_db.py

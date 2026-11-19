@@ -1,5 +1,5 @@
 -- 단독 옵션: menu_options.is_exclusive
--- 근거: supabase/migrations/20261119120000_option_exclusive.sql 머리말. 테스트 데이터는 롤백으로 사라진다.
+-- 근거: supabase/migrations/20261119113501_option_exclusive.sql 머리말. 테스트 데이터는 롤백으로 사라진다.
 -- 이 파일은 pgTAP의 is · ok · no_plan · finish만 쓴다.
 create extension if not exists pgtap with schema extensions;
 

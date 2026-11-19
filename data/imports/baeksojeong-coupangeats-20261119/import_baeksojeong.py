@@ -945,7 +945,7 @@ def anon_verify(plan):
     got_groups = [(g['name'], g['menuIds']) for g in store.get('menuGroups', [])]
     if got_groups != want_groups:
         bad.append(('get_store', '메뉴 그룹 이름·순서·소속이 계획과 다르다'))
-    if [m['id'] for m in store['menus']] != [i for _, ids in want_groups for i in ids]:
+    if [m['id'] for m in store['menus']] != list(dict.fromkeys(i for _, ids in want_groups for i in ids)):   # 여러 그룹에 속한 메뉴는 첫 소속 순서로 한 번만
         bad.append(('get_store', 'menus 순서가 수집 순서와 다르다'))
     gm, og = {}, {}
     for g in plan['groups']:
