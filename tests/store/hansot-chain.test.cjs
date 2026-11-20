@@ -1,7 +1,6 @@
 /**
  * 한솥도시락(명지대점 수집본 반영 후) 메뉴 구조를 앱 코드에 통과시키는 시험.
- * 픽스처는 서버에 적용하기 전의 로컬 에뮬레이션(임시 Postgres에 저장소 migration + 적용 도구 실행 + Guest(anon) 역할 get_store·get_menu 응답)이다.
- * 개발 서버에 적용한 뒤에는 실제 Guest 응답으로 교체한다. 공개 카탈로그 데이터이며 비밀값은 없다.
+ * 픽스처는 2026-11-20 개발 서버 적용 뒤 공개 키(Guest)로 받은 실제 get_store·get_menu 응답이다(공개 카탈로그 데이터, 비밀값 없음).
  * 메뉴 111개·그룹 20개, 필수 옵션 그룹 0개 → 111개 모두 바로 담기, 선택 옵션(수량 조절 288개)은 상세에서 추가.
  */
 const test = require('node:test');
@@ -15,8 +14,8 @@ const { parseMenuDetail } = require('../../src/services/supabase/rpc-result.ts')
 const { hasRequiredOptions, quickAddMenu } = require('../../src/features/cart/quick-add.ts');
 const { createCatalogCartValidator } = require('../../src/services/cart/validate-cart.ts');
 
-const dump = JSON.parse(fs.readFileSync(path.join(__dirname, 'fixtures', 'hansot-emulated-guest-menus.json'), 'utf8')).map(parseMenuDetail);
-const store = JSON.parse(fs.readFileSync(path.join(__dirname, 'fixtures', 'hansot-emulated-guest-store.json'), 'utf8'));
+const dump = JSON.parse(fs.readFileSync(path.join(__dirname, 'fixtures', 'hansot-real-guest-menus.json'), 'utf8')).map(parseMenuDetail);
+const store = JSON.parse(fs.readFileSync(path.join(__dirname, 'fixtures', 'hansot-real-guest-store.json'), 'utf8'));
 const by = Object.fromEntries(dump.map((m) => [m.name, m]));
 
 test('메뉴 111개·그룹 20개(원본 이름·순서)와 연결 메뉴 가격·이름', () => {
@@ -84,6 +83,13 @@ test('실제 한솥 그룹(계란후라이·김치·찌개): 한 선택지 10개
     q = sel.setOptionQuantity(m, s, q, b.id, 5);
     assert.equal(sel.quantityOf(q, b.id), 4, prefix + ' 6+5는 거절(4에서 멈춤)'); assert.equal(sel.groupTotalQuantity(g, s, q), 10);
   }
+});
+
+test('사진 111개가 모두 자기 메뉴 UUID 경로로 연결(연결 메뉴 4개는 새 경로)', () => {
+  assert.equal(store.menus.length, 111);
+  assert.ok(store.menus.every((m) => typeof m.imageRef === 'string' && m.imageRef.startsWith('menus/' + m.id)));
+  assert.equal(new Set(store.menus.map((m) => m.imageRef)).size, 111);
+  for (const n of ['치킨마요', '치킨제육', '(BEST)돈까스도련님', '(BEST)돈까스도련님 고기고기']) assert.match(by[n].imageRef, /^menus\/[0-9a-f-]{36}-[0-9a-f]{8}\.(jpg|png)$/);
 });
 
 test('섹션 20개·소속 111개, 검색 결과는 한 번만', () => {

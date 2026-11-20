@@ -904,7 +904,7 @@ def verify(plan, cur, before=None, photos_expected=True):
     items = {}
     for i in now['menu_group_items']:
         items.setdefault(i['group_id'], []).append(i)
-    check('메뉴 그룹 7개와 순서·이름', [g['name'] for g in sorted(mg.values(), key=lambda g: g['sort_order'])] == [g['name'] for g in plan['menu_groups']], [g['name'] for g in mg.values()])
+    check('메뉴 그룹 20개와 순서·이름', [g['name'] for g in sorted(mg.values(), key=lambda g: g['sort_order'])] == [g['name'] for g in plan['menu_groups']], [g['name'] for g in mg.values()])
     check('그룹 안 메뉴 순서 일치', all([i['menu_id'] for i in sorted(items.get(g['id'], []), key=lambda i: i['sort_order'])] == [i['menu_id'] for i in sorted(
         (x for x in plan['menu_group_items'] if x['group_id'] == g['id']), key=lambda x: x['sort_order'])] for g in plan['menu_groups']))
     check('그룹 소속 연결이 계획과 같다(고유 메뉴 수와 소속 수를 따로 센다, 모든 메뉴가 하나 이상의 그룹에 있다)', sorted((i['group_id'], i['menu_id']) for lst in items.values() for i in lst) == sorted((x['group_id'], x['menu_id']) for x in plan['menu_group_items'])
