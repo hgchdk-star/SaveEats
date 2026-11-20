@@ -105,7 +105,7 @@ by_sid = {m['source_menu_id']: m['id'] for m in plan['menus']}
 sel = {by_sid[int(k)]: v['sha256'] for k, v in pol['photo_choice'].items()}
 up = {p['menu_id']: p['sha256'] for p in plan['photos']}
 check('복수 사진 음료 7개: 선택안 사진만 업로드 계획에 있다', len(sel) == 7 and all(up.get(mid) == sha for mid, sha in sel.items()))
-check('사진 계획: 새 메뉴 107개 업로드·기존 4개 유지·미확보 0개', len(plan['photos']) == 107 and len(plan['kept_photos']) == 4 and not plan['missing_photo_menus'])
+check('사진 계획: 111개 전부 업로드(새 메뉴 107 + 연결 4는 별도 경로로 교체)·미확보 0개·연결 4개의 새 경로는 기존 경로와 다르다', len(plan['photos']) == 111 and len(plan['replaced_photos']) == 4 and not plan['missing_photo_menus'] and all(r['new_object_path'] != r['existing_image_ref'] for r in plan['replaced_photos']))
 
 # 1) 점검·거절
 rc, out = run('--check', flags=())
@@ -119,20 +119,22 @@ for drop, label in ((('--group-total-mode', 'source-max'), '그룹 수량 합계
 rc, out = run('--apply')
 check('--yes-dev-project 없이는 적용 거절', rc != 0 and q("select count(*) " + Y, (SID,))[0][0] == 5)
 
-# 2) 적용(삭제 승인 전: 스냅샷 참조 가상 그룹 보류)
+# 2) 적용(서정 승인된 매핑)
 pre_dirs = set(os.listdir(BK))
 rc, out = run('--apply', '--yes-dev-project')
 check('--apply 성공(트랜잭션 안 검증 포함)', rc == 0 and '적용 완료' in out, out[-700:])
 check('메뉴 111개 전부 활성(연결 4 + 새 107), 제육볶음도시락 삭제', q("select count(*), count(*) filter (where is_active) " + Y, (SID,))[0] == (111, 111)
       and q("select count(*) from public.menus where id=%s", (M_JEYUK,))[0][0] == 0)
-check('연결 4개: UUID·사진·인기 유지, 가격 갱신(5,100·6,400·6,700·8,500)', q("select base_price, image_ref, is_popular, popularity_score from public.menus where id=%s", (M_MAYO,))[0] == (5100, 'menus/' + M_MAYO + '.jpg', True, 40)
+check('연결 4개: UUID·인기 유지, 가격 갱신(5,100·6,400·6,700·8,500), 사진은 수집 사진의 새 경로로 교체', q("select base_price, is_popular, popularity_score from public.menus where id=%s", (M_MAYO,))[0] == (5100, True, 40)
       and [q("select base_price from public.menus where id=%s", (x,))[0][0] for x in (M_DONG, M_JE, M_GOGI)] == [6400, 6700, 8500]
-      and q("select image_ref is not null from public.menus where id=%s", (M_GOGI,))[0][0])
+      and all(q("select image_ref from public.menus where id=%s", (x,))[0][0].startswith('menus/' + x + '-') for x in (M_MAYO, M_DONG, M_JE, M_GOGI)))
+check('사진 111개가 모두 자기 메뉴 UUID 경로로 연결(사진 없는 메뉴 0, 서로 다른 경로 111개)', q("select count(*), count(distinct image_ref), count(*) filter (where image_ref like 'menus/' || id::text || '%%') " + Y, (SID,))[0] == (111, 111, 111))
 check('"(BEST)" 두 메뉴는 수집본 이름으로 맞춤, 과거 주문 스냅샷 이름은 그대로', q("select name from public.menus where id=%s", (M_DONG,))[0][0] == '(BEST)돈까스도련님'
       and q("select name from public.menus where id=%s", (M_GOGI,))[0][0] == '(BEST)돈까스도련님 고기고기' and q("select count(*) from public.order_items where menu_name_snapshot='돈까스도련님'")[0][0] == 1)
 check('설명은 수집 설명으로 교체(source 모드)', q("select description from public.menus where id=%s", (M_MAYO,))[0][0] != next(m['description'] for m in snap['menus'] if m['id'] == M_MAYO))
-check('삭제 승인 전: 옵션 그룹 238 + 보류 1(치킨제육 밥 양), 옵션 1308 + 2, 비활성은 그 1개 그룹, 스냅샷 행 그대로', q("select count(*) from public.menu_option_groups")[0][0] == 239 and q("select count(*) from public.menu_options")[0][0] == 1310
-      and q("select count(*) from public.menu_option_groups where not is_active")[0][0] == 1 and q("select id::text from public.menu_option_groups where not is_active")[0][0] == REF_G and q("select count(*) from public.order_item_options")[0][0] == 1)
+check('승인된 매핑: 옵션 그룹 238·옵션 1308(가상 그룹 5·선택지 10 전부 삭제), 비활성 없음, 스냅샷 행은 그대로', q("select count(*) from public.menu_option_groups")[0][0] == 238 and q("select count(*) from public.menu_options")[0][0] == 1308
+      and q("select count(*) from public.menu_option_groups where not is_active")[0][0] == 0 and q("select count(*) from public.order_item_options")[0][0] == 1)
+check('적용 중 서버 검증: 계란후라이·김치·찌개 실제 그룹에서 한 선택지 10개·6+4 통과, 6+5·11개 거절', out.count('6개 + ') == 6 and out.count('서버 INVALID_OPTIONS') >= 6 and 'FAIL' not in out, [l for l in out.splitlines() if 'FAIL' in l][:3])
 check('수량 조절 옵션 288개(상한 10), 그 외 옵션은 수량 필드 없음·단독 0', q("select count(*) filter (where allow_quantity), count(*) filter (where max_quantity is not null), max(max_quantity), count(*) filter (where is_exclusive) from public.menu_options")[0] == (288, 288, 10, 0))
 check('수량형 그룹 144개(계란후라이·김치·찌개 각 48)는 수량 합계 상한 10, 밥추가 그룹 46개는 최대 1·합계 상한 없음, 필수 그룹 0개', q("select count(*) from public.menu_option_groups where max_total_quantity = 10")[0][0] == 144
       and q("select count(*) from public.menu_option_groups where max_total_quantity is not null")[0][0] == 144
@@ -169,25 +171,24 @@ bks = sorted(x for x in os.listdir(BK) if x not in pre_dirs)
 first = os.path.join(BK, bks[0])
 bkj = json.load(open(first + '/backup.json'))
 check('첫 적용 전 백업은 복구 기준, 재실행 백업은 기준 아님', bkj['applied_before_backup'] == [] and json.load(open(os.path.join(BK, bks[-1]) + '/backup.json'))['applied_before_backup'] != [])
+smap = json.load(open(first + '/snapshot_source_id_map.json'))
+check('백업에 원본 ID ↔ 스냅샷 대응 기록(스냅샷 행 1건, 삭제 그룹 5)', len(smap['snapshot_rows_referencing_deleted']) == 1 and len(smap['deleted_groups']) == 5, list(smap))
 bt = open(first + '/backup.json').read()
 check('백업에 접속 정보·키 없음', URI not in bt and 'postgresql://' not in bt and 'eyJ' not in bt and 'sb_secret' not in bt)
 rc, out = run('--restore', '--yes-dev-project', '--backup-dir', first)
 check('복구 성공', rc == 0 and 'FAIL' not in out, out[-600:])
-check('복구 후: 원래 메뉴 5개(제육볶음도시락 포함)·가격·이름·옵션 그룹 5·옵션 10, 그룹·내부 기록 없음, 다른 가게 불변', q("select count(*) " + Y, (SID,))[0][0] == 5 and q("select count(*) from public.menu_option_groups")[0][0] == 5
-      and q("select count(*) from public.menu_options")[0][0] == 10 and q("select base_price from public.menus where id=%s", (M_MAYO,))[0][0] == 3900 and q("select name from public.menus where id=%s", (M_DONG,))[0][0] == '돈까스도련님'
+check('복구 후: 원래 메뉴 5개(제육볶음도시락 포함)·가격·이름·기존 사진 연결·옵션 그룹 5·옵션 10, 그룹·내부 기록 없음, 다른 가게 불변', q("select count(*) " + Y, (SID,))[0][0] == 5 and q("select count(*) from public.menu_option_groups")[0][0] == 5
+      and q("select count(*) from public.menu_options")[0][0] == 10 and q("select base_price, image_ref from public.menus where id=%s", (M_MAYO,))[0] == (3900, 'menus/' + M_MAYO + '.jpg') and q("select name from public.menus where id=%s", (M_DONG,))[0][0] == '돈까스도련님'
       and q("select count(*) from public.store_menu_groups")[0][0] == 0 and q("select count(*) from private.store_source_records where load_batch like 'hansot%%'")[0][0] == 0 and fp() == fp_other)
 
-# 6) 서정 승인 뒤: 스냅샷 참조 가상 그룹도 삭제 + ID 대응 기록
+# 6) 승인 전 상태(복사본 매핑): 스냅샷 참조 가상 그룹은 삭제하지 않고 비활성 보존
 mp = json.load(open(os.path.join(TOOLCOPY, 'menu_mapping.json'), encoding='utf-8'))
-mp['approved_snapshot_referenced_group_ids'] = [REF_G]
+mp['approved_snapshot_referenced_group_ids'] = []
 json.dump(mp, open(os.path.join(TOOLCOPY, 'menu_mapping.json'), 'w', encoding='utf-8'), ensure_ascii=False)
 pre2 = set(os.listdir(BK))
 rc, out = run('--apply', '--yes-dev-project', tool=os.path.join(TOOLCOPY, 'import_hansot.py'))
-check('승인된 매핑: 옵션 그룹 238·옵션 1308(가상 그룹 5·선택지 10 전부 삭제), 비활성 없음, 스냅샷 행은 그대로', rc == 0 and q("select count(*) from public.menu_option_groups")[0][0] == 238 and q("select count(*) from public.menu_options")[0][0] == 1308
-      and q("select count(*) from public.menu_option_groups where not is_active")[0][0] == 0 and q("select count(*) from public.order_item_options")[0][0] == 1, out[-500:])
-bk2 = os.path.join(BK, sorted(x for x in os.listdir(BK) if x not in pre2)[0])
-smap = json.load(open(bk2 + '/snapshot_source_id_map.json'))
-check('백업에 원본 ID ↔ 스냅샷 대응 기록(스냅샷 행 1건, 삭제 그룹 5)', len(smap['snapshot_rows_referencing_deleted']) == 1 and len(smap['deleted_groups']) == 5, list(smap))
+check('승인 전 매핑: 옵션 그룹 239(보류 1 = 치킨제육 밥 양)·옵션 1310, 비활성은 그 1개 그룹, 스냅샷 행은 그대로', rc == 0 and q("select count(*) from public.menu_option_groups")[0][0] == 239 and q("select count(*) from public.menu_options")[0][0] == 1310
+      and q("select count(*) from public.menu_option_groups where not is_active")[0][0] == 1 and q("select id::text from public.menu_option_groups where not is_active")[0][0] == REF_G and q("select count(*) from public.order_item_options")[0][0] == 1, out[-500:])
 check('출력에 접속 문자열 없음', URI not in out)
 print(f'{sum(results)} / {len(results)} 통과')
 srv.cleanup(); shutil.rmtree(BK, ignore_errors=True); shutil.rmtree(TOOLPARENT, ignore_errors=True)

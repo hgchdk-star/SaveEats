@@ -65,6 +65,27 @@ test('상세에서 선택 옵션 추가: 계란후라이 수량·합계 10 제�
   assert.equal(res.items.c.status, 'VALID');
 });
 
+test('실제 한솥 그룹(계란후라이·김치·찌개): 한 선택지 10개 가능, 6+4 통과·6+5는 4개에서 멈춤(합계 10)', () => {
+  for (const prefix of ['계란후라이', '김치', '찌개']) {
+    const m = dump.find((x) => x.optionGroups.some((g) => g.name.startsWith(prefix + ' (최대 10개')));
+    const g = m.optionGroups.find((x) => x.name.startsWith(prefix + ' (최대 10개'));
+    const [a, b] = g.options;
+    assert.equal(g.options.length, 2); assert.equal(sel.totalLimitOf(g), 10);
+    // 한 선택지만 10개
+    let s = sel.toggleOption({}, g, a.id), q = sel.setOptionQuantity(m, s, {}, a.id, 10);
+    assert.equal(sel.quantityOf(q, a.id), 10, prefix + ' 한 선택지 10개');
+    assert.equal(sel.groupTotalQuantity(g, s, q), 10);
+    // 6 + 4 통과
+    s = sel.toggleOption({}, g, a.id); q = sel.setOptionQuantity(m, s, {}, a.id, 6);
+    s = sel.toggleOption(s, g, b.id, q); q = sel.setOptionQuantity(m, s, q, b.id, 4);
+    assert.equal(sel.quantityOf(q, a.id), 6); assert.equal(sel.quantityOf(q, b.id), 4); assert.equal(sel.groupTotalQuantity(g, s, q), 10);
+    assert.equal(sel.unitPrice(m, s, q), m.price + a.additionalPrice * 6 + b.additionalPrice * 4);
+    // 6 + 5 요청은 합계 10을 넘지 못한다(4에서 멈춤)
+    q = sel.setOptionQuantity(m, s, q, b.id, 5);
+    assert.equal(sel.quantityOf(q, b.id), 4, prefix + ' 6+5는 거절(4에서 멈춤)'); assert.equal(sel.groupTotalQuantity(g, s, q), 10);
+  }
+});
+
 test('섹션 20개·소속 111개, 검색 결과는 한 번만', () => {
   const r = ms.buildMenuSections(store.menus, store.menuGroups, '기타 메뉴');
   assert.equal(r.sections.length, 20); assert.equal(r.sections.reduce((n, x) => n + x.menus.length, 0), 111);

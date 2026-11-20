@@ -459,13 +459,14 @@ def build_plan(package, existing, option_max_quantity=None, sold_out_mode=None, 
         if len(data) > MAX_IMAGE_BYTES:
             issues.append(f'사진이 2MiB를 넘는다: {p["local_path"]}')
         if kind_of[mid] == 'LINK':
-            kept.append({'menu': ex_menus[mid]['name'], 'existing_image_ref': ex_menus[mid]['image_ref'], 'collected_sha256': p['sha256'], 'collected_bytes': len(data)})
-            continue
-        photo_rows.append({'menu_id': mid, 'object_path': f'menus/{mid}.{ext}', 'local_path': path, 'mime': mime, 'bytes': len(data), 'sha256': p['sha256'],
+            # 서정 정정(2026-11-20): 연결 메뉴도 수집 사진으로 교체한다. 기존 파일은 지우지 않고(복구용 백업), 새 사진은 별도 경로에 올려 연결만 바꾼다
+            kept.append({'menu': ex_menus[mid]['name'], 'existing_image_ref': ex_menus[mid]['image_ref'], 'new_object_path': f'menus/{mid}-{p["sha256"][:8]}.{ext}', 'collected_bytes': len(data)})
+        opath = f'menus/{mid}-{p["sha256"][:8]}.{ext}' if kind_of[mid] == 'LINK' else f'menus/{mid}.{ext}'
+        photo_rows.append({'menu_id': mid, 'object_path': opath, 'local_path': path, 'mime': mime, 'bytes': len(data), 'sha256': p['sha256'],
                            'source_url': p['source_url'], 'rights_status': p.get('rights_status', '미확인'), 'menu_name': p['menu_name']})
     with_photo = {r['menu_id']: r['object_path'] for r in photo_rows}
     for r in menu_rows:
-        r['image_ref'] = with_photo.get(r['id']) if r['kind'] == 'NEW' else ex_menus[r['id']]['image_ref']
+        r['image_ref'] = with_photo.get(r['id']) if r['kind'] == 'NEW' else with_photo.get(r['id'], ex_menus[r['id']]['image_ref'])
     missing_photo = [{'source_menu_id': r['source_menu_id'], 'name': r['name']} for r in menu_rows if r['image_ref'] is None]
 
     # ---- 내부 출처 기록 (권리·사용 허락 '미확인')
@@ -531,7 +532,7 @@ def build_plan(package, existing, option_max_quantity=None, sold_out_mode=None, 
         'removals': removals, 'virt_del_groups': virt_del_groups, 'virt_del_options': virt_del_options,
         'virt_keep_groups': virt_keep_groups, 'virt_keep_options': virt_keep_options, 'delete_referenced': bool(delete_referenced),
         'snapshot_referenced_groups': snapshot_referenced_groups, 'snapshot_referenced_options': snapshot_referenced_options,
-        'kept_photos': kept, 'missing_photo_menus': missing_photo,
+        'kept_photos': [], 'replaced_photos': kept, 'missing_photo_menus': missing_photo,
         'sold_out_mode': sold_out_mode, 'option_max_quantity': option_max_quantity, 'undecided': undecided,
         'multi_photo': multi_photo, 'photo_mode': photo_mode, 'included_mode': included_mode,
         'sold_out_today': [r['name'] for r in menu_rows if r['source_sale_status'] == 'SOLD_OUT_TODAY'],
@@ -573,7 +574,7 @@ def render_report(plan, state):
     w(f'- 앱에 보이는 메뉴 {sum(1 for m in menus if m["is_active"])}개, 숨김 {sum(1 for m in menus if not m["is_active"])}개 (원본은 보존). 기존 가상 메뉴: 삭제 {sum(1 for r in plan["removals"] if r["action"] == "DELETE")}개, 숨김 보존 {sum(1 for r in plan["removals"] if r["action"] == "DEACTIVATE")}개')
     w(f'- 옵션 그룹 {len(plan["groups"])}개(필수 {sum(1 for g in plan["groups"] if g["min_select"] >= 1)}), 옵션 {len(plan["options"])}개, 수량 조절 옵션 {sum(1 for o in plan["options"] if o["allow_quantity"])}개')
     w(f'- 메뉴 그룹 {len(plan["menu_groups"])}개, 소속 {len(plan["menu_group_items"])}개 (메뉴 본체 복제 없음)')
-    w(f'- 사진: 새로 올림 {len(plan["photos"])}장, 기존 유지 {len(plan["kept_photos"])}장, 미확보 {len(plan["missing_photo_menus"])}개')
+    w(f'- 사진: 새로 올림 {len(plan["photos"])}장, 그중 연결 메뉴 교체 {len(plan["replaced_photos"])}장(기존 파일은 보존), 미확보 {len(plan["missing_photo_menus"])}개')
     w('')
     w('## 대응표 (기존 메뉴 → 수집 메뉴)')
     w('| 기존 메뉴 | UUID | 수집 메뉴 | 근거 |')
@@ -628,8 +629,8 @@ def render_report(plan, state):
         w(f'- `{k[0].strip()}` 최소 {k[1]}·최대 {k[2]}({k[3]})' + (f'·수량 합계 최대 {lst[0]["max_total_quantity"]}(SaveEats 제품 결정)' if lst[0]['max_total_quantity'] is not None else '') + f': 그룹 {len(lst)}개, 선택지 {len(opts)}개, 수량 허용 {sum(1 for o in opts if o["allow_quantity"])}개, 원본 수량 범위 ' + ', '.join(f'1~{x}({sum(1 for o in opts if o["source_max_quantity"] == x)}개)' for x in sorted({o["source_max_quantity"] for o in opts})) + ', 앱 상한 ' + ', '.join(str(x) for x in sorted({o["max_quantity"] for o in opts if o["allow_quantity"]}, key=str)))
     w('')
     w('## 사진')
-    for k in plan['kept_photos']:
-        w(f'- 유지(같은 상품을 눈으로 대조, 기존이 더 고해상도): {k["menu"]} `{k["existing_image_ref"]}` (수집 {k["collected_bytes"]:,}B)')
+    for k in plan['replaced_photos']:
+        w(f'- 교체(서정 정정: 연결 메뉴도 수집 사진): {k["menu"]} `{k["existing_image_ref"]}` → `{k["new_object_path"]}` (기존 파일은 지우지 않고 백업)')
     for m in plan['missing_photo_menus']:
         w(f'- 미확보(대체 사진 없음): {m["name"]}')
     w('')
@@ -752,8 +753,8 @@ def apply_db(cur, plan, uploaded):
           m['sort_order'], m['is_active'], m['is_sold_out']) for m in new])
     for m in linked:
         # 표시 이름만 수집본에 맞춘다(rename_to_source). UUID·주문·리뷰·인기 참조는 그대로이고, 과거 주문 스냅샷의 이름(order_items.menu_name_snapshot)은 바꾸지 않는다
-        cur.execute("""update public.menus set name = %s, base_price = %s, description = %s, sort_order = %s
-                       where id = %s and store_id = %s""", (m['name'], m['base_price'], m['description'], m['sort_order'], m['id'], STORE_ID))
+        cur.execute("""update public.menus set name = %s, base_price = %s, description = %s, sort_order = %s, image_ref = case when %s then %s else image_ref end
+                       where id = %s and store_id = %s""", (m['name'], m['base_price'], m['description'], m['sort_order'], m['image_ref'] in uploaded, m['image_ref'], m['id'], STORE_ID))
         if cur.rowcount != 1:
             raise RuntimeError(f'기존 메뉴를 갱신하지 못했다: {m["name"]}')
     # 3) 기존 가상 옵션: 참조 재확인 후 삭제(스냅샷이 가리키는 것은 비활성으로 보존)
@@ -830,7 +831,7 @@ def restore_db(cur, plan, bk):
             cur.execute(f'insert into public.{table} select * from jsonb_populate_recordset(null::public.{table}, %s::jsonb) on conflict (id) do nothing', (json.dumps(rows),))
     before = bk['existing']
     for m in before['menus']:
-        cur.execute('update public.menus set name = %s, base_price = %s, description = %s, sort_order = %s, is_active = %s where id = %s', (m['name'], m['base_price'], m['description'], m['sort_order'], m['is_active'], m['id']))
+        cur.execute('update public.menus set name = %s, base_price = %s, description = %s, sort_order = %s, is_active = %s, image_ref = %s where id = %s', (m['name'], m['base_price'], m['description'], m['sort_order'], m['is_active'], m['image_ref'], m['id']))
     for g in before['groups']:
         cur.execute('update public.menu_option_groups set is_active = %s where id = %s', (g['is_active'], g['id']))
     for o in before['options']:
@@ -863,7 +864,9 @@ def verify(plan, cur, before=None, photos_expected=True):
     check('메뉴 가격 일치', all(menus_db[m['id']]['base_price'] == m['base_price'] for m in plan['menus'] if m['id'] in menus_db))
     check('메뉴 순서(sort_order) 일치', all(menus_db[m['id']]['sort_order'] == m['sort_order'] for m in plan['menus'] if m['id'] in menus_db))
     if photos_expected:
-        check('사진 연결(새 메뉴=새 경로, 기존 메뉴=기존 사진 유지, 사진 없는 메뉴는 NULL)', all(menus_db[m['id']]['image_ref'] == m['image_ref'] for m in plan['menus'] if m['id'] in menus_db))
+        check('사진 연결(111개 메뉴 모두 수집 사진의 새 경로, 사진 없는 메뉴는 NULL)', all(menus_db[m['id']]['image_ref'] == m['image_ref'] for m in plan['menus'] if m['id'] in menus_db))
+    if photos_expected:
+        check('모든 메뉴의 사진이 자기 메뉴 UUID의 경로이다(다른 메뉴 사진 연결 없음)', all(menus_db[m['id']]['image_ref'] and menus_db[m['id']]['image_ref'].startswith('menus/' + m['id']) for m in plan['menus'] if m['id'] in menus_db))
     miss_ids = {next(x['id'] for x in plan['menus'] if x['source_menu_id'] == m['source_menu_id']) for m in plan['missing_photo_menus']}
     check('사진 없는 메뉴에 사진이 없다', all(menus_db[i]['image_ref'] is None for i in miss_ids if i in menus_db))
     if before is not None:
@@ -930,9 +933,13 @@ def verify(plan, cur, before=None, photos_expected=True):
         sl = next(x for x in snap['lines'][0]['options'] if x['optionId'] == o['id'])
         check(f'{menu["name"]}: {o["name"]} 2개 = {o["additional_price"] * 2:,}원', sl['quantity'] == 2 and sl['additionalPrice'] * sl['quantity'] == o['additional_price'] * 2, sl)
         check(f'{menu["name"]}: (기본가+옵션 합) {unit:,}원 × 메뉴 2개', snap['total'] == unit * 2, snap['total'])
-    # 음료 합계 규칙(서버 주문 검증, 읽기 전용 함수): 같은 음료 2개·서로 다른 음료 1개씩은 통과, 합계 3개는 거절
-    dg = next((g for g in plan['groups'] if g['max_total_quantity'] is not None and g['menu_id'] in {m['id'] for m in plan['menus'] if m['is_active']}), None)
-    if dg is not None:
+    # 그룹 수량 합계 규칙(서버 주문 검증, 읽기 전용 함수): 한 선택지 10개·서로 다른 선택지 6+4는 통과, 6+5와 11개는 거절은 통과, 합계 3개는 거절
+    seen_names = set()
+    dgs = []
+    for g in plan['groups']:   # 합계 제한이 있는 실제 그룹 종류(계란후라이·김치·찌개)마다 첫 보이는 메뉴의 그룹 하나씩
+        if g['max_total_quantity'] is not None and g['menu_id'] in {m['id'] for m in plan['menus'] if m['is_active']} and g['name'] not in seen_names:
+            seen_names.add(g['name']); dgs.append(g)
+    for dg in dgs:
         dopts = sorted((o for o in plan['options'] if o['group_id'] == dg['id'] and o['allow_quantity']), key=lambda x: (x['sort_order'], x['id']))
         dmenu = next(m for m in plan['menus'] if m['id'] == dg['menu_id'])
 
@@ -950,9 +957,11 @@ def verify(plan, cur, before=None, photos_expected=True):
                 cur.execute('rollback to savepoint tq')
                 return getattr(e, 'pgerror', str(e)).splitlines()[0]
         lim = dg['max_total_quantity']
-        check(f'음료 {dopts[0]["name"]} {lim}개(같은 음료 합계 {lim}): 서버 통과', try_lines([(dopts[0], lim)]) == 'OK')
-        check('서로 다른 음료 1개씩: 서버 통과', try_lines([(dopts[0], 1), (dopts[1], 1)]) == 'OK')
-        check(f'음료 합계 {lim + 1}개(같은 음료 {lim} + 다른 음료 1): 서버 INVALID_OPTIONS', 'INVALID_OPTIONS' in try_lines([(dopts[0], lim), (dopts[1], 1)]))
+        gn = dg['name'].split('(')[0].strip()
+        check(f'{dmenu["name"]}·{gn}: 한 선택지 {dopts[0]["name"]} {lim}개 서버 통과', try_lines([(dopts[0], lim)]) == 'OK')
+        check(f'{dmenu["name"]}·{gn}: 서로 다른 선택지 {dopts[0]["name"]} 6개 + {dopts[1]["name"]} 4개(합계 {lim}) 서버 통과', try_lines([(dopts[0], 6), (dopts[1], lim - 6)]) == 'OK')
+        check(f'{dmenu["name"]}·{gn}: {dopts[0]["name"]} 6개 + {dopts[1]["name"]} 5개(합계 {lim + 1}) 서버 INVALID_OPTIONS', 'INVALID_OPTIONS' in try_lines([(dopts[0], 6), (dopts[1], lim - 5)]))
+        check(f'{dmenu["name"]}·{gn}: 한 선택지 {lim + 1}개는 서버 INVALID_OPTIONS(옵션 상한 {lim})', 'INVALID_OPTIONS' in try_lines([(dopts[0], lim + 1)]))
     # 단독 옵션 규칙(서버 주문 검증, 읽기 전용 함수): 단독 옵션만 선택은 통과, 같은 그룹의 다른 옵션과 함께는 INVALID_OPTIONS
     xo = next((o for o in plan['options'] if o['is_exclusive']), None)
     if xo is not None:
@@ -1049,6 +1058,9 @@ def anon_verify(plan):
         bad.append(('get_store', '메뉴 그룹 이름·순서·소속이 계획과 다르다'))
     if [m['id'] for m in store['menus']] != list(dict.fromkeys(i for _, ids in want_groups for i in ids)):   # 여러 그룹에 속한 메뉴는 첫 소속 순서로 한 번만
         bad.append(('get_store', 'menus 순서가 수집 순서와 다르다'))
+    want_img = {m['id']: m['image_ref'] for m in plan['menus'] if m['is_active']}
+    if {m['id']: m.get('imageRef') for m in store['menus']} != want_img:
+        bad.append(('get_store', '메뉴별 사진 연결이 계획과 다르다'))
     gm, og = {}, {}
     for g in plan['groups']:
         if g['is_active']:   # 숨긴 그룹(리뷰이벤트)은 앱 응답에 없어야 한다
