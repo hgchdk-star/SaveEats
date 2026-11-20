@@ -1,0 +1,280 @@
+{
+ "refs": {
+  "orders": 5,
+  "order_items": 5,
+  "review_menus": 1,
+  "store_sources": 5,
+  "order_item_options": 1,
+  "store_source_records": 17
+ },
+ "menus": [
+  {
+   "id": "aa9b0e7a-ea6d-56fb-a53a-950f247b3a13",
+   "name": "치킨마요",
+   "image_ref": "menus/aa9b0e7a-ea6d-56fb-a53a-950f247b3a13.jpg",
+   "is_active": true,
+   "base_price": 3900,
+   "is_popular": true,
+   "sort_order": 1,
+   "description": "닭고기 튀김에 마요드레싱과 소스를 곁들인 덮밥.",
+   "is_sold_out": false,
+   "popularity_score": 40
+  },
+  {
+   "id": "63103290-798f-56f5-a3d7-1787c2d915ce",
+   "name": "돈까스도련님",
+   "image_ref": "menus/63103290-798f-56f5-a3d7-1787c2d915ce.jpg",
+   "is_active": true,
+   "base_price": 5200,
+   "is_popular": false,
+   "sort_order": 2,
+   "description": "돈까스, 햄버그스테이크, 치킨 가라아게 등을 담은 도시락.",
+   "is_sold_out": false,
+   "popularity_score": 0
+  },
+  {
+   "id": "dba0e2be-77d9-5b95-a8c3-45647cd492a8",
+   "name": "제육볶음도시락",
+   "image_ref": null,
+   "is_active": false,
+   "base_price": 7500,
+   "is_popular": false,
+   "sort_order": 3,
+   "description": "제육볶음과 밥, 곁들임을 담은 도시락.",
+   "is_sold_out": false,
+   "popularity_score": 0
+  },
+  {
+   "id": "6854fd60-0e8c-5461-ad4c-1818ecd3c76a",
+   "name": "치킨제육",
+   "image_ref": "menus/6854fd60-0e8c-5461-ad4c-1818ecd3c76a.jpg",
+   "is_active": true,
+   "base_price": 5500,
+   "is_popular": false,
+   "sort_order": 4,
+   "description": "치킨 가라아게와 제육볶음을 담은 도시락.",
+   "is_sold_out": false,
+   "popularity_score": 0
+  },
+  {
+   "id": "439f46f9-a865-5b4f-a4e3-1c4394e3bfac",
+   "name": "돈까스도련님 고기고기",
+   "image_ref": "menus/439f46f9-a865-5b4f-a4e3-1c4394e3bfac.jpg",
+   "is_active": true,
+   "base_price": 7300,
+   "is_popular": false,
+   "sort_order": 5,
+   "description": "돈까스도련님 구성에 소불고기와 제육볶음을 더한 도시락.",
+   "is_sold_out": false,
+   "popularity_score": 0
+  }
+ ],
+ "store": {
+  "id": "5ab234b5-79cd-58a6-ab73-0b14376ad985",
+  "name": "한솥도시락",
+  "is_open": true,
+  "image_ref": "stores/5ab234b5-79cd-58a6-ab73-0b14376ad985.jpg",
+  "is_active": true,
+  "category_id": "10000000-0000-4000-8000-000000000004",
+  "is_recommended": true
+ },
+ "groups": [
+  {
+   "id": "73a885c5-c2d5-59ca-ae8e-c8ec37c550a8",
+   "name": "밥 양",
+   "menu_id": "439f46f9-a865-5b4f-a4e3-1c4394e3bfac",
+   "is_active": true,
+   "max_select": 1,
+   "min_select": 1,
+   "sort_order": 1
+  },
+  {
+   "id": "e4503fc8-005b-5b05-ade3-a6853644e743",
+   "name": "밥 양",
+   "menu_id": "63103290-798f-56f5-a3d7-1787c2d915ce",
+   "is_active": true,
+   "max_select": 1,
+   "min_select": 1,
+   "sort_order": 1
+  },
+  {
+   "id": "7a5dfeb7-0b9a-54c9-a155-97cef806cf9d",
+   "name": "밥 양",
+   "menu_id": "6854fd60-0e8c-5461-ad4c-1818ecd3c76a",
+   "is_active": true,
+   "max_select": 1,
+   "min_select": 1,
+   "sort_order": 1
+  },
+  {
+   "id": "6babb710-3f20-51b4-a4e0-ff408fb2ee5e",
+   "name": "밥 양",
+   "menu_id": "aa9b0e7a-ea6d-56fb-a53a-950f247b3a13",
+   "is_active": true,
+   "max_select": 1,
+   "min_select": 1,
+   "sort_order": 1
+  },
+  {
+   "id": "1d77d2a7-b08c-5166-a108-ba6e76aa0b4d",
+   "name": "밥 양",
+   "menu_id": "dba0e2be-77d9-5b95-a8c3-45647cd492a8",
+   "is_active": false,
+   "max_select": 1,
+   "min_select": 1,
+   "sort_order": 1
+  }
+ ],
+ "totals": {
+  "groups_total": 1683,
+  "menus_active": 881,
+  "orders_total": 50,
+  "options_total": 12685,
+  "stores_active": 16
+ },
+ "options": [
+  {
+   "id": "32ceaa2f-63c6-513f-acfd-5d863ecab858",
+   "name": "기본",
+   "group_id": "1d77d2a7-b08c-5166-a108-ba6e76aa0b4d",
+   "is_active": false,
+   "sort_order": 1,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 0
+  },
+  {
+   "id": "00b17a14-c902-552e-a803-5ff90107254a",
+   "name": "밥 추가",
+   "group_id": "1d77d2a7-b08c-5166-a108-ba6e76aa0b4d",
+   "is_active": false,
+   "sort_order": 2,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 1000
+  },
+  {
+   "id": "e0537763-9d28-5b74-a1e5-f79652ac12a2",
+   "name": "기본",
+   "group_id": "6babb710-3f20-51b4-a4e0-ff408fb2ee5e",
+   "is_active": true,
+   "sort_order": 1,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 0
+  },
+  {
+   "id": "6373e6a9-c2e1-5dbc-aa82-b6bf27bc1162",
+   "name": "밥 추가",
+   "group_id": "6babb710-3f20-51b4-a4e0-ff408fb2ee5e",
+   "is_active": true,
+   "sort_order": 2,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 1000
+  },
+  {
+   "id": "8937da24-2c7f-5b5f-a8c5-4b9de705ded3",
+   "name": "기본",
+   "group_id": "73a885c5-c2d5-59ca-ae8e-c8ec37c550a8",
+   "is_active": true,
+   "sort_order": 1,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 0
+  },
+  {
+   "id": "3769a198-e15e-529b-aa29-27aac3042bd9",
+   "name": "밥 추가",
+   "group_id": "73a885c5-c2d5-59ca-ae8e-c8ec37c550a8",
+   "is_active": true,
+   "sort_order": 2,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 1000
+  },
+  {
+   "id": "3a294a40-211d-5583-a522-b6177e8ebfa7",
+   "name": "기본",
+   "group_id": "7a5dfeb7-0b9a-54c9-a155-97cef806cf9d",
+   "is_active": true,
+   "sort_order": 1,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 0
+  },
+  {
+   "id": "22a257d1-85df-551e-af00-2edb569fcea6",
+   "name": "밥 추가",
+   "group_id": "7a5dfeb7-0b9a-54c9-a155-97cef806cf9d",
+   "is_active": true,
+   "sort_order": 2,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 1000
+  },
+  {
+   "id": "a1481420-e82f-5983-a9b7-da2092cab870",
+   "name": "기본",
+   "group_id": "e4503fc8-005b-5b05-ade3-a6853644e743",
+   "is_active": true,
+   "sort_order": 1,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 0
+  },
+  {
+   "id": "2fadb25f-bc62-5538-a1cd-11f834c8618f",
+   "name": "밥 추가",
+   "group_id": "e4503fc8-005b-5b05-ade3-a6853644e743",
+   "is_active": true,
+   "sort_order": 2,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 1000
+  }
+ ],
+ "menu_groups": [],
+ "private_records": 0,
+ "menu_group_items": [],
+ "snapshot_group_ids": [
+  "7a5dfeb7-0b9a-54c9-a155-97cef806cf9d"
+ ],
+ "snapshot_option_ids": [
+  "3a294a40-211d-5583-a522-b6177e8ebfa7"
+ ],
+ "source": "database",
+ "_category": [
+  "korean",
+  "한식"
+ ],
+ "_order_items": {
+  "6854fd60-0e8c-5461-ad4c-1818ecd3c76a": 1,
+  "aa9b0e7a-ea6d-56fb-a53a-950f247b3a13": 3,
+  "63103290-798f-56f5-a3d7-1787c2d915ce": 1
+ },
+ "_reviews": {
+  "6854fd60-0e8c-5461-ad4c-1818ecd3c76a": 1
+ },
+ "_oio": [
+  {
+   "menu_id": "6854fd60-0e8c-5461-ad4c-1818ecd3c76a",
+   "source_group_id": "7a5dfeb7-0b9a-54c9-a155-97cef806cf9d",
+   "source_option_id": "3a294a40-211d-5583-a522-b6177e8ebfa7",
+   "group_name_snapshot": "밥 양",
+   "option_name_snapshot": "기본",
+   "additional_price_snapshot": 0,
+   "sort_order": 1
+  }
+ ]
+}

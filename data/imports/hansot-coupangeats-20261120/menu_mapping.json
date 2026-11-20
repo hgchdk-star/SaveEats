@@ -1,0 +1,52 @@
+{
+  "_comment": "기존 한솥도시락 메뉴 ↔ 수집(명지대점) 메뉴 대응표. 이름이 같거나 표기 태그만 다르고 기존 사진과 수집 사진이 같은 상품인 것만 연결한다. 가격은 수집 가격으로 갱신한다(서정 승인: 지점 가격을 대표값으로).",
+  "links": [
+    {
+      "existing_menu_id": "aa9b0e7a-ea6d-56fb-a53a-950f247b3a13",
+      "existing_name": "치킨마요",
+      "source_menu_id": 82409757,
+      "source_name": "치킨마요",
+      "status": "LINK",
+      "basis": "EXACT_NAME_PHOTO",
+      "evidence": "이름 동일('마요' 그룹), 같은 상품(치킨마요). 가격 3,900→5,100원. 빅치킨마요·메가치킨마요·치킨마요 부대찌개 정식과 합치지 않는다. 주문 3건·인기 40점 유지. 기존 사진은 접시에 담은 연출 사진, 수집 사진은 한솥 용기 사진(같은 음식)"
+    },
+    {
+      "existing_menu_id": "63103290-798f-56f5-a3d7-1787c2d915ce",
+      "existing_name": "돈까스도련님",
+      "source_menu_id": 82409663,
+      "source_name": "(BEST)돈까스도련님",
+      "status": "LINK",
+      "basis": "NAME_TAG_PHOTO",
+      "evidence": "'(BEST)' 표기만 다르고 같은 상품(돈까스·햄버그·치킨 도련님 도시락, 기존 사진과 수집 사진이 같은 구성). 가격 5,200→6,400원. 제육 돈까스 도련님·더블 돈까스도련님·반찬 돈까스도련님과 합치지 않는다. 주문 1건 유지. 표시 이름은 수집본(원본 이름 유지 요청)으로 맞춘다",
+      "rename_to_source": true
+    },
+    {
+      "existing_menu_id": "6854fd60-0e8c-5461-ad4c-1818ecd3c76a",
+      "existing_name": "치킨제육",
+      "source_menu_id": 82409661,
+      "source_name": "치킨제육",
+      "status": "LINK",
+      "basis": "EXACT_NAME_PHOTO",
+      "evidence": "이름 동일('모둠' 그룹), 같은 상품(치킨 + 제육 도시락, 기존 사진과 수집 사진이 같은 구성). 가격 5,500→6,700원. 주문 1건·리뷰 1건 유지"
+    },
+    {
+      "existing_menu_id": "439f46f9-a865-5b4f-a4e3-1c4394e3bfac",
+      "existing_name": "돈까스도련님 고기고기",
+      "source_menu_id": 82409719,
+      "source_name": "(BEST)돈까스도련님 고기고기",
+      "status": "LINK",
+      "basis": "NAME_TAG_PHOTO",
+      "evidence": "'(BEST)' 표기만 다르고 같은 상품(돈까스도련님 + 소불고기·제육 도시락, 기존 사진과 수집 사진이 같은 구성). 가격 7,300→8,500원. 표시 이름은 수집본으로 맞춘다",
+      "rename_to_source": true
+    }
+  ],
+  "remove": [
+    {
+      "existing_menu_id": "dba0e2be-77d9-5b95-a8c3-45647cd492a8",
+      "existing_name": "제육볶음도시락",
+      "reason": "수집 목록에 동일 상품이 없다: 수집본에는 '반찬 제육볶음(130g)'·'제육 돈까스 도련님' 등 구성이 다른 메뉴만 있다. 실제 존재 여부는 확인하지 않았다. 이미 비활성(사진 없음)인 개발용 메뉴(7,500원)이며 참조가 없어 삭제 후보다"
+    }
+  ],
+  "approved_snapshot_referenced_group_ids": [],
+  "_approved_note": "주문 스냅샷이 원본 ID로 가리키는 기존 가상 옵션 그룹(치킨제육의 밥 양, 옵션 2개)은 서정이 삭제를 승인한 뒤 여기에 그룹 id를 넣는다. 그 전에는 삭제하지 않고 비활성으로 보존한다."
+}
