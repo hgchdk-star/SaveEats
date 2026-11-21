@@ -1,0 +1,39 @@
+{
+  "_comment": "기존 맘스터치 메뉴 ↔ 수집(맘스터치 홍제역점) 메뉴 대응표(2026-11-22 준비, 서정 확인 전). 이름이 같거나 표기 태그·띄어쓰기만 다르고 같은 상품인 것만 연결한다. 가격은 수집 가격으로 갱신한다(지점 가격을 대표값으로 쓰는 기존 결정).",
+  "links": [
+    {
+      "existing_menu_id": "f9fbfb42-465e-5ba1-a99f-6dbec94441cc",
+      "existing_name": "싸이버거",
+      "source_menu_id": 116645403,
+      "source_name": "싸이버거 단품",
+      "status": "LINK",
+      "basis": "NAME_SINGLE",
+      "evidence": "'단품'만 덧붙은 이름, 기존 사진은 버거 한 개이며 수집 '싸이버거 단품'과 같다. 세트(9,700원, 감자·음료 포함)와는 구성이 달라 연결하지 않는다",
+      "rename_to_source": true
+    }
+  ],
+  "remove": [
+    {
+      "existing_menu_id": "c70c8d45-d4a9-540e-ad18-bdbce792306b",
+      "existing_name": "휠렛버거",
+      "reason": "수집본의 '휠렛버거'는 세트(감자·음료 포함, 9,800원)뿐이고 단품이 없다. 기존 사진은 버거 한 개라 세트와 구성이 달라 연결하지 않는다"
+    },
+    {
+      "existing_menu_id": "84e480a7-fcf7-5878-a223-a064257619cb",
+      "existing_name": "통다리살 치킨버거+음료",
+      "reason": "수집 목록에 같은 상품이 없다(비활성 개발용 메뉴, 사진·참조 없음)"
+    },
+    {
+      "existing_menu_id": "28296a4f-6401-5722-aa79-f53e48e7ea35",
+      "existing_name": "할라피뇨통살치킨버거",
+      "reason": "수집 목록에 같은 상품이 없다(수집본에는 할라피뇨너겟만 있다, 비활성 개발용 메뉴)"
+    },
+    {
+      "existing_menu_id": "e37921a7-3096-5351-a495-b445b56b72a3",
+      "existing_name": "간장마늘 통다리살버거",
+      "reason": "수집 목록에 같은 상품이 없다(비활성 개발용 메뉴)"
+    }
+  ],
+  "approved_snapshot_referenced_group_ids": [],
+  "_approved_note": "주문 스냅샷이 원본 ID로 가리키는 기존 가상 옵션 그룹은 서정이 삭제를 승인한 뒤 여기에 그룹 id를 넣는다. 그 전에는 삭제하지 않고 비활성으로 보존한다."
+}

@@ -1,0 +1,214 @@
+{
+ "refs": {
+  "orders": 1,
+  "order_items": 1,
+  "review_menus": 1,
+  "store_sources": 6,
+  "order_item_options": 1,
+  "store_source_records": 13
+ },
+ "menus": [
+  {
+   "id": "6ecbd484-b879-5b06-affb-2a182bf1cf05",
+   "name": "콰삭모짜킹",
+   "image_ref": "menus/6ecbd484-b879-5b06-affb-2a182bf1cf05.png",
+   "is_active": true,
+   "base_price": 24000,
+   "is_popular": false,
+   "sort_order": 1,
+   "description": "모짜렐라를 넣은 순살 치킨으로 딥 소스 2종을 곁들이는 메뉴.",
+   "is_sold_out": false,
+   "popularity_score": 0
+  },
+  {
+   "id": "847498e3-976f-5aa1-adc1-37fbf8bd4d05",
+   "name": "커링클",
+   "image_ref": "menus/847498e3-976f-5aa1-adc1-37fbf8bd4d05.png",
+   "is_active": true,
+   "base_price": 21900,
+   "is_popular": false,
+   "sort_order": 2,
+   "description": "커리와 크림 풍미의 달고 매운 시즈닝 치킨에 허니버터요거트소스를 곁들이는 메뉴.",
+   "is_sold_out": false,
+   "popularity_score": 0
+  },
+  {
+   "id": "b80c5fc0-6ce7-56b7-aa07-5bfce2beeb74",
+   "name": "커링클/뿌링클 반반",
+   "image_ref": "menus/b80c5fc0-6ce7-56b7-aa07-5bfce2beeb74.png",
+   "is_active": true,
+   "base_price": 23500,
+   "is_popular": false,
+   "sort_order": 3,
+   "description": "커링클과 뿌링클을 반반으로 구성하고 허니버터요거트소스를 제공하는 메뉴.",
+   "is_sold_out": false,
+   "popularity_score": 0
+  }
+ ],
+ "store": {
+  "id": "a3fa9f76-e7c1-568b-a59a-39c70b0084f9",
+  "name": "BHC",
+  "is_open": true,
+  "image_ref": "stores/a3fa9f76-e7c1-568b-a59a-39c70b0084f9.png",
+  "is_active": true,
+  "category_id": "10000000-0000-4000-8000-000000000001",
+  "is_recommended": false
+ },
+ "groups": [
+  {
+   "id": "1dffcfbb-ff09-5664-a6ef-81a19db7df87",
+   "name": "구성 선택",
+   "menu_id": "6ecbd484-b879-5b06-affb-2a182bf1cf05",
+   "is_active": true,
+   "max_select": 1,
+   "min_select": 1,
+   "sort_order": 1
+  },
+  {
+   "id": "12403d83-5654-5a6c-a512-e0da71b84acc",
+   "name": "구성 선택",
+   "menu_id": "847498e3-976f-5aa1-adc1-37fbf8bd4d05",
+   "is_active": true,
+   "max_select": 1,
+   "min_select": 1,
+   "sort_order": 1
+  },
+  {
+   "id": "e555107d-8838-5a05-af27-ed5e96746f77",
+   "name": "구성 선택",
+   "menu_id": "b80c5fc0-6ce7-56b7-aa07-5bfce2beeb74",
+   "is_active": true,
+   "max_select": 1,
+   "min_select": 1,
+   "sort_order": 1
+  }
+ ],
+ "totals": {
+  "groups_total": 1916,
+  "menus_active": 988,
+  "orders_total": 50,
+  "options_total": 13983,
+  "stores_active": 16
+ },
+ "options": [
+  {
+   "id": "60882e8a-a36a-575e-a765-c8218112627a",
+   "name": "뼈 한 마리",
+   "group_id": "12403d83-5654-5a6c-a512-e0da71b84acc",
+   "is_active": true,
+   "sort_order": 1,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 0
+  },
+  {
+   "id": "1cc36d80-d083-57fb-af73-ee2f961a66f3",
+   "name": "순살",
+   "group_id": "12403d83-5654-5a6c-a512-e0da71b84acc",
+   "is_active": true,
+   "sort_order": 2,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 2000
+  },
+  {
+   "id": "4f1ce8a5-5c78-510d-a57e-a9581398eb5b",
+   "name": "윙과 봉",
+   "group_id": "12403d83-5654-5a6c-a512-e0da71b84acc",
+   "is_active": true,
+   "sort_order": 3,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 3000
+  },
+  {
+   "id": "52493666-c9a9-588f-a496-6187cfd743a0",
+   "name": "순살",
+   "group_id": "1dffcfbb-ff09-5664-a6ef-81a19db7df87",
+   "is_active": true,
+   "sort_order": 1,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 0
+  },
+  {
+   "id": "1a072114-3bdb-5ebd-afa4-3e2720b5e9a0",
+   "name": "순살 넉넉히",
+   "group_id": "1dffcfbb-ff09-5664-a6ef-81a19db7df87",
+   "is_active": true,
+   "sort_order": 2,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 5000
+  },
+  {
+   "id": "da5b6ca1-81d1-5b60-a224-5183691b3483",
+   "name": "뼈 한 마리",
+   "group_id": "e555107d-8838-5a05-af27-ed5e96746f77",
+   "is_active": true,
+   "sort_order": 1,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 0
+  },
+  {
+   "id": "466a4c40-9d90-52f8-a7dc-016cd428f35f",
+   "name": "순살",
+   "group_id": "e555107d-8838-5a05-af27-ed5e96746f77",
+   "is_active": true,
+   "sort_order": 2,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 2000
+  },
+  {
+   "id": "b3896322-888b-5a0f-ac09-57d95b77b469",
+   "name": "윙과 봉",
+   "group_id": "e555107d-8838-5a05-af27-ed5e96746f77",
+   "is_active": true,
+   "sort_order": 3,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 3000
+  }
+ ],
+ "menu_groups": [],
+ "private_records": 0,
+ "menu_group_items": [],
+ "snapshot_group_ids": [
+  "1dffcfbb-ff09-5664-a6ef-81a19db7df87"
+ ],
+ "snapshot_option_ids": [
+  "52493666-c9a9-588f-a496-6187cfd743a0"
+ ],
+ "source": "database",
+ "_category": [
+  "chicken",
+  "치킨"
+ ],
+ "_order_items": {
+  "6ecbd484-b879-5b06-affb-2a182bf1cf05": 1
+ },
+ "_reviews": {
+  "6ecbd484-b879-5b06-affb-2a182bf1cf05": 1
+ },
+ "_oio": [
+  {
+   "menu_id": "6ecbd484-b879-5b06-affb-2a182bf1cf05",
+   "source_group_id": "1dffcfbb-ff09-5664-a6ef-81a19db7df87",
+   "source_option_id": "52493666-c9a9-588f-a496-6187cfd743a0",
+   "group_name_snapshot": "구성 선택",
+   "option_name_snapshot": "순살",
+   "additional_price_snapshot": 0,
+   "sort_order": 1
+  }
+ ]
+}

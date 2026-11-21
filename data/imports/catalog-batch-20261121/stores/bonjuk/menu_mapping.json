@@ -1,0 +1,53 @@
+{
+  "_comment": "기존 본죽&비빔밥 메뉴 ↔ 수집(본죽&비빔밥 홍은1동점) 메뉴 대응표(2026-11-22 준비, 서정 확인 전). 이름이 같거나 표기 태그·띄어쓰기만 다르고 같은 상품인 것만 연결한다. 가격은 수집 가격으로 갱신한다(지점 가격을 대표값으로 쓰는 기존 결정).",
+  "links": [
+    {
+      "existing_menu_id": "2a87aab2-f130-5569-a111-52d2b458788b",
+      "existing_name": "삼계죽",
+      "source_menu_id": 54481148,
+      "source_name": "삼계죽 (보양)",
+      "status": "LINK",
+      "basis": "NAME_TAG_PHOTO",
+      "evidence": "'(보양)' 분류 표기만 다르고 같은 죽(기존·수집 사진 동일 음식)",
+      "rename_to_source": true
+    },
+    {
+      "existing_menu_id": "6846a8b9-647d-572a-aa05-7dda719388ef",
+      "existing_name": "추어죽",
+      "source_menu_id": 92366720,
+      "source_name": "추어죽 (보양)",
+      "status": "LINK",
+      "basis": "NAME_TAG_PHOTO",
+      "evidence": "'(보양)' 분류 표기만 다르고 같은 죽",
+      "rename_to_source": true
+    },
+    {
+      "existing_menu_id": "0d4bfafa-27d4-5433-abfd-9c9209ee223e",
+      "existing_name": "삼계전복죽",
+      "source_menu_id": 54481083,
+      "source_name": "삼계전복죽 (보양)",
+      "status": "LINK",
+      "basis": "NAME_TAG_PHOTO",
+      "evidence": "'(보양)' 분류 표기만 다르고 같은 죽",
+      "rename_to_source": true
+    },
+    {
+      "existing_menu_id": "d1098ea1-471f-59cc-a120-91b3eb078979",
+      "existing_name": "소불고기나물비빔밥",
+      "source_menu_id": 54481093,
+      "source_name": "소불고기나물비빔밥",
+      "status": "LINK",
+      "basis": "EXACT_NAME_PHOTO",
+      "evidence": "이름 동일, 같은 상품"
+    }
+  ],
+  "remove": [
+    {
+      "existing_menu_id": "d50ec7ad-ad90-5918-ac9d-afdd57518072",
+      "existing_name": "본죽장조림버터비빔밥",
+      "reason": "수집 목록에 같은 상품이 없다(수집 비빔밥: 낙지김치·신짬뽕·소불고기나물·6가지나물·제육볶음나물)"
+    }
+  ],
+  "approved_snapshot_referenced_group_ids": [],
+  "_approved_note": "주문 스냅샷이 원본 ID로 가리키는 기존 가상 옵션 그룹은 서정이 삭제를 승인한 뒤 여기에 그룹 id를 넣는다. 그 전에는 삭제하지 않고 비활성으로 보존한다."
+}

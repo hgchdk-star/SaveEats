@@ -1,0 +1,260 @@
+{
+ "refs": {
+  "orders": 0,
+  "order_items": 0,
+  "review_menus": 0,
+  "store_sources": 6,
+  "order_item_options": 0,
+  "store_source_records": 21
+ },
+ "menus": [
+  {
+   "id": "2a87aab2-f130-5569-a111-52d2b458788b",
+   "name": "삼계죽",
+   "image_ref": "menus/2a87aab2-f130-5569-a111-52d2b458788b.jpg",
+   "is_active": true,
+   "base_price": 13500,
+   "is_popular": false,
+   "sort_order": 1,
+   "description": "닭고기와 수삼을 넣은 죽.",
+   "is_sold_out": false,
+   "popularity_score": 0
+  },
+  {
+   "id": "6846a8b9-647d-572a-aa05-7dda719388ef",
+   "name": "추어죽",
+   "image_ref": "menus/6846a8b9-647d-572a-aa05-7dda719388ef.jpg",
+   "is_active": true,
+   "base_price": 15000,
+   "is_popular": false,
+   "sort_order": 2,
+   "description": "추어탕 풍미의 죽.",
+   "is_sold_out": false,
+   "popularity_score": 0
+  },
+  {
+   "id": "0d4bfafa-27d4-5433-abfd-9c9209ee223e",
+   "name": "삼계전복죽",
+   "image_ref": "menus/0d4bfafa-27d4-5433-abfd-9c9209ee223e.jpg",
+   "is_active": true,
+   "base_price": 17500,
+   "is_popular": false,
+   "sort_order": 3,
+   "description": "닭고기·전복·수삼을 넣은 죽.",
+   "is_sold_out": false,
+   "popularity_score": 0
+  },
+  {
+   "id": "d50ec7ad-ad90-5918-ac9d-afdd57518072",
+   "name": "본죽장조림버터비빔밥",
+   "image_ref": "menus/d50ec7ad-ad90-5918-ac9d-afdd57518072.jpg",
+   "is_active": true,
+   "base_price": 12500,
+   "is_popular": false,
+   "sort_order": 4,
+   "description": "장조림과 버터를 넣은 비빔밥.",
+   "is_sold_out": false,
+   "popularity_score": 0
+  },
+  {
+   "id": "d1098ea1-471f-59cc-a120-91b3eb078979",
+   "name": "소불고기나물비빔밥",
+   "image_ref": "menus/d1098ea1-471f-59cc-a120-91b3eb078979.jpg",
+   "is_active": true,
+   "base_price": 13000,
+   "is_popular": false,
+   "sort_order": 5,
+   "description": "소불고기와 나물을 넣은 비빔밥.",
+   "is_sold_out": false,
+   "popularity_score": 0
+  }
+ ],
+ "store": {
+  "id": "23fbc09f-d03f-5d87-a0b7-d8b4d3d8b989",
+  "name": "본죽&비빔밥",
+  "is_open": true,
+  "image_ref": "stores/23fbc09f-d03f-5d87-a0b7-d8b4d3d8b989.jpg",
+  "is_active": true,
+  "category_id": "10000000-0000-4000-8000-000000000004",
+  "is_recommended": false
+ },
+ "groups": [
+  {
+   "id": "7ae269be-a7ab-5861-ab86-1763ca3050fa",
+   "name": "죽 농도",
+   "menu_id": "0d4bfafa-27d4-5433-abfd-9c9209ee223e",
+   "is_active": true,
+   "max_select": 1,
+   "min_select": 1,
+   "sort_order": 1
+  },
+  {
+   "id": "166c0984-d5ef-5987-a36d-019050a3e9fa",
+   "name": "죽 농도",
+   "menu_id": "2a87aab2-f130-5569-a111-52d2b458788b",
+   "is_active": true,
+   "max_select": 1,
+   "min_select": 1,
+   "sort_order": 1
+  },
+  {
+   "id": "9600a453-9b60-59c7-a085-d297be93dfb0",
+   "name": "죽 농도",
+   "menu_id": "6846a8b9-647d-572a-aa05-7dda719388ef",
+   "is_active": true,
+   "max_select": 1,
+   "min_select": 1,
+   "sort_order": 1
+  },
+  {
+   "id": "ddc01528-ace0-5362-ae19-c6571ae26ae1",
+   "name": "밥 양",
+   "menu_id": "d1098ea1-471f-59cc-a120-91b3eb078979",
+   "is_active": true,
+   "max_select": 1,
+   "min_select": 1,
+   "sort_order": 1
+  },
+  {
+   "id": "ac02dbc8-b793-53d4-a8fe-de5ad9cc3853",
+   "name": "밥 양",
+   "menu_id": "d50ec7ad-ad90-5918-ac9d-afdd57518072",
+   "is_active": true,
+   "max_select": 1,
+   "min_select": 1,
+   "sort_order": 1
+  }
+ ],
+ "totals": {
+  "groups_total": 1916,
+  "menus_active": 988,
+  "orders_total": 50,
+  "options_total": 13983,
+  "stores_active": 16
+ },
+ "options": [
+  {
+   "id": "265f1489-014f-5b95-ac4c-a270fa58cf27",
+   "name": "기본",
+   "group_id": "166c0984-d5ef-5987-a36d-019050a3e9fa",
+   "is_active": true,
+   "sort_order": 1,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 0
+  },
+  {
+   "id": "09b96692-ec31-545e-a423-1cb307ea2651",
+   "name": "묽게",
+   "group_id": "166c0984-d5ef-5987-a36d-019050a3e9fa",
+   "is_active": true,
+   "sort_order": 2,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 0
+  },
+  {
+   "id": "6a989df7-b7d7-5f34-a22f-ae8a47e2f1be",
+   "name": "기본",
+   "group_id": "7ae269be-a7ab-5861-ab86-1763ca3050fa",
+   "is_active": true,
+   "sort_order": 1,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 0
+  },
+  {
+   "id": "0207bc15-d823-5ec8-a10a-877a3feb8e8e",
+   "name": "묽게",
+   "group_id": "7ae269be-a7ab-5861-ab86-1763ca3050fa",
+   "is_active": true,
+   "sort_order": 2,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 0
+  },
+  {
+   "id": "729aae26-7a41-596f-a1db-6921c7a4fd5b",
+   "name": "기본",
+   "group_id": "9600a453-9b60-59c7-a085-d297be93dfb0",
+   "is_active": true,
+   "sort_order": 1,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 0
+  },
+  {
+   "id": "0f8dcc1b-29d8-5ce5-adac-41af41ee3bd4",
+   "name": "묽게",
+   "group_id": "9600a453-9b60-59c7-a085-d297be93dfb0",
+   "is_active": true,
+   "sort_order": 2,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 0
+  },
+  {
+   "id": "092b36dc-50ff-5930-a149-127ff1c4a12f",
+   "name": "기본",
+   "group_id": "ac02dbc8-b793-53d4-a8fe-de5ad9cc3853",
+   "is_active": true,
+   "sort_order": 1,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 0
+  },
+  {
+   "id": "64d88e09-53c3-5f07-a886-767116a456ed",
+   "name": "밥 추가",
+   "group_id": "ac02dbc8-b793-53d4-a8fe-de5ad9cc3853",
+   "is_active": true,
+   "sort_order": 2,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 1000
+  },
+  {
+   "id": "c600a5a4-d1d4-585e-a5ca-9e1a908e1849",
+   "name": "기본",
+   "group_id": "ddc01528-ace0-5362-ae19-c6571ae26ae1",
+   "is_active": true,
+   "sort_order": 1,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 0
+  },
+  {
+   "id": "facb9790-155d-525b-a735-1c7a3c2d0e83",
+   "name": "밥 추가",
+   "group_id": "ddc01528-ace0-5362-ae19-c6571ae26ae1",
+   "is_active": true,
+   "sort_order": 2,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 1000
+  }
+ ],
+ "menu_groups": [],
+ "private_records": 0,
+ "menu_group_items": [],
+ "snapshot_group_ids": [],
+ "snapshot_option_ids": [],
+ "source": "database",
+ "_category": [
+  "korean",
+  "한식"
+ ],
+ "_order_items": {},
+ "_reviews": {},
+ "_oio": []
+}

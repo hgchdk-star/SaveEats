@@ -1,0 +1,264 @@
+{
+ "refs": {
+  "orders": 1,
+  "order_items": 1,
+  "review_menus": 1,
+  "store_sources": 2,
+  "order_item_options": 0,
+  "store_source_records": 21
+ },
+ "menus": [
+  {
+   "id": "438f8685-e9ff-55b4-a716-6f576e1da228",
+   "name": "히레카츠",
+   "image_ref": "menus/438f8685-e9ff-55b4-a716-6f576e1da228.jpg",
+   "is_active": true,
+   "base_price": 12500,
+   "is_popular": false,
+   "sort_order": 1,
+   "description": "안심 카츠.",
+   "is_sold_out": false,
+   "popularity_score": 0
+  },
+  {
+   "id": "934d0fa9-63f3-5337-aa4c-6368385b14cd",
+   "name": "치즈 돈카츠",
+   "image_ref": "menus/934d0fa9-63f3-5337-aa4c-6368385b14cd.jpg",
+   "is_active": true,
+   "base_price": 13000,
+   "is_popular": false,
+   "sort_order": 2,
+   "description": "자연치즈를 넣은 돈카츠.",
+   "is_sold_out": false,
+   "popularity_score": 0
+  },
+  {
+   "id": "25b2af33-35af-5cf5-a17b-6ac162fe549b",
+   "name": "통살생선카츠",
+   "image_ref": "menus/25b2af33-35af-5cf5-a17b-6ac162fe549b.jpg",
+   "is_active": true,
+   "base_price": 13000,
+   "is_popular": false,
+   "sort_order": 3,
+   "description": "생선으로 만든 카츠.",
+   "is_sold_out": false,
+   "popularity_score": 0
+  },
+  {
+   "id": "5b4f1b73-68af-5aba-a42b-a6618fc822f4",
+   "name": "돈카츠동",
+   "image_ref": "menus/5b4f1b73-68af-5aba-a42b-a6618fc822f4.jpg",
+   "is_active": true,
+   "base_price": 10000,
+   "is_popular": false,
+   "sort_order": 4,
+   "description": "돈카츠를 올린 덮밥.",
+   "is_sold_out": false,
+   "popularity_score": 0
+  },
+  {
+   "id": "387ba22c-3041-5b1a-ab1e-eb5833baff47",
+   "name": "치킨가라아게동",
+   "image_ref": "menus/387ba22c-3041-5b1a-ab1e-eb5833baff47.jpg",
+   "is_active": true,
+   "base_price": 10000,
+   "is_popular": false,
+   "sort_order": 5,
+   "description": "닭고기 튀김을 올린 덮밥.",
+   "is_sold_out": false,
+   "popularity_score": 0
+  }
+ ],
+ "store": {
+  "id": "0d37a1b6-46b7-5d50-a72b-2c619736941f",
+  "name": "미소야",
+  "is_open": true,
+  "image_ref": "stores/0d37a1b6-46b7-5d50-a72b-2c619736941f.jpg",
+  "is_active": true,
+  "category_id": "10000000-0000-4000-8000-000000000006",
+  "is_recommended": false
+ },
+ "groups": [
+  {
+   "id": "3b08a81e-caf0-5fc1-a76e-7e3697dfb345",
+   "name": "곁들임 추가",
+   "menu_id": "25b2af33-35af-5cf5-a17b-6ac162fe549b",
+   "is_active": true,
+   "max_select": 2,
+   "min_select": 0,
+   "sort_order": 1
+  },
+  {
+   "id": "08c14a90-d3ed-5741-a710-263307a8941b",
+   "name": "곁들임 추가",
+   "menu_id": "387ba22c-3041-5b1a-ab1e-eb5833baff47",
+   "is_active": true,
+   "max_select": 2,
+   "min_select": 0,
+   "sort_order": 1
+  },
+  {
+   "id": "57fee075-8fd3-5f54-a6a1-1a5a57e78f08",
+   "name": "곁들임 추가",
+   "menu_id": "438f8685-e9ff-55b4-a716-6f576e1da228",
+   "is_active": true,
+   "max_select": 2,
+   "min_select": 0,
+   "sort_order": 1
+  },
+  {
+   "id": "0a63de5b-4b77-50ed-a6df-f5b6f61652c8",
+   "name": "곁들임 추가",
+   "menu_id": "5b4f1b73-68af-5aba-a42b-a6618fc822f4",
+   "is_active": true,
+   "max_select": 2,
+   "min_select": 0,
+   "sort_order": 1
+  },
+  {
+   "id": "32579aeb-f671-5ac4-a6b3-dc7e5f4eda65",
+   "name": "곁들임 추가",
+   "menu_id": "934d0fa9-63f3-5337-aa4c-6368385b14cd",
+   "is_active": true,
+   "max_select": 2,
+   "min_select": 0,
+   "sort_order": 1
+  }
+ ],
+ "totals": {
+  "groups_total": 1916,
+  "menus_active": 988,
+  "orders_total": 50,
+  "options_total": 13983,
+  "stores_active": 16
+ },
+ "options": [
+  {
+   "id": "f3ca7488-a72a-5038-ae90-bbbeb310368b",
+   "name": "미니 우동",
+   "group_id": "08c14a90-d3ed-5741-a710-263307a8941b",
+   "is_active": true,
+   "sort_order": 1,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 2500
+  },
+  {
+   "id": "525e3071-94d6-5d8a-abb1-db482b793155",
+   "name": "미니 돈가스",
+   "group_id": "08c14a90-d3ed-5741-a710-263307a8941b",
+   "is_active": true,
+   "sort_order": 2,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 3500
+  },
+  {
+   "id": "3ea4eff9-9a43-523a-a58e-9334c13c1f59",
+   "name": "미니 우동",
+   "group_id": "0a63de5b-4b77-50ed-a6df-f5b6f61652c8",
+   "is_active": true,
+   "sort_order": 1,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 2500
+  },
+  {
+   "id": "37f92914-9cc4-5046-a22a-268b868a5a6a",
+   "name": "미니 돈가스",
+   "group_id": "0a63de5b-4b77-50ed-a6df-f5b6f61652c8",
+   "is_active": true,
+   "sort_order": 2,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 3500
+  },
+  {
+   "id": "c3bc7118-ebb3-5a28-add0-094d93b3c9e9",
+   "name": "미니 우동",
+   "group_id": "32579aeb-f671-5ac4-a6b3-dc7e5f4eda65",
+   "is_active": true,
+   "sort_order": 1,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 2500
+  },
+  {
+   "id": "96f76a75-7a92-5603-a638-29db58712471",
+   "name": "미니 돈가스",
+   "group_id": "32579aeb-f671-5ac4-a6b3-dc7e5f4eda65",
+   "is_active": true,
+   "sort_order": 2,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 3500
+  },
+  {
+   "id": "7bf48bbc-4336-5a07-a26b-85882fdd3c82",
+   "name": "미니 우동",
+   "group_id": "3b08a81e-caf0-5fc1-a76e-7e3697dfb345",
+   "is_active": true,
+   "sort_order": 1,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 2500
+  },
+  {
+   "id": "38dd0ff8-3c99-5cd8-ad61-6d46ede0d339",
+   "name": "미니 돈가스",
+   "group_id": "3b08a81e-caf0-5fc1-a76e-7e3697dfb345",
+   "is_active": true,
+   "sort_order": 2,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 3500
+  },
+  {
+   "id": "1dad14f3-cbfa-591e-a93a-d1767b83b450",
+   "name": "미니 우동",
+   "group_id": "57fee075-8fd3-5f54-a6a1-1a5a57e78f08",
+   "is_active": true,
+   "sort_order": 1,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 2500
+  },
+  {
+   "id": "be216cf3-8580-595f-a834-bdd5084c20f3",
+   "name": "미니 돈가스",
+   "group_id": "57fee075-8fd3-5f54-a6a1-1a5a57e78f08",
+   "is_active": true,
+   "sort_order": 2,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 3500
+  }
+ ],
+ "menu_groups": [],
+ "private_records": 0,
+ "menu_group_items": [],
+ "snapshot_group_ids": [],
+ "snapshot_option_ids": [],
+ "source": "database",
+ "_category": [
+  "japanese",
+  "일식"
+ ],
+ "_order_items": {
+  "438f8685-e9ff-55b4-a716-6f576e1da228": 1
+ },
+ "_reviews": {
+  "438f8685-e9ff-55b4-a716-6f576e1da228": 1
+ },
+ "_oio": []
+}

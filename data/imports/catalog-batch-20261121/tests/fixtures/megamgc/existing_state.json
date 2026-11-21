@@ -1,0 +1,209 @@
+{
+ "refs": {
+  "orders": 1,
+  "order_items": 1,
+  "review_menus": 1,
+  "store_sources": 4,
+  "order_item_options": 0,
+  "store_source_records": 21
+ },
+ "menus": [
+  {
+   "id": "0d0e9692-f0e5-5236-aada-ebe394ef5465",
+   "name": "초코젤라또 말차라떼",
+   "image_ref": "menus/0d0e9692-f0e5-5236-aada-ebe394ef5465.jpg",
+   "is_active": true,
+   "base_price": 4400,
+   "is_popular": false,
+   "sort_order": 1,
+   "description": "초코 젤라또·말차·커피를 조합한 라떼.",
+   "is_sold_out": false,
+   "popularity_score": 0
+  },
+  {
+   "id": "962f60ac-61b4-5771-ab57-9a048a176a4c",
+   "name": "(HOT)헛개리카노",
+   "image_ref": "menus/962f60ac-61b4-5771-ab57-9a048a176a4c.jpg",
+   "is_active": true,
+   "base_price": 2400,
+   "is_popular": false,
+   "sort_order": 2,
+   "description": "헛개수와 커피를 섞은 따뜻한 음료.",
+   "is_sold_out": false,
+   "popularity_score": 0
+  },
+  {
+   "id": "f307bc4f-c70f-5c40-a20a-479d83838770",
+   "name": "(ICE)헛개리카노",
+   "image_ref": "menus/f307bc4f-c70f-5c40-a20a-479d83838770.jpg",
+   "is_active": true,
+   "base_price": 2400,
+   "is_popular": false,
+   "sort_order": 3,
+   "description": "헛개수와 커피를 섞은 차가운 음료.",
+   "is_sold_out": false,
+   "popularity_score": 0
+  },
+  {
+   "id": "231d183b-45b9-5440-a7e1-036275ed67c9",
+   "name": "왕메가카페라떼",
+   "image_ref": "menus/231d183b-45b9-5440-a7e1-036275ed67c9.jpg",
+   "is_active": true,
+   "base_price": 4400,
+   "is_popular": false,
+   "sort_order": 4,
+   "description": "우유와 에스프레소를 넣은 큰 용량 라떼.",
+   "is_sold_out": false,
+   "popularity_score": 0
+  },
+  {
+   "id": "acd964dd-e17d-56a8-acd5-6cc1ef2b0b30",
+   "name": "할메가미숫커피",
+   "image_ref": "menus/acd964dd-e17d-56a8-acd5-6cc1ef2b0b30.jpg",
+   "is_active": true,
+   "base_price": 3100,
+   "is_popular": false,
+   "sort_order": 5,
+   "description": "곡물과 믹스커피를 조합한 음료.",
+   "is_sold_out": false,
+   "popularity_score": 0
+  }
+ ],
+ "store": {
+  "id": "7dff7e39-2b54-584e-a981-06a1f54b5d76",
+  "name": "메가MGC커피",
+  "is_open": true,
+  "image_ref": "stores/7dff7e39-2b54-584e-a981-06a1f54b5d76.jpg",
+  "is_active": true,
+  "category_id": "10000000-0000-4000-8000-000000000008",
+  "is_recommended": false
+ },
+ "groups": [
+  {
+   "id": "b19f06d8-d53c-571f-a7de-2c16d950610b",
+   "name": "샷 추가",
+   "menu_id": "0d0e9692-f0e5-5236-aada-ebe394ef5465",
+   "is_active": true,
+   "max_select": 1,
+   "min_select": 0,
+   "sort_order": 1
+  },
+  {
+   "id": "9c7bde44-81f1-5d43-afe8-c85ff74fb6f0",
+   "name": "샷 추가",
+   "menu_id": "231d183b-45b9-5440-a7e1-036275ed67c9",
+   "is_active": true,
+   "max_select": 1,
+   "min_select": 0,
+   "sort_order": 1
+  },
+  {
+   "id": "10ee8e2a-b61d-5e4a-aa0e-dfe044975213",
+   "name": "샷 추가",
+   "menu_id": "962f60ac-61b4-5771-ab57-9a048a176a4c",
+   "is_active": true,
+   "max_select": 1,
+   "min_select": 0,
+   "sort_order": 1
+  },
+  {
+   "id": "90fe0f7d-3f2c-5579-af46-3082c9ba063d",
+   "name": "샷 추가",
+   "menu_id": "acd964dd-e17d-56a8-acd5-6cc1ef2b0b30",
+   "is_active": true,
+   "max_select": 1,
+   "min_select": 0,
+   "sort_order": 1
+  },
+  {
+   "id": "6dd0ba7a-f15c-57d8-a23e-01c142cc2abd",
+   "name": "샷 추가",
+   "menu_id": "f307bc4f-c70f-5c40-a20a-479d83838770",
+   "is_active": true,
+   "max_select": 1,
+   "min_select": 0,
+   "sort_order": 1
+  }
+ ],
+ "totals": {
+  "groups_total": 1916,
+  "menus_active": 988,
+  "orders_total": 50,
+  "options_total": 13983,
+  "stores_active": 16
+ },
+ "options": [
+  {
+   "id": "86e02dc1-b0f8-5a6c-ac7d-02c4154821fe",
+   "name": "에스프레소 1샷",
+   "group_id": "10ee8e2a-b61d-5e4a-aa0e-dfe044975213",
+   "is_active": true,
+   "sort_order": 1,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 500
+  },
+  {
+   "id": "3faf23a0-b73c-5fc1-ab57-123b00de6e54",
+   "name": "에스프레소 1샷",
+   "group_id": "6dd0ba7a-f15c-57d8-a23e-01c142cc2abd",
+   "is_active": true,
+   "sort_order": 1,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 500
+  },
+  {
+   "id": "19cd3fd1-d8b7-5ae8-ae6d-1fa377da4694",
+   "name": "에스프레소 1샷",
+   "group_id": "90fe0f7d-3f2c-5579-af46-3082c9ba063d",
+   "is_active": true,
+   "sort_order": 1,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 500
+  },
+  {
+   "id": "8b107dac-7fb8-5810-a2f2-813d668c744f",
+   "name": "에스프레소 1샷",
+   "group_id": "9c7bde44-81f1-5d43-afe8-c85ff74fb6f0",
+   "is_active": true,
+   "sort_order": 1,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 500
+  },
+  {
+   "id": "0cb60009-24da-59a9-a423-6267f99a4c14",
+   "name": "에스프레소 1샷",
+   "group_id": "b19f06d8-d53c-571f-a7de-2c16d950610b",
+   "is_active": true,
+   "sort_order": 1,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 500
+  }
+ ],
+ "menu_groups": [],
+ "private_records": 0,
+ "menu_group_items": [],
+ "snapshot_group_ids": [],
+ "snapshot_option_ids": [],
+ "source": "database",
+ "_category": [
+  "cafe_dessert",
+  "카페·디저트"
+ ],
+ "_order_items": {
+  "0d0e9692-f0e5-5236-aada-ebe394ef5465": 1
+ },
+ "_reviews": {
+  "0d0e9692-f0e5-5236-aada-ebe394ef5465": 1
+ },
+ "_oio": []
+}

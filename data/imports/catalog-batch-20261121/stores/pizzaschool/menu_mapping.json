@@ -1,0 +1,54 @@
+{
+  "_comment": "기존 피자스쿨 메뉴 ↔ 수집(피자스쿨 문화촌점) 메뉴 대응표(2026-11-22 준비, 서정 확인 전). 이름이 같거나 표기 태그·띄어쓰기만 다르고 같은 상품인 것만 연결한다. 가격은 수집 가격으로 갱신한다(지점 가격을 대표값으로 쓰는 기존 결정).",
+  "links": [
+    {
+      "existing_menu_id": "72730a68-f0cf-5f06-a5da-9216652a2080",
+      "existing_name": "고구마피자",
+      "source_menu_id": 81310909,
+      "source_name": "고구마피자",
+      "status": "LINK",
+      "basis": "EXACT_NAME_PHOTO",
+      "evidence": "이름 동일(12,900원 동일), 같은 상품. 콜라 콤보(124650785)·불닭고구마피자와는 연결하지 않는다"
+    },
+    {
+      "existing_menu_id": "d9f91bb5-5af8-5151-a176-88e98057a168",
+      "existing_name": "콘치즈피자",
+      "source_menu_id": 109630420,
+      "source_name": "콘치즈피자",
+      "status": "LINK",
+      "basis": "EXACT_NAME",
+      "evidence": "이름 동일(12,900원 동일), 같은 상품(기존 사진 없음). 주문 1건·리뷰 1건 유지"
+    },
+    {
+      "existing_menu_id": "9fb091c3-4393-5aa8-a932-136c139c8298",
+      "existing_name": "콤비네이션피자",
+      "source_menu_id": 81310934,
+      "source_name": "콤비네이션피자",
+      "status": "LINK",
+      "basis": "EXACT_NAME_PHOTO",
+      "evidence": "이름 동일(12,900원 동일), 같은 상품"
+    },
+    {
+      "existing_menu_id": "13e9d266-fc92-5770-af9f-1813ce754dc3",
+      "existing_name": "핫치킨피자",
+      "source_menu_id": 81310935,
+      "source_name": "핫치킨피자",
+      "status": "LINK",
+      "basis": "EXACT_NAME_PHOTO",
+      "evidence": "이름 동일(12,900원 동일), 같은 상품"
+    },
+    {
+      "existing_menu_id": "c448adf6-6b6a-5b88-a700-a1fcb8539b59",
+      "existing_name": "포테이토피자 (베이컨포테이토피자)(오리지널)",
+      "source_menu_id": 81310910,
+      "source_name": "포테이토피자",
+      "status": "LINK",
+      "basis": "NAME_STEM_EDGE",
+      "evidence": "이름 앞부분이 '포테이토피자'이고 가격 13,900원이 같다. 괄호의 '(오리지널)'은 수집 상세의 엣지 선택 기본값 '오리지널'(0원)과 같다(기존 사진 없음). 갈릭·트러플·오지치즈·아이리쉬 포테이토와는 구성이 달라 연결하지 않는다",
+      "rename_to_source": true
+    }
+  ],
+  "remove": [],
+  "approved_snapshot_referenced_group_ids": [],
+  "_approved_note": "주문 스냅샷이 원본 ID로 가리키는 기존 가상 옵션 그룹은 서정이 삭제를 승인한 뒤 여기에 그룹 id를 넣는다. 그 전에는 삭제하지 않고 비활성으로 보존한다."
+}

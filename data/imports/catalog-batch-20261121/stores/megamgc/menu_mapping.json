@@ -1,0 +1,53 @@
+{
+  "_comment": "기존 메가MGC커피 메뉴 ↔ 수집(메가MGC커피 홍제홍은벽산점) 메뉴 대응표(2026-11-22 준비, 서정 확인 전). 이름이 같거나 표기 태그·띄어쓰기만 다르고 같은 상품인 것만 연결한다. 가격은 수집 가격으로 갱신한다(지점 가격을 대표값으로 쓰는 기존 결정).",
+  "links": [
+    {
+      "existing_menu_id": "962f60ac-61b4-5771-ab57-9a048a176a4c",
+      "existing_name": "(HOT)헛개리카노",
+      "source_menu_id": 108490158,
+      "source_name": "(HOT) 헛개리카노",
+      "status": "LINK",
+      "basis": "NAME_SPACING",
+      "evidence": "띄어쓰기만 다른 이름, 같은 HOT 음료(기존·수집 사진 동일 구성)",
+      "rename_to_source": true
+    },
+    {
+      "existing_menu_id": "f307bc4f-c70f-5c40-a20a-479d83838770",
+      "existing_name": "(ICE)헛개리카노",
+      "source_menu_id": 108490159,
+      "source_name": "(ICE) 헛개리카노",
+      "status": "LINK",
+      "basis": "NAME_SPACING",
+      "evidence": "띄어쓰기만 다른 이름, 같은 ICE 음료. 왕메가 사이즈(108490160)와는 용량이 달라 연결하지 않는다",
+      "rename_to_source": true
+    },
+    {
+      "existing_menu_id": "231d183b-45b9-5440-a7e1-036275ed67c9",
+      "existing_name": "왕메가카페라떼",
+      "source_menu_id": 108490272,
+      "source_name": "왕메가카페라떼",
+      "status": "LINK",
+      "basis": "EXACT_NAME_PHOTO",
+      "evidence": "이름 동일, 같은 상품(큰 용량 카페라떼, 기존 사진은 ONLY ICE 표시 포함)"
+    },
+    {
+      "existing_menu_id": "acd964dd-e17d-56a8-acd5-6cc1ef2b0b30",
+      "existing_name": "할메가미숫커피",
+      "source_menu_id": 108490163,
+      "source_name": "(ICE)할메가미숫커피",
+      "status": "LINK",
+      "basis": "NAME_ICE_TAG",
+      "evidence": "'(ICE)' 표기만 다르고 같은 상품(기존 사진도 아이스 음료). 수집 목록에 HOT 할메가미숫커피는 없다. 왕할메가·할메가커피와는 구성이 달라 연결하지 않는다",
+      "rename_to_source": true
+    }
+  ],
+  "remove": [
+    {
+      "existing_menu_id": "0d0e9692-f0e5-5236-aada-ebe394ef5465",
+      "existing_name": "초코젤라또 말차라떼",
+      "reason": "수집 목록에 같은 상품이 없다(젤라또 토핑은 다른 메뉴의 옵션으로만 있다). 주문 1건·리뷰 1건이 가리켜 삭제하지 않고 숨김 보존"
+    }
+  ],
+  "approved_snapshot_referenced_group_ids": [],
+  "_approved_note": "주문 스냅샷이 원본 ID로 가리키는 기존 가상 옵션 그룹은 서정이 삭제를 승인한 뒤 여기에 그룹 id를 넣는다. 그 전에는 삭제하지 않고 비활성으로 보존한다."
+}

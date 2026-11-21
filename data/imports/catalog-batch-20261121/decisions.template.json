@@ -1,0 +1,15 @@
+{
+  "_comment": "서정이 한 번의 답변으로 정하는 값의 초안(권장안). 적용 승인 뒤 이 파일을 decisions.json으로 복사해 값을 확정한다. 값이 비어 있거나 빠지면 해당 가게는 --apply가 미결정으로 거절한다. 스냅샷 참조 가상 옵션 그룹 삭제 승인은 stores/<key>/menu_mapping.json의 approved_snapshot_referenced_group_ids에 그룹 id를 넣어 표시한다(승인 전에는 비활성 보존).",
+  "order": ["bhc", "momstouch", "megamgc", "misoya", "bonjuk", "sinjeon", "jjambbongjizon", "pizzaschool"],
+  "common": ["--photo-choice", "proposed", "--link-descriptions", "source", "--option-sold-out-mode", "source"],
+  "stores": {
+    "bhc": ["--hide-menus", "hidden", "--group-names", "proposed"],
+    "momstouch": [],
+    "megamgc": ["--group-names", "proposed"],
+    "misoya": [],
+    "bonjuk": [],
+    "sinjeon": [],
+    "jjambbongjizon": ["--hide-menus", "hidden", "--option-max-quantity", "10"],
+    "pizzaschool": ["--option-max-quantity", "10", "--group-total-mode", "source-max"]
+  }
+}

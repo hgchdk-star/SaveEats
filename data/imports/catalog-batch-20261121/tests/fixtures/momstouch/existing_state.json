@@ -1,0 +1,147 @@
+{
+ "refs": {
+  "orders": 0,
+  "order_items": 0,
+  "review_menus": 0,
+  "store_sources": 4,
+  "order_item_options": 0,
+  "store_source_records": 7
+ },
+ "menus": [
+  {
+   "id": "f9fbfb42-465e-5ba1-a99f-6dbec94441cc",
+   "name": "싸이버거",
+   "image_ref": "menus/f9fbfb42-465e-5ba1-a99f-6dbec94441cc.png",
+   "is_active": true,
+   "base_price": 6500,
+   "is_popular": false,
+   "sort_order": 1,
+   "description": null,
+   "is_sold_out": false,
+   "popularity_score": 0
+  },
+  {
+   "id": "84e480a7-fcf7-5878-a223-a064257619cb",
+   "name": "통다리살 치킨버거+음료",
+   "image_ref": null,
+   "is_active": false,
+   "base_price": 9900,
+   "is_popular": false,
+   "sort_order": 2,
+   "description": "닭다리살 치킨버거와 탄산음료 구성. 감자튀김은 포함하지 않음.",
+   "is_sold_out": false,
+   "popularity_score": 0
+  },
+  {
+   "id": "c70c8d45-d4a9-540e-ad18-bdbce792306b",
+   "name": "휠렛버거",
+   "image_ref": "menus/c70c8d45-d4a9-540e-ad18-bdbce792306b.png",
+   "is_active": true,
+   "base_price": 6300,
+   "is_popular": false,
+   "sort_order": 3,
+   "description": null,
+   "is_sold_out": false,
+   "popularity_score": 0
+  },
+  {
+   "id": "28296a4f-6401-5722-aa79-f53e48e7ea35",
+   "name": "할라피뇨통살치킨버거",
+   "image_ref": null,
+   "is_active": false,
+   "base_price": 7500,
+   "is_popular": false,
+   "sort_order": 4,
+   "description": "튀긴 통다리살 패티에 할라피뇨 소스를 더한 버거.",
+   "is_sold_out": false,
+   "popularity_score": 0
+  },
+  {
+   "id": "e37921a7-3096-5351-a495-b445b56b72a3",
+   "name": "간장마늘 통다리살버거",
+   "image_ref": null,
+   "is_active": false,
+   "base_price": 10500,
+   "is_popular": false,
+   "sort_order": 5,
+   "description": "닭다리살 치킨버거에 간장마늘 풍미를 더한 메뉴.",
+   "is_sold_out": false,
+   "popularity_score": 0
+  }
+ ],
+ "store": {
+  "id": "3ae1ca12-9429-5b13-aaef-41eda941b451",
+  "name": "맘스터치",
+  "is_open": true,
+  "image_ref": "stores/3ae1ca12-9429-5b13-aaef-41eda941b451.png",
+  "is_active": true,
+  "category_id": "10000000-0000-4000-8000-000000000007",
+  "is_recommended": false
+ },
+ "groups": [
+  {
+   "id": "b1963484-8e2d-4ef0-aa57-1d8cc19a7e76",
+   "name": "음료 선택",
+   "menu_id": "84e480a7-fcf7-5878-a223-a064257619cb",
+   "is_active": false,
+   "max_select": 1,
+   "min_select": 1,
+   "sort_order": 1
+  }
+ ],
+ "totals": {
+  "groups_total": 1916,
+  "menus_active": 988,
+  "orders_total": 50,
+  "options_total": 13983,
+  "stores_active": 16
+ },
+ "options": [
+  {
+   "id": "54680a0b-d916-411d-ace6-6c01802b38d4",
+   "name": "콜라",
+   "group_id": "b1963484-8e2d-4ef0-aa57-1d8cc19a7e76",
+   "is_active": false,
+   "sort_order": 1,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 0
+  },
+  {
+   "id": "d2854d78-7d06-4673-a260-dcc32c7db647",
+   "name": "제로 콜라",
+   "group_id": "b1963484-8e2d-4ef0-aa57-1d8cc19a7e76",
+   "is_active": false,
+   "sort_order": 2,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 0
+  },
+  {
+   "id": "fbad008c-08bd-4326-a7f5-620f65d99a6e",
+   "name": "사이다",
+   "group_id": "b1963484-8e2d-4ef0-aa57-1d8cc19a7e76",
+   "is_active": false,
+   "sort_order": 3,
+   "is_sold_out": false,
+   "max_quantity": null,
+   "allow_quantity": false,
+   "additional_price": 0
+  }
+ ],
+ "menu_groups": [],
+ "private_records": 0,
+ "menu_group_items": [],
+ "snapshot_group_ids": [],
+ "snapshot_option_ids": [],
+ "source": "database",
+ "_category": [
+  "burger",
+  "버거"
+ ],
+ "_order_items": {},
+ "_reviews": {},
+ "_oio": []
+}

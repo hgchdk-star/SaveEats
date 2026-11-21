@@ -1,0 +1,54 @@
+{
+  "_comment": "기존 미소야 메뉴 ↔ 수집(미소야 구산역점) 메뉴 대응표(2026-11-22 준비, 서정 확인 전). 이름이 같거나 표기 태그·띄어쓰기만 다르고 같은 상품인 것만 연결한다. 가격은 수집 가격으로 갱신한다(지점 가격을 대표값으로 쓰는 기존 결정).",
+  "links": [
+    {
+      "existing_menu_id": "438f8685-e9ff-55b4-a716-6f576e1da228",
+      "existing_name": "히레카츠",
+      "source_menu_id": 111123200,
+      "source_name": "히레카츠",
+      "status": "LINK",
+      "basis": "EXACT_NAME_PHOTO",
+      "evidence": "이름 동일, 같은 상품. 정식(111123201)·SET(111123202)과는 구성이 달라 연결하지 않는다"
+    },
+    {
+      "existing_menu_id": "934d0fa9-63f3-5337-aa4c-6368385b14cd",
+      "existing_name": "치즈 돈카츠",
+      "source_menu_id": 111123207,
+      "source_name": "치즈돈카츠",
+      "status": "LINK",
+      "basis": "NAME_SPACING",
+      "evidence": "띄어쓰기만 다른 이름, 같은 상품(기존·수집 사진 동일 구성). 정식·세트와는 연결하지 않는다",
+      "rename_to_source": true
+    },
+    {
+      "existing_menu_id": "25b2af33-35af-5cf5-a17b-6ac162fe549b",
+      "existing_name": "통살생선카츠",
+      "source_menu_id": 111123203,
+      "source_name": "통살생선카츠",
+      "status": "LINK",
+      "basis": "EXACT_NAME_PHOTO",
+      "evidence": "이름 동일, 같은 상품. 정식·SET·1pc 추가와는 연결하지 않는다"
+    },
+    {
+      "existing_menu_id": "5b4f1b73-68af-5aba-a42b-a6618fc822f4",
+      "existing_name": "돈카츠동",
+      "source_menu_id": 111123173,
+      "source_name": "돈카츠동",
+      "status": "LINK",
+      "basis": "EXACT_NAME_PHOTO",
+      "evidence": "이름 동일, 같은 상품. 정식(111123174)과는 연결하지 않는다"
+    },
+    {
+      "existing_menu_id": "387ba22c-3041-5b1a-ab1e-eb5833baff47",
+      "existing_name": "치킨가라아게동",
+      "source_menu_id": 111123175,
+      "source_name": "치킨가라아게동",
+      "status": "LINK",
+      "basis": "EXACT_NAME_PHOTO",
+      "evidence": "이름 동일, 같은 상품. 정식(111123176)과는 연결하지 않는다"
+    }
+  ],
+  "remove": [],
+  "approved_snapshot_referenced_group_ids": [],
+  "_approved_note": "주문 스냅샷이 원본 ID로 가리키는 기존 가상 옵션 그룹은 서정이 삭제를 승인한 뒤 여기에 그룹 id를 넣는다. 그 전에는 삭제하지 않고 비활성으로 보존한다."
+}

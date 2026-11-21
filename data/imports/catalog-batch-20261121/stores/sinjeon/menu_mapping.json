@@ -1,0 +1,51 @@
+{
+  "_comment": "기존 신전떡볶이 메뉴 ↔ 수집(신전떡볶이 상명대점) 메뉴 대응표(2026-11-22 준비, 서정 확인 전). 이름이 같거나 표기 태그·띄어쓰기만 다르고 같은 상품인 것만 연결한다. 가격은 수집 가격으로 갱신한다(지점 가격을 대표값으로 쓰는 기존 결정).",
+  "links": [
+    {
+      "existing_menu_id": "4a8d324a-0618-5ceb-a817-e31d50f7e73e",
+      "existing_name": "쌀떡볶이",
+      "source_menu_id": 63401088,
+      "source_name": "쌀떡볶이(통가래떡4 + 오뎅3)",
+      "status": "LINK",
+      "basis": "NAME_COMPOSITION",
+      "evidence": "구성 설명('통가래떡4 + 오뎅3')만 덧붙은 이름, 같은 쌀떡볶이(기존·수집 사진 동일 음식, 가격 4,500원 동일). 일반 떡볶이(1915492)와는 연결하지 않는다",
+      "rename_to_source": true
+    },
+    {
+      "existing_menu_id": "1ac3ff76-7b16-5199-a712-439e0bea701c",
+      "existing_name": "치즈떡볶이",
+      "source_menu_id": 1915500,
+      "source_name": "치즈떡볶이",
+      "status": "LINK",
+      "basis": "EXACT_NAME_PHOTO",
+      "evidence": "이름 동일, 같은 상품(용기·촬영만 다름)"
+    },
+    {
+      "existing_menu_id": "d89d06bc-6b8c-5ae1-ad6b-8834126fc862",
+      "existing_name": "로제떡볶이",
+      "source_menu_id": 17537875,
+      "source_name": "로제떡볶이",
+      "status": "LINK",
+      "basis": "EXACT_NAME_PHOTO",
+      "evidence": "이름 동일, 같은 상품. 마라로제떡볶이(68720495)와는 맛이 달라 연결하지 않는다"
+    },
+    {
+      "existing_menu_id": "58e95778-3918-5eff-ae3d-2b46363d6002",
+      "existing_name": "튀김오뎅",
+      "source_menu_id": 1915503,
+      "source_name": "튀김오뎅",
+      "status": "LINK",
+      "basis": "EXACT_NAME_PHOTO",
+      "evidence": "이름 동일, 같은 상품"
+    }
+  ],
+  "remove": [
+    {
+      "existing_menu_id": "6c651edd-ee52-540f-a7c5-929b7c257570",
+      "existing_name": "신전치즈김밥",
+      "reason": "수집본에는 '신전매콤치즈김밥'(4,500원)과 '신전매콤김밥'만 있고 '신전치즈김밥'이 없다. 기존 사진은 매콤치즈김밥과 비슷해 보이지만 '매콤'은 맛이 다르다는 규칙에 따라 자동 연결하지 않는다(서정 결정 항목). 주문 1건·리뷰 1건이 가리켜 삭제하지 않고 숨김 보존"
+    }
+  ],
+  "approved_snapshot_referenced_group_ids": [],
+  "_approved_note": "주문 스냅샷이 원본 ID로 가리키는 기존 가상 옵션 그룹은 서정이 삭제를 승인한 뒤 여기에 그룹 id를 넣는다. 그 전에는 삭제하지 않고 비활성으로 보존한다."
+}

@@ -1,0 +1,37 @@
+{
+  "_comment": "기존 BHC 메뉴 ↔ 수집(BHC 홍은점) 메뉴 대응표(2026-11-22 준비, 서정 확인 전). 이름이 같거나 표기 태그·띄어쓰기만 다르고 같은 상품인 것만 연결한다. 가격은 수집 가격으로 갱신한다(지점 가격을 대표값으로 쓰는 기존 결정).",
+  "links": [
+    {
+      "existing_menu_id": "6ecbd484-b879-5b06-affb-2a182bf1cf05",
+      "existing_name": "콰삭모짜킹",
+      "source_menu_id": 125397639,
+      "source_name": "[샘킴xbhc치킨] 콰삭모짜킹",
+      "status": "LINK",
+      "basis": "NAME_COLLAB_TAG",
+      "evidence": "'[샘킴xbhc치킨]' 협업 표기만 다르고 같은 상품(순살 콰삭 치킨 + 모짜렐라, 딥소스 2종). 하프(4조각, 127341484)와는 구성이 달라 연결하지 않는다",
+      "rename_to_source": true
+    },
+    {
+      "existing_menu_id": "847498e3-976f-5aa1-adc1-37fbf8bd4d05",
+      "existing_name": "커링클",
+      "source_menu_id": 121003799,
+      "source_name": "커링클",
+      "status": "LINK",
+      "basis": "EXACT_NAME_PHOTO",
+      "evidence": "이름 동일, 기존 사진과 수집 사진이 같은 상품. 콤보·윙·스틱·순살과는 구성이 달라 연결하지 않는다"
+    },
+    {
+      "existing_menu_id": "b80c5fc0-6ce7-56b7-aa07-5bfce2beeb74",
+      "existing_name": "커링클/뿌링클 반반",
+      "source_menu_id": 121003800,
+      "source_name": "커링클/뿌링클 반반치킨",
+      "status": "LINK",
+      "basis": "NAME_SUFFIX",
+      "evidence": "'치킨'만 덧붙은 이름, 같은 반반 구성(기존·수집 사진 동일 구성)",
+      "rename_to_source": true
+    }
+  ],
+  "remove": [],
+  "approved_snapshot_referenced_group_ids": [],
+  "_approved_note": "주문 스냅샷이 원본 ID로 가리키는 기존 가상 옵션 그룹은 서정이 삭제를 승인한 뒤 여기에 그룹 id를 넣는다. 그 전에는 삭제하지 않고 비활성으로 보존한다."
+}
