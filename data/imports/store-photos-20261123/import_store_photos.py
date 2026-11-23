@@ -73,7 +73,7 @@ def build_plan(package, s, cur):
     cur.execute("select count(*) from information_schema.tables where table_schema = 'public' and table_name = 'store_photos'")
     has_table = cur.fetchone()[0] == 1
     if not has_table:
-        issues.append('서버에 store_photos 테이블(migration 20261123000000_store_photos.sql)이 아직 없다')
+        issues.append('서버에 store_photos 테이블(migration 20261123144759_store_photos.sql)이 아직 없다')
     existing = []
     if has_table:
         cur.execute('select image_ref, sort_order, source_position, is_active from public.store_photos where store_id = %s order by sort_order', (s['store_id'],))

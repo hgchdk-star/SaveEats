@@ -1,0 +1,60 @@
+{
+ "id": "d5c4fa89-212d-58ca-ac17-b364518e55e3",
+ "name": "굽네치킨",
+ "menus": [
+  {
+   "id": "80bc9b2a-e27d-5edf-9a05-b4d222054860",
+   "name": "(New) 서울엄마 파기름떡볶이 치킨",
+   "price": 25000,
+   "imageRef": "menus/80bc9b2a-e27d-5edf-9a05-b4d222054860.jpg",
+   "isSoldOut": false,
+   "description": "서울엄마 우정욱 셰프의 명품 레시피!\n매콤달콤한 감칠맛에 은은한 대파 풍미!\n쫄깃한 쌀떡과 촉촉한 오븐치킨의 찰떡 조합!\n치킨+치킨무\n[조리전 중량]\n뼈 한마리 955g\n윙봉 850g"
+  },
+  {
+   "id": "0311c155-fb21-5b45-8a8a-8379c1b4370d",
+   "name": "(New) 서울엄마 파기름떡볶이 치킨 윙봉",
+   "price": 28000,
+   "imageRef": "menus/0311c155-fb21-5b45-8a8a-8379c1b4370d.jpg",
+   "isSoldOut": false,
+   "description": "서울엄마 우정욱 셰프의 명품 레시피!\n매콤달콤한 감칠맛에 은은한 대파 풍미!\n쫄깃한 쌀떡과 촉촉한 오븐치킨의 찰떡 조합!\n치킨+치킨무\n[조리전 중량]\n윙봉 850g"
+  }
+ ],
+ "isOpen": true,
+ "photos": [
+  {
+   "imageRef": "stores/d5c4fa89-212d-58ca-ac17-b364518e55e3-6e2946dd.jpg"
+  },
+  {
+   "imageRef": "stores/d5c4fa89-212d-58ca-ac17-b364518e55e3-139ed459.jpg"
+  },
+  {
+   "imageRef": "stores/d5c4fa89-212d-58ca-ac17-b364518e55e3-75aace6c.jpg"
+  },
+  {
+   "imageRef": "stores/d5c4fa89-212d-58ca-ac17-b364518e55e3-1b9fe14f.jpg"
+  },
+  {
+   "imageRef": "stores/d5c4fa89-212d-58ca-ac17-b364518e55e3-a1290ba8.jpg"
+  },
+  {
+   "imageRef": "stores/d5c4fa89-212d-58ca-ac17-b364518e55e3-ec942b4a.jpg"
+  },
+  {
+   "imageRef": "stores/d5c4fa89-212d-58ca-ac17-b364518e55e3-b916a0b7.jpg"
+  }
+ ],
+ "category": {
+  "id": "10000000-0000-4000-8000-000000000001",
+  "code": "chicken",
+  "name": "치킨"
+ },
+ "imageRef": "stores/d5c4fa89-212d-58ca-ac17-b364518e55e3-6e2946dd.jpg",
+ "isFavorite": null,
+ "menuGroups": [],
+ "description": null,
+ "isRecommended": true,
+ "reviewSummary": {
+  "count": 3,
+  "averageCravingRating": 5
+ }
+}

@@ -1,0 +1,45 @@
+{
+ "id": "3ddc0b28-61f6-5531-a1c8-1a9f8d08404a",
+ "name": "설빙",
+ "menus": [
+  {
+   "id": "e548f43a-7e84-5afc-ac01-afaebfcc75bd",
+   "name": "허쉬초코크런치설빙",
+   "price": 17000,
+   "imageRef": "menus/e548f43a-7e84-5afc-ac01-afaebfcc75bd.jpg",
+   "isSoldOut": false,
+   "description": "진한 허쉬 초코 아이스크림에 초코칩, 미니쿠키, 초코와플을 더해 한 입마다 다채로운 크런치와 깊고 진한 초콜릿 풍미를 즐길 수 있는 초코 설빙"
+  },
+  {
+   "id": "d298e174-494a-52d4-94c4-b3da21abec57",
+   "name": "오레오치즈떠먹케설빙",
+   "price": 18500,
+   "imageRef": "menus/d298e174-494a-52d4-94c4-b3da21abec57.jpg",
+   "isSoldOut": false,
+   "description": "‘오레오초코몬스터설빙’의 인기 요소인 바삭한 쿠키 크럼블에 촉촉한 초코 케이크와 꾸덕한 큐브치즈, 바닐라 아이스크림을 더해 호불호 없는 초코 디저트 설빙"
+  }
+ ],
+ "isOpen": true,
+ "photos": [
+  {
+   "imageRef": "stores/3ddc0b28-61f6-5531-a1c8-1a9f8d08404a-641a0855.jpg"
+  },
+  {
+   "imageRef": "stores/3ddc0b28-61f6-5531-a1c8-1a9f8d08404a-841d4537.jpg"
+  }
+ ],
+ "category": {
+  "id": "10000000-0000-4000-8000-000000000008",
+  "code": "cafe_dessert",
+  "name": "카페·디저트"
+ },
+ "imageRef": "stores/3ddc0b28-61f6-5531-a1c8-1a9f8d08404a-641a0855.jpg",
+ "isFavorite": null,
+ "menuGroups": [],
+ "description": null,
+ "isRecommended": true,
+ "reviewSummary": {
+  "count": 1,
+  "averageCravingRating": 5
+ }
+}

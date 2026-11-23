@@ -77,3 +77,17 @@ test('16개 가게 사진 계획: 새 경로 66개가 모두 resolveImageUrl을 
     assert.equal(photoCounterLabel(0, uris.length), uris.length >= 2 ? `1/${uris.length}` : null);
   }
 });
+
+test('실제 Guest 응답(개발 서버 적용 뒤): 굽네 7장(대표 = 첫 장), 설빙 2장, 모든 경로가 공개 URL로 변환된다', () => {
+  const dir = path.join(__dirname, 'fixtures', 'store-photos-real');
+  for (const [file, count, rep] of [['goobne-store.json', 7, '6e2946dd'], ['sulbing-store.json', 2, '641a0855']]) {
+    const raw = JSON.parse(fs.readFileSync(path.join(dir, file), 'utf8'));
+    const d = parseStoreDetail(raw);
+    const uris = storePhotoUris(d);
+    assert.equal(uris.length, count);
+    assert.ok(uris.every((u) => typeof u === 'string' && u.startsWith(BASE + 'stores/')));
+    assert.equal(raw.photos[0].imageRef, raw.imageRef);
+    assert.ok(raw.imageRef.includes(rep));
+    assert.equal(photoCounterLabel(0, uris.length), `1/${count}`);
+  }
+});
