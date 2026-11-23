@@ -150,3 +150,13 @@ export function searchAnchorScroll(scrollY: number, anchorY: number, barHeight: 
 export function stickyScrollRange(anchorY: number, barHeight: number): [number, number] {
   return [0, Math.max(1, anchorY - barHeight)];
 }
+
+/**
+ * 고정 영역의 세로 위치 보간표. 스크롤 0 이상은 [원래 자리 → 상단 바 아래]로 올라가다 멈추고(오른쪽 고정),
+ * 맨 위에서 아래로 당긴 음수 스크롤(오버스크롤)에서는 본문과 같은 거리만큼 따라 내려온다(왼쪽은 기울기 -1로 연장).
+ * 놓으면 스크롤이 0으로 돌아오므로 위치도 원래 자리로 돌아온다.
+ */
+export function stickyTranslateInterpolation(anchorY: number, barHeight: number): { inputRange: number[]; outputRange: number[] } {
+  const end = stickyScrollRange(anchorY, barHeight)[1];
+  return { inputRange: [-1, 0, end], outputRange: [anchorY + 1, anchorY, barHeight] };
+}

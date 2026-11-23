@@ -54,7 +54,7 @@ import {
   searchAnchorScroll,
   searchMenus,
   searchTransition,
-  stickyScrollRange,
+  stickyTranslateInterpolation,
 } from './menu-sections';
 import { storePhotoUris } from './store-photos';
 import { StoreSourceSection } from './store-source-section';
@@ -176,9 +176,9 @@ export function StoreDetailScreen({ storeId }: { storeId: string }) {
     );
   }, [scrollY]);
 
-  /** 고정 영역: 스크롤 0에서는 원래 자리(anchorY)에 있다가, 올라가면 상단 바 아래(barHeight)에 멈춘다 */
+  /** 고정 영역: 스크롤 0에서는 원래 자리(anchorY)에 있다가, 올라가면 상단 바 아래(barHeight)에 멈춘다. 맨 위 오버스크롤(음수)에서는 본문을 따라 내려온다 */
   const stickyTranslateY = useMemo(
-    () => scrollY.interpolate({ inputRange: stickyScrollRange(anchorY, barHeight), outputRange: [anchorY, barHeight], extrapolate: 'clamp' }),
+    () => scrollY.interpolate({ ...stickyTranslateInterpolation(anchorY, barHeight), extrapolateLeft: 'extend', extrapolateRight: 'clamp' }),
     [scrollY, anchorY, barHeight],
   );
 

@@ -225,3 +225,21 @@ test('처리가 실패로 끝나도 잠금이 풀려 다시 누를 수 있다', 
   try { await qa.quickAddMenu('m1', deps(cart, () => { throw new Error('x'); })); } finally { flight.finish(); }
   assert.equal(flight.tryStart('m1'), true);
 });
+
+test('고정 영역 위치: 오버스크롤(음수)은 본문과 같은 거리만큼 내려오고, 0 이상은 기존처럼 올라가다 멈춘다', () => {
+  // Animated interpolate와 같은 방식: 구간별 선형, 왼쪽은 연장, 오른쪽은 고정
+  const at = (anchorY, bar, x) => {
+    const { inputRange: i, outputRange: o } = ms.stickyTranslateInterpolation(anchorY, bar);
+    if (x >= i[i.length - 1]) return o[o.length - 1];
+    let k = x < i[1] ? 0 : 1;
+    return o[k] + ((x - i[k]) * (o[k + 1] - o[k])) / (i[k + 1] - i[k]);
+  };
+  assert.equal(at(600, 100, 0), 600, '맨 위: 원래 자리');
+  assert.equal(at(600, 100, -40), 640, '40만큼 당기면 40만큼 내려온다');
+  assert.equal(at(600, 100, -120), 720);
+  assert.equal(at(600, 100, 200), 400, '일반 스크롤: 같은 속도로 올라간다');
+  assert.equal(at(600, 100, 500), 100, '상단 바 아래에서 멈춤');
+  assert.equal(at(600, 100, 900), 100, '그 이후에도 고정');
+  const t = ms.stickyTranslateInterpolation(80, 100);
+  assert.ok(t.inputRange.every((v, i, a) => i === 0 || v > a[i - 1]), '입력 구간은 항상 증가');
+});
