@@ -8,7 +8,7 @@
   python run_batch.py --package-root <...> --decisions decisions.json --restore-plan                 # 가게별 복구 명령 출력(실행하지 않음)
 
 가게마다 순서: 1) 상태 재확인(--check, 오류·미결정·새 의존성이 있으면 이 가게를 보류) → 2) 적용 전 백업 → 3) 사진 업로드(실패하면 DB 반영 전 중단)
-→ 4) DB 한 트랜잭션(안에서 검증, 실패하면 전체 되돌림) → 5) Guest 검증 → 6) 재실행(행 수 변화 없음 확인) + --verify.
+→ 4) DB 한 트랜잭션(안에서 검증, 실패하면 전체 되돌림) → 5) Guest 검증 → 6) 쓰기 없는 --verify(변경 없음 점검).
 한 가게가 보류·실패해도 다음 가게는 계속한다(--stop-on-failure로 멈출 수 있다). 접속 정보·키·원본 오류는 출력하지 않는다(도구가 마스킹).
 """
 import argparse, datetime, io, json, os, re, subprocess, sys
@@ -57,7 +57,8 @@ def main():
                 status = '실패(해당 가게 보류, 트랜잭션 되돌림)'
                 detail = '\n'.join(l for l in out.splitlines() if l.startswith(('FAIL', '업로드 실패', 'DB 반영 실패', '사진 업로드에', '미결정', '변환 검사')))[:400]
             else:
-                rc2, out2 = run(base + ['--apply', '--yes-dev-project', '--skip-photos'])   # 재실행(중복 검사): DB만 다시 반영해 행 수가 같은지 --verify가 대조
+                # 재실행 점검은 쓰기 없는 --verify(변경 없음 점검: 계획의 모든 행이 이미 있고 개수가 같다, Guest·사진 대조 포함)로 한다
+                rc2 = 0
                 rc3, out3 = run(base + ['--verify', '--backup-dir', backup])
                 status = '완료' if rc2 == 0 and rc3 == 0 and 'FAIL' not in out3 else '적용됨, 재실행/검증 확인 필요'
                 detail = out3.strip().splitlines()[-1] if out3.strip() else ''

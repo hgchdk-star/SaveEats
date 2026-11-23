@@ -103,12 +103,13 @@ def main():
                            **({'rename_to_source': True} if name != s['name'].strip() else {})))
         for name, reason in REMOVE.get(key, {}).items():
             e = ex_by_name[name]
-            rm.append({'existing_menu_id': e['id'], 'existing_name': name, 'reason': reason})
+            refd = bool(ex['_order_items'].get(e['id']) or ex['_reviews'].get(e['id']))
+            rm.append({'existing_menu_id': e['id'], 'existing_name': name, 'reason': reason, 'expected_action': 'DEACTIVATE' if refd else 'DELETE'})
         assert {l['existing_name'] for l in lk} | {r['existing_name'] for r in rm} == set(ex_by_name), (key, set(ex_by_name) - {l['existing_name'] for l in lk} - {r['existing_name'] for r in rm})
         io.open(os.path.join(sd, 'menu_mapping.json'), 'w', encoding='utf-8').write(json.dumps({
             '_comment': f'기존 {sname} 메뉴 ↔ 수집({branch}) 메뉴 대응표(2026-11-22 준비, 서정 확인 전). 이름이 같거나 표기 태그·띄어쓰기만 다르고 같은 상품인 것만 연결한다. 가격은 수집 가격으로 갱신한다(지점 가격을 대표값으로 쓰는 기존 결정).',
-            'links': lk, 'remove': rm, 'approved_snapshot_referenced_group_ids': [],
-            '_approved_note': '주문 스냅샷이 원본 ID로 가리키는 기존 가상 옵션 그룹은 서정이 삭제를 승인한 뒤 여기에 그룹 id를 넣는다. 그 전에는 삭제하지 않고 비활성으로 보존한다.'}, ensure_ascii=False, indent=2) + '\n')
+            'links': lk, 'remove': rm, 'approved_snapshot_referenced_group_ids': sorted(ex['snapshot_group_ids']),
+            '_approved_note': '서정 승인(2026-11-23): 주문 스냅샷이 원본 ID로 가리키는 기존 가상 옵션 그룹 7개(BHC 콰삭모짜킹 구성 선택, 신전 치즈떡볶이 맵기 선택·추가 토핑, 피자스쿨 콘치즈피자·포테이토피자 크기 선택·엣지 선택)의 삭제. 실행 직전 실제 그룹 ID·FK·조회 의존성을 대조하고, 예상 밖 참조가 있으면 삭제를 보류한다(스냅샷 행은 수정하지 않는다). 삭제 승인 범위는 이 파일의 remove(맘스터치 4·본죽 1·짬뽕지존 2)로 한정하며 expected_action이 실제와 다르면 해당 가게를 보류한다.'}, ensure_ascii=False, indent=2) + '\n')
         # 옵션 정책
         mg = J(P + '/menu_groups.json')
         hid_groups = HIDDEN.get(key, {}).get('group', [])

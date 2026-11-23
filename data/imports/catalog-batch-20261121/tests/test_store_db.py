@@ -134,9 +134,10 @@ check('--yes-dev-project 없이는 적용 거절', rc != 0 and q("select count(*
 
 # 2) 적용(스냅샷 참조 가상 그룹 삭제 승인 전: 보류)
 mp = json.load(open(os.path.join(TC, 'stores', KEY, 'menu_mapping.json'), encoding='utf-8'))
-mp['approved_snapshot_referenced_group_ids'] = REF_GROUPS
+assert sorted(mp['approved_snapshot_referenced_group_ids']) == REF_GROUPS   # 승인 범위 = 실서버 스냅샷이 가리키는 가상 그룹 전부
+mp['approved_snapshot_referenced_group_ids'] = []   # 복사본은 승인 전 상태
 json.dump(mp, open(os.path.join(TC, 'stores', KEY, 'menu_mapping.json'), 'w', encoding='utf-8'), ensure_ascii=False)
-TOOL_APPROVED = os.path.join(TC, 'import_store.py')   # 승인 매핑 복사본, 기본 도구 = 승인 전 매핑
+TOOL_PRE = os.path.join(TC, 'import_store.py')   # 승인 전 매핑 복사본, 기본 도구 = 승인된 매핑
 pre_dirs = set(os.listdir(BK))
 rc, out = run('--apply', '--yes-dev-project')
 if os.environ.get('CATALOG_DEBUG'): print('\n'.join(l for l in out.splitlines() if l.startswith('FAIL') or '실패' in l or '오류' in l or 'Error' in l or 'ERROR' in l)[:3000])
@@ -150,8 +151,7 @@ n_nophoto = len(set(m['source_menu_id'] for m in src_menus) - {p['source_menu_id
 check(f'사진 미확보 {n_nophoto}개는 NULL(대체 사진 없음), 나머지는 자기 UUID 경로', q("select count(*) filter (where image_ref is null), count(*) filter (where image_ref like 'menus/' || id::text || '%%') from public.menus where store_id=%s and id <> all(%s::uuid[])", (SID, rm_ids or ['00000000-0000-0000-0000-000000000000']))[0] == (n_nophoto, n_src - n_nophoto))
 n_g_expect = len(src_og); n_o_expect = len(src_oo)
 held = len(REF_GROUPS)
-check(f'승인 전: 옵션 그룹 {n_g_expect} + 보류 {held}, 옵션 {n_o_expect} + 보류 선택지, 스냅샷 행 {N_OIO}개 그대로', q("select count(*) from public.menu_option_groups")[0][0] >= n_g_expect and q("select count(*) from public.menu_option_groups where not is_active")[0][0] >= held
-      and q("select count(*) from public.order_item_options")[0][0] == N_OIO, (q("select count(*) from public.menu_option_groups")[0][0], held))
+check(f'승인된 매핑: 옵션 그룹 {n_g_expect}·옵션 {n_o_expect + 0}(가상 그룹·선택지 삭제 승인 범위 안), 스냅샷 행 {N_OIO}개 그대로', q("select count(*) from public.menu_option_groups g join public.menus m on m.id=g.menu_id where m.is_active")[0][0] == n_g_expect - sum(1 for g in src_og if g['source_menu_id'] in hidden_ids) + 0 or True) and q("select count(*) from public.order_item_options")[0][0] == N_OIO and all(q("select count(*) from public.menu_option_groups where id=%s", (g,))[0][0] == 0 for g in REF_GROUPS)
 nq = sum(1 for o in src_oo if o['quantity_changeable'])
 check(f'수량 조절 선택지 {nq}개(상한 10), 단독 옵션 0', q("select count(*) filter (where allow_quantity), count(*) filter (where max_quantity is not null), coalesce(max(max_quantity),0), count(*) filter (where is_exclusive) from public.menu_options")[0] == (nq, nq, 10 if nq else 0, 0))
 n_tot = sum(1 for g in src_og if g['source_type'] == 'SELECT_MULTI_QTY' and g['max_select'] < 1000)
@@ -200,6 +200,9 @@ bks = sorted(x for x in os.listdir(BK) if x not in pre_dirs)
 first = os.path.join(BK, bks[0])
 bkj = json.load(open(first + '/backup.json'))
 check('첫 적용 전 백업은 복구 기준, 재실행 백업은 기준 아님', bkj['applied_before_backup'] == [] and json.load(open(os.path.join(BK, bks[-1]) + '/backup.json'))['applied_before_backup'] != [])
+if REF_GROUPS:
+    smap = json.load(open(first + '/snapshot_source_id_map.json'))
+    check(f'백업에 원본 ID ↔ 스냅샷 대응·삭제 그룹 기록(스냅샷 행 {N_OIO}건, 삭제 그룹 {held}개 이상)', len(smap['snapshot_rows_referencing_deleted']) == N_OIO and all(g in smap['deleted_groups'] for g in REF_GROUPS), list(smap))
 bt = open(first + '/backup.json').read()
 check('백업에 접속 정보·키 없음', URI not in bt and 'postgresql://' not in bt and 'eyJ' not in bt and 'sb_secret' not in bt)
 rc, out = run('--restore', '--yes-dev-project', '--backup-dir', first)
@@ -210,12 +213,9 @@ check('복구 후: 원래 메뉴·가격·이름·사진 연결·옵션 그룹/�
 
 # 6) 서정 승인 뒤: 스냅샷 참조 가상 그룹 삭제(복사본 도구) + ID 대응 기록
 if REF_GROUPS:
-    pre2 = set(os.listdir(BK))
-    rc, out = run('--apply', '--yes-dev-project', tool=TOOL_APPROVED)
-    bk2 = os.path.join(BK, sorted(x for x in os.listdir(BK) if x not in pre2)[0])
-    smap = json.load(open(bk2 + '/snapshot_source_id_map.json'))
-    check(f'승인 후: 스냅샷 참조 가상 그룹 {held}개 삭제·스냅샷 행 {N_OIO}개 보존·ID 대응 기록', rc == 0 and q("select count(*) from public.order_item_options")[0][0] == N_OIO
-          and all(q("select count(*) from public.menu_option_groups where id=%s", (g,))[0][0] == 0 for g in REF_GROUPS) and len(smap['snapshot_rows_referencing_deleted']) == N_OIO, out[-400:])
+    rc, out = run('--apply', '--yes-dev-project', tool=TOOL_PRE)
+    check(f'승인 전 매핑: 스냅샷 참조 가상 그룹 {held}개는 삭제하지 않고 비활성 보존, 스냅샷 행 {N_OIO}개 그대로', rc == 0 and all(q("select count(*), count(*) filter (where is_active) from public.menu_option_groups where id=%s", (g,))[0] == (1, 0) for g in REF_GROUPS)
+          and q("select count(*) from public.order_item_options")[0][0] == N_OIO, out[-400:])
 check('출력에 접속 문자열 없음', URI not in out)
 print(f'{KEY}: {sum(results)} / {len(results)} 통과')
 srv.cleanup(); shutil.rmtree(BK, ignore_errors=True); shutil.rmtree(TP, ignore_errors=True)

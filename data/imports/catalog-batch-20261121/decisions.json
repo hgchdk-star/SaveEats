@@ -1,0 +1,49 @@
+{
+  "_comment": "서정 승인(2026-11-23) 확정값. 옵션 품절 source, 수량 상한 10, 피자스쿨 그룹 합계 source-max, 주류·리뷰이벤트 숨김, 그룹 표시명 proposed, 연결 설명 source, 사진 proposed. 스냅샷 참조 가상 그룹 7개 삭제 승인은 stores/<key>/menu_mapping.json의 approved_snapshot_referenced_group_ids.",
+  "order": [
+    "bhc",
+    "momstouch",
+    "megamgc",
+    "misoya",
+    "bonjuk",
+    "sinjeon",
+    "jjambbongjizon",
+    "pizzaschool"
+  ],
+  "common": [
+    "--photo-choice",
+    "proposed",
+    "--link-descriptions",
+    "source",
+    "--option-sold-out-mode",
+    "source"
+  ],
+  "stores": {
+    "bhc": [
+      "--hide-menus",
+      "hidden",
+      "--group-names",
+      "proposed"
+    ],
+    "momstouch": [],
+    "megamgc": [
+      "--group-names",
+      "proposed"
+    ],
+    "misoya": [],
+    "bonjuk": [],
+    "sinjeon": [],
+    "jjambbongjizon": [
+      "--hide-menus",
+      "hidden",
+      "--option-max-quantity",
+      "10"
+    ],
+    "pizzaschool": [
+      "--option-max-quantity",
+      "10",
+      "--group-total-mode",
+      "source-max"
+    ]
+  }
+}

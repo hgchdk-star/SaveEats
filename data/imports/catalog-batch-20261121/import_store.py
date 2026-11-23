@@ -209,6 +209,9 @@ def build_plan(package, existing, option_max_quantity=None, sold_out_mode=None, 
             rm['refs'] = (menu_refs or {}).get(rm['existing_menu_id'], {})
             # 주문·리뷰 등이 가리키는 메뉴는 지울 수 없다(FK RESTRICT, 스냅샷 보존). 숨김(비활성)으로 보존한다
             rm['action'] = 'DEACTIVATE' if rm['refs'] else 'DELETE'
+            # 서정 승인 범위: 대응표에 적힌 메뉴만, 적힌 처리(삭제/숨김 보존)대로만. 실행 직전 참조가 대응표와 다르면(새 참조 등) 이 가게를 보류한다
+            if rm.get('expected_action') and rm['expected_action'] != rm['action']:
+                issues.append(f'삭제·숨김 대상의 참조 상태가 대응표와 다르다(새 참조 의심): {rm["existing_name"]} 예상 {rm["expected_action"]} / 실제 {rm["action"]} {rm["refs"]}')
             removals.append(rm)
     own_new = {uid('menu', SOURCE_SYSTEM, source_store_id, m['source_menu_id']) for m in menus_src}
     mapped_existing = {l['existing_menu_id'] for l in links.values()} | {r['existing_menu_id'] for r in mapping['remove']}
@@ -925,6 +928,10 @@ def restore_db(cur, plan, bk):
 
 
 # ---------------------------------------------------------------- 검증
+def sid_menu_by_id(plan, menu_id):
+    return next((m for m in plan['menus'] if m['id'] == menu_id and m['is_active']), None)
+
+
 def verify(plan, cur, before=None, photos_expected=True):
     results = []
 
@@ -1109,6 +1116,31 @@ def verify(plan, cur, before=None, photos_expected=True):
         seen_priced += 1
         if seen_priced >= 4:
             break
+    # 가격 대조 메뉴(목록가≠기본가): 필수 옵션마다 주문 가능한 최저 추가금 선택지를 고르면 결제 금액 = 상세 기본가 + 최저 추가금이 정확히 한 번만 더해지고 목록가와 같다
+    sid_menu = {m['source_menu_id']: m for m in plan['menus']}
+    for pc in plan['price_checks']:
+        pm = sid_menu[pc['source_menu_id']]
+        if not pm['is_active'] or not pc['explained']:
+            continue
+        picks = []
+        for g in sorted((g for g in plan['groups'] if g['menu_id'] == pm['id'] and g['is_active'] and g['min_select'] >= 1), key=lambda g: (g['sort_order'], g['id'])):
+            avail = sorted((o for o in optg.get(g['id'], []) if not o['is_sold_out']), key=lambda o: (o['additional_price'], o['sort_order'], o['id']))
+            picks += [(o, 1) for o in avail[:g['min_select']]]
+        res, unit, total = server_try(pm, picks, 1)
+        check(f'가격 대조 {pm["name"]}: 기본가 {pm["base_price"]:,} + 필수 최저 추가금 = 결제 {unit:,}원(= 목록가 {pc["listing"]:,.0f}원), 필수 옵션 포함가를 다시 더하지 않음', res == 'OK' and total == unit and unit == pc['listing'], (res, unit, total))
+    # 품절로 필수 그룹을 충족할 수 없는 메뉴가 없다(재고를 임의로 풀거나 필수 조건을 바꾸지 않는다)
+    optg_all = {}
+    for o in plan['options']:
+        optg_all.setdefault(o['group_id'], []).append(o)
+    bad_req = [g['name'] for g in plan['groups'] if g['is_active'] and g['min_select'] >= 1 and sum(1 for o in optg_all.get(g['id'], []) if not o['is_sold_out']) < g['min_select'] and sid_menu_by_id(plan, g['menu_id'])]
+    check('모든 필수 그룹에 주문 가능한(품절 아닌) 선택지가 최소 선택 수 이상 남아 있다', not bad_req, bad_req[:3])
+    # 변경 없음 점검: 서버의 이 가게 옵션 그룹·옵션·메뉴 그룹 수가 계획(+보류 보존)과 같다(재실행해도 새로 만들 행이 없다)
+    cur.execute('select count(*) from public.menu_option_groups g join public.menus m on m.id = g.menu_id where m.store_id = %s', (STORE_ID,))
+    n_g = cur.fetchone()[0]
+    cur.execute('select count(*) from public.menu_options o join public.menu_option_groups g on g.id = o.group_id join public.menus m on m.id = g.menu_id where m.store_id = %s', (STORE_ID,))
+    n_o = cur.fetchone()[0]
+    keep_hidden_g = [g for g in groups_db.values() if g['id'] not in planned_g]
+    check('서버 옵션 그룹·옵션 수 = 계획 + 보존 행(중복·잔여 없음)', n_g == len(plan['groups']) + len(keep_hidden_g) and n_o >= len(plan['options']) and len(now['menu_groups']) == len(plan['menu_groups']) and len(now['menu_group_items']) == len(plan['menu_group_items']), (n_g, len(plan['groups']), len(keep_hidden_g), n_o, len(plan['options'])))
     plain = next((m for m in plan['menus'] if m['is_active'] and m not in req_menus), None)
     if plain is not None:
         res, unit, total = server_try(plain, [], 2)
