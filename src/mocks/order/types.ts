@@ -106,7 +106,11 @@ export type MockOrderSnapshot = {
     quantity: number;
     lineTotal: Won;
     /** quantity: 메뉴 한 개에 들어간 옵션 개수. 옵션 수량 도입 전 주문과 응답에 없으면 1 */
-    options: { groupName: string; optionName: string; additionalPrice: Won; quantity: number }[];
+    /**
+     * groupId·optionId: 주문 당시 옵션의 원본 식별자(서버 order_item_options.source_group_id·source_option_id).
+     * 내역에서 '같은 주문 담기'가 같은 옵션을 현재 메뉴에서 찾는 데 쓴다. 이 필드를 주지 않는 옛 응답에는 없다(이름으로 추측해 맞추지 않는다).
+     */
+    options: { groupName: string; optionName: string; additionalPrice: Won; quantity: number; groupId?: Uuid; optionId?: Uuid }[];
   }[];
   /**
    * 주문 당시 목적지(은행명 · 끝 4자리). 서버는 계좌를 몰라서 응답에 주지 않는다. 앱이 기기 보안 저장소에서 합치고(with-local-destination),

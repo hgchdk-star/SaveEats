@@ -15,7 +15,7 @@ export function buildSnapshot(storeId: Uuid, lines: SnapshotLine[], account: Pic
   let total = 0;
   const items = lines.map((line) => {
     const menu = mockMenus.find((m) => m.id === line.menuId);
-    const options = (menu?.optionGroups ?? []).flatMap((g) => g.options.map((o) => ({ groupName: g.name, option: o })));
+    const options = (menu?.optionGroups ?? []).flatMap((g) => g.options.map((o) => ({ groupName: g.name, groupId: g.id, option: o })));
     const picked = line.optionIds.map((id) => options.find((o) => o.option.id === id)).filter((o): o is NonNullable<typeof o> => !!o);
     const qtyOf = (optionId: Uuid) => line.optionQuantities?.[optionId] ?? 1;
     const unitPrice = (menu?.price ?? 0) + picked.reduce((sum, p) => sum + p.option.additionalPrice * qtyOf(p.option.id), 0);
@@ -27,7 +27,7 @@ export function buildSnapshot(storeId: Uuid, lines: SnapshotLine[], account: Pic
       unitPrice,
       quantity: line.quantity,
       lineTotal: unitPrice * line.quantity,
-      options: picked.map((p) => ({ groupName: p.groupName, optionName: p.option.name, additionalPrice: p.option.additionalPrice, quantity: qtyOf(p.option.id) })),
+      options: picked.map((p) => ({ groupName: p.groupName, optionName: p.option.name, additionalPrice: p.option.additionalPrice, quantity: qtyOf(p.option.id), groupId: p.groupId, optionId: p.option.id })),
     };
   });
   return {

@@ -76,7 +76,7 @@ export const UNDECIDED = {
   initialPendingEventUnread: true,
   /** 묶음3 #2 · 리뷰 작성자는 실명을 마스킹한 표시명만 보여준다. 탈퇴 사용자 처리는 없다 (OPEN-DB-004·005) */
   reviewAuthorDisplay: 'maskedRealName',
-  /** 묶음3 #3 · 여러 메뉴를 주문했으면 "대표 메뉴 외 N개"로 보여준다 (OPEN-DB-008) */
+  /** 묶음3 #3 · 여러 메뉴를 주문했으면 "첫 메뉴 외 N건"(N = 주문 항목 수 − 1)으로 보여준다 (OPEN-DB-008) */
   multiMenuOrderLabel: 'firstMenuPlusCount',
   /**
    * 묶음3 #4 · 리뷰 신고(SHOULD)는 시트에 항목만 두고 신고 접수 화면은 "준비 중" 화면으로 보낸다.

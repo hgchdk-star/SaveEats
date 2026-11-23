@@ -20,6 +20,7 @@ import { formatOrderDate } from '@/utils/date';
 
 import { isCorrectedOrder, orderMenuLabel, reviewButtonOf, rowStatus, unreadEventIdsOf } from './history-model';
 import { useHistoryStore } from './history-store';
+import { useReorder } from './use-reorder';
 
 /** SDK 58(RN 0.88)부터 ViewToken이 react-native에서 바로 나오지 않아 FlatList 속성에서 가져온다 */
 type ViewableChange = Parameters<NonNullable<FlatListProps<unknown>['onViewableItemsChanged']>>[0];
@@ -38,6 +39,7 @@ export function HistoryScreen() {
   const { load, rows, hasMore, pageLoad, summary, summaryLoad, pendingReadIds, queuedConfirmOrderIds, correctedIds } = useHistoryStore();
   const [refreshing, setRefreshing] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const { reorder, busyId: reorderBusyId, sheet: reorderSheet } = useReorder();
 
   // 읽음 처리는 화면이 앞에 있고 앱이 켜져 있을 때만 한다. 콜백은 FlatList에 고정해야 해서 ref로 읽는다
   const focusedRef = useRef(false);
@@ -162,6 +164,7 @@ export function HistoryScreen() {
     <Screen top={top}>
       <FlatList
         data={rows}
+        extraData={reorderBusyId}
         keyExtractor={(row) => row.orderId}
         contentContainerStyle={styles.list}
         ItemSeparatorComponent={Separator}
@@ -200,7 +203,8 @@ export function HistoryScreen() {
         renderItem={({ item: row }) => {
           const status = rowStatus(row, queuedConfirmOrderIds);
           const review = status === 'delivered' ? reviewButtonOf(row.reviewEligibility) : null;
-          const sameMenuId = status === 'delivered' ? row.validCurrentMenuRefs[0] : undefined; // 지금 볼 수 없는 메뉴는 링크를 숨긴다
+          // 지금 열 수 있는 메뉴가 하나도 없으면 담기 버튼을 숨긴다(주문 기록은 그대로)
+          const canReorder = status === 'delivered' && row.validCurrentMenuRefs.length > 0;
           return (
             <OrderHistoryItem
               date={formatOrderDate(row.createdAt)}
@@ -217,11 +221,14 @@ export function HistoryScreen() {
               onRetrySave={() => void retryQueuedConfirm(row)}
               reviewStatus={review}
               onReview={() => (review === 'written' && row.reviewEligibility?.activeReviewId ? goMyReviews(row.reviewEligibility.activeReviewId) : goReviewWrite(row.orderId))}
-              onSameMenu={sameMenuId ? () => router.push({ pathname: '/menu/[menuId]', params: { menuId: sameMenuId } }) : undefined}
+              onSameOrder={canReorder ? () => reorder(row) : undefined}
+              sameOrderBusy={reorderBusyId !== null}
+              onStore={() => router.push({ pathname: '/store/[storeId]', params: { storeId: row.snapshot.storeId } })}
             />
           );
         }}
       />
+      {reorderSheet}
     </Screen>
   );
 }

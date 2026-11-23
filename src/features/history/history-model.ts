@@ -7,11 +7,11 @@ import type { MockOrder, MockOrderSnapshot } from '@/mocks/order/types';
  * 금액·상태·작성 가능 여부는 서버가 알려준 값을 보여줄 뿐 여기서 새로 판단하지 않는다.
  */
 
-/** 내역·리뷰 작성 화면의 메뉴 표시: 여러 메뉴면 "대표 메뉴 외 N개" (미결정 묶음3 #3) */
+/** 내역·리뷰 작성 화면의 메뉴 표시: 주문 항목(줄)이 둘 이상이면 "첫 메뉴 외 N건" (N = 주문 항목 수 − 1, 수량 기준이 아니다. 미결정 묶음3 #3) */
 export function orderMenuLabel(snapshot: MockOrderSnapshot): string {
   const names = snapshot.items.map((i) => i.menuName);
   const first = names[0] ?? '';
-  if (UNDECIDED.multiMenuOrderLabel === 'firstMenuPlusCount' && names.length > 1) return `${first} 외 ${names.length - 1}개`;
+  if (UNDECIDED.multiMenuOrderLabel === 'firstMenuPlusCount' && names.length > 1) return `${first} 외 ${names.length - 1}건`;
   return first;
 }
 

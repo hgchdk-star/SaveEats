@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { draftCopy } from '@/config/draft-copy';
 import { colors, font, radius, spacing, text } from '@/theme';
@@ -27,7 +27,12 @@ type OrderHistoryItemProps = {
   corrected?: boolean;
   reviewStatus: 'available' | 'written' | 'expired' | null;
   onReview?: () => void;
-  onSameMenu?: () => void;
+  /** 같은 주문 담기. 없으면(지금 열 수 있는 메뉴가 없음) 버튼을 숨긴다 */
+  onSameOrder?: () => void;
+  /** 같은 주문 담기를 처리하는 중이면 버튼을 잠근다(연속 터치 방지) */
+  sameOrderBusy?: boolean;
+  /** 가게 이름을 누르면 가게 상세로 간다 */
+  onStore?: () => void;
 };
 
 const copy = draftCopy.history;
@@ -36,7 +41,7 @@ const copy = draftCopy.history;
  * 내역 한 줄. 주문 당시의 이름·금액을 그대로 보여준다.
  * 상태가 바뀌어도 줄 순서는 그대로다. 줄을 읽음 처리하는 시점은 목록 화면이 정한다.
  */
-export function OrderHistoryItem({ date, storeName, imageUri, menuLabel, amount, status, corrected = false, unread, busy = false, onDetail, onResume, onRetrySave, reviewStatus, onReview, onSameMenu }: OrderHistoryItemProps) {
+export function OrderHistoryItem({ date, storeName, imageUri, menuLabel, amount, status, corrected = false, unread, busy = false, onDetail, onResume, onRetrySave, reviewStatus, onReview, onSameOrder, sameOrderBusy = false, onStore }: OrderHistoryItemProps) {
   const label = status === 'delivered' ? copy.delivered(formatWon(amount)) : status === 'pending' ? copy.statusPending : status === 'saveFailed' ? copy.statusSaveFailed : copy.statusCancelled;
   const tone = status === 'delivered' ? styles.toneDone : status === 'cancelled' ? styles.toneMuted : status === 'saveFailed' ? styles.toneBad : styles.tonePending;
 
@@ -48,14 +53,21 @@ export function OrderHistoryItem({ date, storeName, imageUri, menuLabel, amount,
           {copy.detail}
         </TextButton>
       </View>
-      <View accessibilityLabel={`${storeName}, ${menuLabel}, ${label}${corrected ? `, ${copy.correctedTag}` : ''}${unread ? `, ${copy.unreadLabel}` : ''}`} accessible style={styles.main}>
+      <View style={styles.main}>
         <FoodImage uri={imageUri} width={64} rounded={radius.sm} />
         <View style={styles.text}>
-          <Text style={styles.store}>{storeName}</Text>
+          {/* 가게 이름만 눌린다(글자 영역만 터치 영역). 메뉴 이름은 눌리지 않는 글자다 */}
+          {onStore ? (
+            <Pressable accessibilityRole="link" accessibilityLabel={copy.storeLink(storeName)} onPress={onStore} hitSlop={{ top: 4, bottom: 4, right: 8 }} style={({ pressed }) => [styles.link, pressed && styles.linkPressed]}>
+              <Text numberOfLines={1} style={[styles.store, styles.menusLink]}>{storeName}</Text>
+            </Pressable>
+          ) : (
+            <Text style={styles.store}>{storeName}</Text>
+          )}
           <Text numberOfLines={1} style={styles.menus}>
             {menuLabel}
           </Text>
-          <View style={styles.amountRow}>
+          <View accessible accessibilityLabel={`${label}${corrected ? `, ${copy.correctedTag}` : ''}${unread ? `, ${copy.unreadLabel}` : ''}`} style={styles.amountRow}>
             {status !== 'delivered' ? <Price amount={amount} size="sm" /> : null}
             <View style={styles.statusRow}>
               {unread ? <View style={styles.dot} /> : null}
@@ -78,16 +90,16 @@ export function OrderHistoryItem({ date, storeName, imageUri, menuLabel, amount,
           {copy.retrySave}
         </SecondaryButton>
       ) : null}
-      {status === 'delivered' && (reviewStatus || onSameMenu) ? (
+      {status === 'delivered' && (reviewStatus || onSameOrder) ? (
         <View style={styles.actions}>
           {reviewStatus ? (
             <View style={reviewStatus === 'expired' ? undefined : styles.reviewButton}>
               <ReviewWriteButton status={reviewStatus} onPress={onReview} />
             </View>
           ) : <View />}
-          {onSameMenu ? (
-            <TextButton size="sm" onPress={onSameMenu}>
-              {copy.sameMenu}
+          {onSameOrder ? (
+            <TextButton size="sm" disabled={sameOrderBusy} onPress={onSameOrder}>
+              {copy.sameOrder}
             </TextButton>
           ) : null}
         </View>
@@ -151,6 +163,17 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 18,
     color: colors.inkSecondary,
+  },
+  // 눌리는 가게 이름임을 알 수 있게 밑줄만 더한다(색·크기는 그대로)
+  menusLink: {
+    textDecorationLine: 'underline',
+  },
+  link: {
+    alignSelf: 'flex-start',
+    maxWidth: '100%',
+  },
+  linkPressed: {
+    opacity: 0.6,
   },
   amountRow: {
     flexDirection: 'row',

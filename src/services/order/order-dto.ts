@@ -33,7 +33,9 @@ export function parseOrderDto(data: unknown, idempotencyKey: string): MockOrder 
       if (!isObj(o) || !isStr(o.groupName) || !isStr(o.optionName) || !isNum(o.additionalPrice)) throw bad();
       // 옵션 수량 도입 전 서버 응답에는 quantity가 없다 → 1개. 있으면 1 이상의 정수여야 한다
       if (o.quantity !== undefined && !(isNum(o.quantity) && Number.isInteger(o.quantity) && o.quantity >= 1)) throw bad();
-      return { groupName: o.groupName, optionName: o.optionName, additionalPrice: o.additionalPrice, quantity: (o.quantity as number | undefined) ?? 1 };
+      // 옵션 식별자는 선택 필드다(옛 응답에는 없다). 둘 다 문자열일 때만 받고, 하나만 있거나 모양이 다르면 둘 다 버린다
+      const ids = isStr(o.groupId) && isStr(o.optionId) ? { groupId: o.groupId, optionId: o.optionId } : {};
+      return { groupName: o.groupName, optionName: o.optionName, additionalPrice: o.additionalPrice, quantity: (o.quantity as number | undefined) ?? 1, ...ids };
     });
     return { menuId: raw.menuId, menuName: raw.menuName, menuImageRef: raw.menuImageRef, unitPrice: raw.unitPrice, quantity: raw.quantity, lineTotal: raw.lineTotal, options };
   });

@@ -60,7 +60,7 @@ export const confirmedCopy = {
   reviewHelpful: '함께해요',
   reviewMine: '내 리뷰',
   reviewWrite: '리뷰 쓰기',
-  reviewWritten: '리뷰 작성 완료 · 보기',
+  reviewWritten: '작성한 리뷰 보기',
   reviewExpired: '리뷰 작성 기간이 지났어요',
 
   /** 기획서 11.4 · FR-HOME-003 검색창 문구. 홈 검색창과 검색 탭이 같은 문구를 쓴다 */

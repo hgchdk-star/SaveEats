@@ -1226,7 +1226,7 @@ uid, status, completedAt, Snapshot 이름, 시스템 검증 플래그는 입력�
 | 목적지 표시(기기) | AccountVault의 당시 목적지 | destinationRef/마스킹 Snapshot을 보안 저장, 서버 응답과 기기에서 결합 |
 | 생성 맥락 | 검증된 요청 | snapshot version, 생성 Cart id/revision, 고지 버전 |
 
-unitPrice=basePrice+sum(optionPrice), lineTotal=unitPrice×quantity, total=sum(lineTotal). 실제 존재하지 않는 배달비/최소주문금액을 추가하지 않는다. 생성 후 이름/가격/목적지 Snapshot을 업데이트하지 않는다. 현재 Menu는 ‘같은 메뉴 보기’ 유효성에만 사용한다.
+unitPrice=basePrice+sum(optionPrice), lineTotal=unitPrice×quantity, total=sum(lineTotal). 실제 존재하지 않는 배달비/최소주문금액을 추가하지 않는다. 생성 후 이름/가격/목적지 Snapshot을 업데이트하지 않는다. 현재 Menu는 ‘같은 주문 담기’의 유효성과 담을 때의 현재 가격에만 사용한다.
 
 계좌 원문/은행/마스킹/암호문/계좌 해시는 Order JSON·API·로그·일반 로컬 요청/복구 큐에 넣지 않는다. 보안 저장한 key/Order→destinationRef 연결로만 목적지를 찾는다. 마스킹만으로 원문 일치를 증명할 수 없다. OPEN-DB-002 원문 수명 결정 전 해당 경계는 미완료이며 현재 계좌 자동 대입은 금지한다.
 
@@ -1605,7 +1605,7 @@ get_review_eligibility(orderId)는 본인 Order를 검사하고 serverNow, compl
 | 상태 | 화면/동작 |
 |---|---|
 | 활성 리뷰 없음 + serverNow <= completedAt+720h | 리뷰 쓰기 |
-| 활성 리뷰 존재 | ✓ 리뷰 작성 완료 · 보기, 기한 무관 수정/삭제 |
+| 활성 리뷰 존재 | ✓ 작성한 리뷰 보기, 기한 무관 수정/삭제 |
 | 삭제 이력 있음 + 기한 이내 | 리뷰 쓰기, 새 ID |
 | 삭제 이력 있음/없음 + 기한 초과 | 리뷰 작성 기간이 지났어요 |
 
@@ -1814,7 +1814,7 @@ Receipt 재생은 적용 당시 결과와 현재 상태를 구분한다. 같은 
 
 - 내역은 본인 주문의 createdAt 최신순 고정, 무한스크롤. 완료·읽음·리뷰 수정으로 주문 순서가 바뀌지 않는다.
 - PENDING은 주문 완료가 필요해요 / 주문 이어하기. USER_CONFIRMED는 내 계좌로 27,000원 배달.
-- 과거 표시값은 Order Snapshot, 같은 메뉴 보기는 현재 Menu가 유효할 때만.
+- 과거 표시값은 Order Snapshot, 같은 주문 담기는 현재 Menu가 유효한 메뉴가 있을 때만, 가게 이름은 가게 상세 링크, 메뉴 이름은 눌리지 않는 글자.
 - 다음 페이지 실패는 기존 데이터 유지+하단 재시도. 첫 로딩 실패는 전체 Error State.
 - 빨간 점은 미확인 OrderStatusUpdate. 리뷰 미작성/Push/리뷰 알림과 무관.
 - 행 50% 이상 약 1초 노출 시 해당 상태 이벤트 read. 탭 진입·상세 진입만으로 읽음 처리하지 않는다.
@@ -1854,7 +1854,7 @@ get_my_order(orderId)는 본인 상세·현재 상태·상태이력 조회. 다�
 
 주문 이어하기는 기존 orderId로 제6장 흐름을 연다. 새 create_order를 호출하지 않는다. 저장 실패 큐가 있으면 외부 앱 자동 실행 없이 제5장 상태 저장 복구를 먼저 제공한다. 상세 진입은 Snapshot 확인이며 read의 우회 경로가 아니다.
 
-현재 menu active이고 접근 가능한 경우에만 같은 메뉴 보기. 과거 Menu 삭제/비활성에도 주문/메뉴명 Snapshot은 유지한다. 여러 메뉴 버튼 배치는 화면 디자인 검수 사항이다. 기록의 월간 간단 요약은 완료 상태만, completedAt KST 월 범위 기술안을 유지한다. 상세 통계 확장 SHOULD를 추가하지 않는다.
+현재 menu가 active이고 접근 가능한 메뉴가 있을 때만 같은 주문 담기를 제공한다. 내역 카드 메뉴 표시는 snapshot.items(주문 항목) 수 기준 `[첫 메뉴] 외 N건`(N = 항목 수 − 1)이고 눌리지 않는다. 가게 이름은 가게 상세로 이동한다. 같은 주문 담기는 주문의 모든 항목을 현재 get_menu 기준으로 다시 검증해(활성·품절·영업 상태·옵션 id 일치·옵션 수량·그룹 선택 수·단독 옵션·그룹 수량 합계) 하나라도 어긋나면 아무것도 담지 않고, 담을 때는 현재 가격·catalogRevision을 쓴다. 옵션 매칭은 주문 응답 snapshot.items[].options[]의 groupId·optionId로만 하며 이름·순서로 추측하지 않는다(키가 없는 응답에서 옵션이 있는 주문은 담기 거절). 과거 Menu 삭제/비활성에도 주문/메뉴명 Snapshot은 유지한다. 여러 메뉴 버튼 배치는 화면 디자인 검수 사항이다. 기록의 월간 간단 요약은 완료 상태만, completedAt KST 월 범위 기술안을 유지한다. 상세 통계 확장 SHOULD를 추가하지 않는다.
 
 ### HIST-005 unread 원장과 로컬 overlay
 

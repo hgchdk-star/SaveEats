@@ -5,6 +5,7 @@ import { validateCart } from '@/services';
 
 import {
   acknowledgePrices,
+  addManyToCart,
   addToCart,
   clearCart,
   createEmptyCart,
@@ -37,6 +38,8 @@ type CartState = {
   validation: CartValidation;
   hydrate: () => Promise<void>;
   add: (input: AddToCartInput, options?: { replaceOtherStore?: boolean }) => Promise<CartEditResult>;
+  /** 여러 줄을 한 번에 담는다. 하나라도 담을 수 없으면 아무것도 담지 않는다 */
+  addMany: (inputs: AddToCartInput[], options?: { replaceOtherStore?: boolean }) => Promise<CartEditResult>;
   setQuantity: (clientItemId: string, quantity: number) => Promise<CartEditResult>;
   remove: (clientItemId: string) => Promise<CartEditResult>;
   clear: () => Promise<CartEditResult>;
@@ -99,6 +102,14 @@ export const useCartStore = create<CartState>((set, get) => {
       commit(
         (cart) => {
           const result = addToCart(cart, input, options);
+          return result.ok ? result.cart : { reason: result.reason };
+        },
+        { resetValidation: true },
+      ),
+    addMany: (inputs, options) =>
+      commit(
+        (cart) => {
+          const result = addManyToCart(cart, inputs, options);
           return result.ok ? result.cart : { reason: result.reason };
         },
         { resetValidation: true },

@@ -178,6 +178,23 @@ export function addToCart(cart: CartEnvelope, input: AddToCartInput, options?: {
   return { ok: true, cart: edited(cart, { storeId: input.storeId, items }) };
 }
 
+/**
+ * 여러 줄을 한 번에 담기(내역의 '같은 주문 담기'). 한 줄씩 addToCart 규칙을 그대로 적용하고,
+ * 하나라도 거절되면 아무것도 담지 않는다(일부만 담기지 않는다). 다른 가게 비우기도 전체를 한 번의 변경으로 처리한다.
+ */
+export function addManyToCart(cart: CartEnvelope, inputs: readonly AddToCartInput[], options?: { replaceOtherStore?: boolean }): AddToCartResult {
+  if (inputs.length === 0) return { ok: true, cart };
+  let next = cart;
+  for (let i = 0; i < inputs.length; i++) {
+    // 다른 가게 비우기는 첫 줄에서만 적용된다. 그 뒤 줄은 이미 새 가게 장바구니에 담는 것이다
+    const result = addToCart(next, inputs[i], i === 0 ? options : undefined);
+    if (!result.ok) return result;
+    next = result.cart;
+  }
+  // 한 번의 담기이므로 편집 횟수는 1만 늘린다
+  return { ok: true, cart: { ...next, localRevision: cart.localRevision + 1 } };
+}
+
 /** 수량은 1~10. 1에서 더 줄여도 0이 되지 않는다. 삭제는 removeItem으로만 한다 */
 export function setQuantity(cart: CartEnvelope, clientItemId: string, quantity: number): CartEnvelope {
   const next = Math.max(LIMITS.quantityMin, Math.min(LIMITS.quantityMax, Math.trunc(quantity)));
