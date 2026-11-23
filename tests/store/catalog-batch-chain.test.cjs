@@ -1,7 +1,6 @@
 /**
  * 2026-11-21 쿠팡이츠 수집본 8개 가게(BHC·맘스터치·메가MGC커피·미소야·본죽&비빔밥·신전떡볶이·짬뽕지존·피자스쿨)의 반영 후 메뉴 구조를 앱 코드에 통과시키는 시험.
- * 픽스처는 서버 적용 전 로컬 에뮬레이션(임시 Postgres에 저장소 migration + 적용 도구 실행 + Guest(anon) 역할 get_store·get_menu 응답)이다.
- * 개발 서버에 적용한 뒤에는 실제 Guest 응답으로 교체한다. 공개 카탈로그 데이터이며 비밀값은 없다.
+ * 픽스처는 2026-11-23 개발 서버 적용 뒤 공개 키(Guest)로 받은 실제 get_store·get_menu 응답이다(공개 카탈로그 데이터, 비밀값 없음).
  */
 const test = require('node:test');
 const assert = require('node:assert/strict');
@@ -13,7 +12,7 @@ const ms = require('../../src/features/store/menu-sections.ts');
 const { parseMenuDetail } = require('../../src/services/supabase/rpc-result.ts');
 const { hasRequiredOptions, quickAddMenu } = require('../../src/features/cart/quick-add.ts');
 
-const dir = path.join(__dirname, 'fixtures', 'catalog-emulated');
+const dir = path.join(__dirname, 'fixtures', 'catalog-real');
 const load = (k) => ({
   menus: JSON.parse(fs.readFileSync(path.join(dir, `${k}-menus.json`), 'utf8')).map(parseMenuDetail),
   store: JSON.parse(fs.readFileSync(path.join(dir, `${k}-store.json`), 'utf8')),
@@ -96,5 +95,40 @@ test('맘스터치·본죽: 품절 선택지는 isSoldOut으로 내려오고, �
     const { menus } = load(k);
     assert.ok(menus.some((m) => m.optionGroups.some((g) => g.options.some((o) => o.isSoldOut))));
     for (const m of menus) for (const g of m.optionGroups) if (g.minSelect >= 1) assert.ok(g.options.filter((o) => !o.isSoldOut).length >= g.minSelect, `${m.name}/${g.name}`);
+  }
+});
+
+test('실제 Guest 응답: 사진 연결(자기 UUID 경로)·미확보 메뉴는 imageRef 없음, 숨김 메뉴는 응답에 없다', () => {
+  const miss = { bhc: 0, momstouch: 0, megamgc: 0, misoya: 0, bonjuk: 0, sinjeon: 3, jjambbongjizon: 2, pizzaschool: 0 };
+  for (const k of Object.keys(EXPECT)) {
+    const { store } = load(k);
+    assert.ok(store.menus.filter((m) => m.imageRef).every((m) => m.imageRef.startsWith('menus/' + m.id)), k);
+    assert.equal(store.menus.filter((m) => !m.imageRef).length, miss[k] - (k === 'sinjeon' ? 0 : 0), k);
+  }
+  const names = (k) => load(k).store.menus.map((m) => m.name);
+  assert.ok(!names('bhc').some((n) => /참이슬|처음처럼/.test(n)));
+  assert.ok(!names('jjambbongjizon').some((n) => /카스|테라|참이슬|새로 |진로|칭타오|고량주|이과두주|리뷰이벤트/.test(n)));
+  assert.ok(!names('sinjeon').includes('신전치즈김밥') && names('sinjeon').includes('신전매콤치즈김밥'));
+  assert.ok(!names('megamgc').includes('초코젤라또 말차라떼'));
+});
+
+test('신전떡볶이: 이름·가격이 같은 포테이토치즈스틱(1개) 2개는 서로 다른 메뉴로 유지된다', () => {
+  const { store } = load('sinjeon');
+  const ps = store.menus.filter((m) => m.name === '포테이토치즈스틱(1개)');
+  assert.equal(ps.length, 2); assert.notEqual(ps[0].id, ps[1].id);
+});
+
+test('가격: 필수 옵션 최저 추가금은 결제 금액에 한 번만 더해진다(맘스터치 순살 6개·짬뽕지존 3개 = 목록가)', () => {
+  const cheapest = (m) => {
+    let s = {};
+    for (const g of m.optionGroups) if (g.minSelect >= 1) for (const o of [...g.options].filter((x) => !x.isSoldOut).sort((a, b) => a.additionalPrice - b.additionalPrice).slice(0, g.minSelect)) s = sel.toggleOption(s, g, o.id);
+    assert.equal(sel.firstMissingRequired(m, s), null);
+    return sel.unitPrice(m, s, {});
+  };
+  const mom = load('momstouch').menus; const jj = load('jjambbongjizon').menus;
+  const by = (arr, n) => arr.find((m) => m.name === n);
+  for (const [arr, n, listing, base] of [[mom, '치킨&버거세트', 26000, 25200], [mom, '핫치즈밤치킨(순살)', 23200, 22400], [mom, '핫치즈치킨(순살)', 20400, 19600], [mom, '후라이드치킨(순살)', 17300, 16500],
+    [mom, '맘스양념치킨(순살)', 19700, 18900], [mom, '간장마늘치킨(순살)', 19700, 18900], [jj, '찹쌀탕수육', 15000, 14500], [jj, '군만두', 5000, 4500], [jj, '통살새우볼6p', 6500, 6000]]) {
+    const m = by(arr, n); assert.equal(m.price, base, n); assert.equal(cheapest(m), listing, n);
   }
 });

@@ -959,7 +959,7 @@ def verify(plan, cur, before=None, photos_expected=True):
     if photos_expected:
         check('사진 연결(111개 메뉴 모두 수집 사진의 새 경로, 사진 없는 메뉴는 NULL)', all(menus_db[m['id']]['image_ref'] == m['image_ref'] for m in plan['menus'] if m['id'] in menus_db))
     if photos_expected:
-        check('모든 메뉴의 사진이 자기 메뉴 UUID의 경로이다(다른 메뉴 사진 연결 없음)', all(menus_db[m['id']]['image_ref'] and menus_db[m['id']]['image_ref'].startswith('menus/' + m['id']) for m in plan['menus'] if m['id'] in menus_db))
+        check('모든 메뉴의 사진이 자기 메뉴 UUID의 경로이다(다른 메뉴 사진 연결 없음)', all((menus_db[m['id']]['image_ref'] or '').startswith('menus/' + m['id']) for m in plan['menus'] if m['id'] in menus_db and m['image_ref']))
     miss_ids = {next(x['id'] for x in plan['menus'] if x['source_menu_id'] == m['source_menu_id']) for m in plan['missing_photo_menus']}
     check('사진 없는 메뉴에 사진이 없다', all(menus_db[i]['image_ref'] is None for i in miss_ids if i in menus_db))
     if before is not None:

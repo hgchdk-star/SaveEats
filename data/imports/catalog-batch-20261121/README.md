@@ -1,11 +1,11 @@
 # 쿠팡이츠 수집본 8개 가게 → 기존 SaveEats 가게 확장 적용 도구 (2026-11-21 수집분)
 
-수집 ZIP(`saveeats-catalog-batch-20261121.zip`, 읽기 전용, 저장소 밖)의 8개 지점 카탈로그를 SaveEats **개발 서버**(`msiahbzzebgjsoanjbtx`)의 기존 가게 8개에 반영하는 공용 도구다. **새 가게를 만들지 않고**, 수집 지점은 각 기존 가게의 카탈로그 출처(`private.store_source_records`)로 기록한다. 현재는 **준비 단계**(개발 서버 미적용)이며, 적용은 서정이 계획을 확인·승인한 뒤에만 한다.
+수집 ZIP(`saveeats-catalog-batch-20261121.zip`, 읽기 전용, 저장소 밖)의 8개 지점 카탈로그를 SaveEats **개발 서버**(`msiahbzzebgjsoanjbtx`)의 기존 가게 8개에 반영하는 공용 도구다. **새 가게를 만들지 않고**, 수집 지점은 각 기존 가게의 카탈로그 출처(`private.store_source_records`)로 기록한다. 2026-11-23 개발 서버에 적용했다(`docs/evidence/catalog-batch-existing-stores-apply-20261123.md`).
 한솥도시락 도구(`../hansot-coupangeats-20261120/import_hansot.py`)를 가게별 설정으로 일반화했고, 굽네 도구의 마스킹·연결·Storage 보조 함수를 쓴다.
 
 ## 구성
 - `import_store.py --store <key>`: 가게 하나를 `--check / --backup / --apply / --verify / --restore`. 가게별 `stores/<key>/store.json`(기존 UUID), `menu_mapping.json`(대응표), `option_policy.json`(숨김 대상·대표 사진), `menu_group_display.json`을 읽는다.
-- `run_batch.py`: 8개를 한 번의 승인으로 차례대로(가게마다 독립) 실행. 가게마다 **상태 재확인 → 적용 전 백업 → 사진 업로드(실패하면 DB 반영 전 중단) → DB 한 트랜잭션(안에서 검증) → Guest 검증 → 재실행(행 수 변화 없음) + `--verify`**. 오류·미결정·새 의존성이 있으면 그 가게만 보류하고 다음으로 간다. `--restore-plan`은 가게별 복구 명령을 출력한다.
+- `run_batch.py`: 8개를 한 번의 승인으로 차례대로(가게마다 독립) 실행. 가게마다 **상태 재확인 → 적용 전 백업 → 사진 업로드(실패하면 DB 반영 전 중단) → DB 한 트랜잭션(안에서 검증) → Guest 검증 → 쓰기 없는 `--verify`(변경 없음 점검)**. 오류·미결정·새 의존성이 있으면 그 가게만 보류하고 다음으로 간다. `--restore-plan`은 가게별 복구 명령을 출력한다.
 - `decisions.template.json`: 서정이 한 번에 정하는 값의 권장안. `build_stores.py`·`build_policies.py`·`dump_existing_state.py`: 설정·정책·시험 픽스처 생성(읽기 전용 조회).
 - `tests/test_store_db.py <key>`: 임시 Postgres 시험(가게당 28~31개). `../../../tests/store/catalog-batch-chain.test.cjs`: 앱 체인 시험(에뮬레이션 Guest 응답 픽스처).
 
