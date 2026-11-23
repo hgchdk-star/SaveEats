@@ -3,6 +3,8 @@ import type { Page } from '@/contracts/common';
 import { LIMITS } from '@/config/limits';
 import { RepositoryError, type CatalogRepository } from '@/services/catalog/catalog-repository';
 
+import { withPreviewPhotos } from '@/services/store-photo-preview';
+
 import { getSupabaseClient } from './client';
 import { parseCategories, parseFavoriteStoreCardPage, parseMenuCardList, parseMenuDetail, parseSearchStoreCardPage, parseSetFavoriteResult, parseStoreCardList, parseStoreCardPage, parseStoreDetail, toRepositoryError } from './rpc-result';
 
@@ -105,7 +107,7 @@ export function createSupabaseCatalogRepository(fallback: CatalogRepository): Ca
     listStores: ({ categoryId, cursor, pageSize }) =>
       call(CATALOG_RPC.listStores, { p_category_id: categoryId ?? null, p_cursor: cursor ?? null, p_page_size: pageSize ?? 20 }, parseStoreCardPage),
 
-    getStore: (storeId) => call(CATALOG_RPC.getStore, { p_store_id: storeId }, parseStoreDetail),
+    getStore: async (storeId) => withPreviewPhotos(await call(CATALOG_RPC.getStore, { p_store_id: storeId }, parseStoreDetail)),
 
     getMenu: (menuId) => call(CATALOG_RPC.getMenu, { p_menu_id: menuId }, parseMenuDetail),
 

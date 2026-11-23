@@ -1,0 +1,858 @@
+{
+ "_comment": "가게별 대표·상세 사진 계획. 사진 권리 상태는 미확인(쿠팡이츠 가게 상단 이미지). 수집 파일은 저장소 밖에 있다.",
+ "collected_date": "2026-11-23",
+ "stores": [
+  {
+   "key": "goobne",
+   "store_id": "d5c4fa89-212d-58ca-ac17-b364518e55e3",
+   "store_name": "굽네치킨",
+   "branch_name": "굽네치킨&피자 서대문 연희점",
+   "source_store_id": 845069,
+   "source_field": "store.get_store_with_menu:data.imagePaths",
+   "representative_source_position": 4,
+   "representative_basis": "food-focused composition in the 16:9 card crop",
+   "photos": [
+    {
+     "sort_order": 0,
+     "source_position": 4,
+     "object_path": "stores/d5c4fa89-212d-58ca-ac17-b364518e55e3-6e2946dd.jpg",
+     "sha256": "6e2946dd440980c89665902bc6b5792f20d8686ee2a6d6a425875ba365678fde",
+     "bytes": 144591,
+     "local_path": "images/c7fdfc2f7695d77dfa3275cd.jpg",
+     "source_url": "https://t5a.coupangcdn.com/thumbnails/remote/1024x1024/image/eats_api/e652/67282d060cbaa948867acc33415e4639b57739b3253fffbbea2beb89f1e6.jpg",
+     "rights_status": "미확인"
+    },
+    {
+     "sort_order": 1,
+     "source_position": 1,
+     "object_path": "stores/d5c4fa89-212d-58ca-ac17-b364518e55e3-139ed459.jpg",
+     "sha256": "139ed45948f2a580d9eb9d357ce2eb030d7e11c037295fe952a7646eb6a4ca9c",
+     "bytes": 50986,
+     "local_path": "images/9b4a6d1a69ce6c22de23ccbe.jpg",
+     "source_url": "https://t5a.coupangcdn.com/thumbnails/remote/1024x1024/image/eats_api/fe43/d75126a8548fc20fce57cd84820d562ccd56b65da9eea06e3a5de12aaac7.jpg",
+     "rights_status": "미확인"
+    },
+    {
+     "sort_order": 2,
+     "source_position": 2,
+     "object_path": "stores/d5c4fa89-212d-58ca-ac17-b364518e55e3-75aace6c.jpg",
+     "sha256": "75aace6cf6cac576f9b1aa1efa1ed014a751a2816f00f0d447ef4451d4c70063",
+     "bytes": 116944,
+     "local_path": "images/7b89550de312f1fde0473241.jpg",
+     "source_url": "https://t2c.coupangcdn.com/thumbnails/remote/1024x1024/image/eats_catalog_tool/c479/dd11d5a83cd6bec680e75ab5d2d1a7d2bc62ca9781ee7296e34d36f5d314.jpg",
+     "rights_status": "미확인"
+    },
+    {
+     "sort_order": 3,
+     "source_position": 3,
+     "object_path": "stores/d5c4fa89-212d-58ca-ac17-b364518e55e3-1b9fe14f.jpg",
+     "sha256": "1b9fe14f9c2c5cb0c3a75acfcd240ff57169955866e825771d54413f6d628032",
+     "bytes": 150219,
+     "local_path": "images/377e00611f5f691e61cf441a.jpg",
+     "source_url": "https://t5c.coupangcdn.com/thumbnails/remote/1024x1024/image/eats_api/3c5c/5b43502577b6508b4dbd16c359974e1e3c00b1878b28013be53dbda3714a.jpg",
+     "rights_status": "미확인"
+    },
+    {
+     "sort_order": 4,
+     "source_position": 5,
+     "object_path": "stores/d5c4fa89-212d-58ca-ac17-b364518e55e3-a1290ba8.jpg",
+     "sha256": "a1290ba826b29142736a50eaacea81f3ba90e9be15fae7db8bbd0a2b96610ed1",
+     "bytes": 160847,
+     "local_path": "images/1c28979e888f0411464a8b99.jpg",
+     "source_url": "https://t1c.coupangcdn.com/thumbnails/remote/1024x1024/image/eats_api/9bae/9bcbb0f13ff5ae84a50bb9e682265240ac19803afce7808365cedcada996.jpg",
+     "rights_status": "미확인"
+    },
+    {
+     "sort_order": 5,
+     "source_position": 6,
+     "object_path": "stores/d5c4fa89-212d-58ca-ac17-b364518e55e3-ec942b4a.jpg",
+     "sha256": "ec942b4a1283a3a0694a1fb912b15f15639055d83ac9231d8bab580274e963ae",
+     "bytes": 115968,
+     "local_path": "images/9584440a4ba293d59599dc01.jpg",
+     "source_url": "https://t3a.coupangcdn.com/thumbnails/remote/1024x1024/image/eats_api/faab/8cd07670147ff2765e8544962c8ea7719779d5f726baa34f24098487dea9.jpg",
+     "rights_status": "미확인"
+    },
+    {
+     "sort_order": 6,
+     "source_position": 7,
+     "object_path": "stores/d5c4fa89-212d-58ca-ac17-b364518e55e3-b916a0b7.jpg",
+     "sha256": "b916a0b734a7ab7cab2cdc35775a1647c96273764979813ad88a79664db58bbc",
+     "bytes": 100038,
+     "local_path": "images/2e670c3589dbd2fcd838a132.jpg",
+     "source_url": "https://t1a.coupangcdn.com/thumbnails/remote/1024x1024/image/eats_api/60f0/dcbc7041861c957ee9418d7d7fcb478af1ec5c881e68a4a6c858dc24d2d6.jpg",
+     "rights_status": "미확인"
+    }
+   ]
+  },
+  {
+   "key": "yeopgi",
+   "store_id": "028512ff-e033-53c3-a30f-a3e7f18862f1",
+   "store_name": "동대문엽기떡볶이",
+   "branch_name": "동대문엽기떡볶이 홍제점",
+   "source_store_id": 342436,
+   "source_field": "store.get_store_with_menu:data.imagePaths",
+   "representative_source_position": 1,
+   "representative_basis": "first source photo; food visible in the 16:9 card crop",
+   "photos": [
+    {
+     "sort_order": 0,
+     "source_position": 1,
+     "object_path": "stores/028512ff-e033-53c3-a30f-a3e7f18862f1-b85c8e42.jpg",
+     "sha256": "b85c8e42fdb6e0f9876b371b4658eb9f1c9a649370134c93b201ea814ddd1f7b",
+     "bytes": 116053,
+     "local_path": "images/3502a295733a8efe15dd7fa8.jpg",
+     "source_url": "https://t4c.coupangcdn.com/thumbnails/remote/1024x1024/image/eats_api/76f7/9fa63613ebf17ae17da25624917ed6f12546a12a5db8c3685030384f9f7d.jpg",
+     "rights_status": "미확인"
+    },
+    {
+     "sort_order": 1,
+     "source_position": 2,
+     "object_path": "stores/028512ff-e033-53c3-a30f-a3e7f18862f1-6c18ba58.jpg",
+     "sha256": "6c18ba58996866e9c5525886f28b5485b0ed5e9004397f8958b33aa790d1b6f8",
+     "bytes": 145470,
+     "local_path": "images/bbe5bd0da7304db0e511174a.jpg",
+     "source_url": "https://t2c.coupangcdn.com/thumbnails/remote/1024x1024/image/eats_api/1a02/4e4b6e42bbde24de655460b7bebc079e3084fc666bb31f491ec776989c93.jpg",
+     "rights_status": "미확인"
+    },
+    {
+     "sort_order": 2,
+     "source_position": 3,
+     "object_path": "stores/028512ff-e033-53c3-a30f-a3e7f18862f1-22e58e69.jpg",
+     "sha256": "22e58e690572cf84f225842478625180b5fb542e67a7f3398a5502bd364c5fbb",
+     "bytes": 68444,
+     "local_path": "images/f42f9cfdc0480f37c17bf239.jpg",
+     "source_url": "https://t4a.coupangcdn.com/thumbnails/remote/1024x1024/image/eats_api/bb87/0ef713e92e271c2a5ec7c199e46715ea771e789312b552eb1331546cdc24.jpg",
+     "rights_status": "미확인"
+    },
+    {
+     "sort_order": 3,
+     "source_position": 4,
+     "object_path": "stores/028512ff-e033-53c3-a30f-a3e7f18862f1-db0e0837.jpg",
+     "sha256": "db0e0837c64a1d703eb6006579536122cb352d4492a1538df743fc7300ca5453",
+     "bytes": 31883,
+     "local_path": "images/c1c12688ba43fd4bb98ce570.jpg",
+     "source_url": "https://t2a.coupangcdn.com/thumbnails/remote/1024x1024/image/eats_api/8e2d/7a2aee1690aff0387767c53fa9983a44c9fb0c054910ea9e2e4b1dd0cf20.jpg",
+     "rights_status": "미확인"
+    }
+   ]
+  },
+  {
+   "key": "domino",
+   "store_id": "9d5acc03-45c5-581b-a657-22ee8773b28c",
+   "store_name": "도미노피자",
+   "branch_name": "도미노피자 홍제점",
+   "source_store_id": 522372,
+   "source_field": "store.get_store_with_menu:data.imagePaths",
+   "representative_source_position": 2,
+   "representative_basis": "food-focused composition in the 16:9 card crop",
+   "photos": [
+    {
+     "sort_order": 0,
+     "source_position": 2,
+     "object_path": "stores/9d5acc03-45c5-581b-a657-22ee8773b28c-1a312b3b.jpg",
+     "sha256": "1a312b3b06e686d13c806dd54ac1717d338bb3f7f4b20cc5de1d6cb8a182f6ef",
+     "bytes": 139532,
+     "local_path": "images/1e5081c17fe65ae2f3cfb237.jpg",
+     "source_url": "https://t4c.coupangcdn.com/thumbnails/remote/1024x1024/image/eats_api/bf3c/4c8714e57cd1f24fad31ef5a5b970b9e0821370081d4cfa1fe1a3603b2db.jpg",
+     "rights_status": "미확인"
+    },
+    {
+     "sort_order": 1,
+     "source_position": 1,
+     "object_path": "stores/9d5acc03-45c5-581b-a657-22ee8773b28c-7faea69c.jpg",
+     "sha256": "7faea69c91b29d0ac69d0a92e5218831a68dfca8fc85129460d8315a71853be8",
+     "bytes": 55653,
+     "local_path": "images/0a5e1e76f076a561de596156.jpg",
+     "source_url": "https://t4a.coupangcdn.com/thumbnails/remote/1024x1024/image/eats_api/f06f/a2d01a5989758dc785185f17020379194758b9a7a56f5d688fe6e0e7e344.jpg",
+     "rights_status": "미확인"
+    },
+    {
+     "sort_order": 2,
+     "source_position": 3,
+     "object_path": "stores/9d5acc03-45c5-581b-a657-22ee8773b28c-b11c62d0.jpg",
+     "sha256": "b11c62d079b7904723763db8ca81d4ec31b040d81163f7491bbbeb12e1155640",
+     "bytes": 134768,
+     "local_path": "images/9638f5723ec6f9c146522577.jpg",
+     "source_url": "https://t4a.coupangcdn.com/thumbnails/remote/1024x1024/image/eats_api/00b2/b0054dd8b88191f8df4b4684785a897bf25e5b965885c3f02eb124e3474f.jpg",
+     "rights_status": "미확인"
+    },
+    {
+     "sort_order": 3,
+     "source_position": 4,
+     "object_path": "stores/9d5acc03-45c5-581b-a657-22ee8773b28c-e8dcb665.jpg",
+     "sha256": "e8dcb6651bfadf8b00da43857f26c0213061548633d5ea776c7a69b0717f0a2f",
+     "bytes": 133572,
+     "local_path": "images/a1fb889e2b44d4114b8e7fc9.jpg",
+     "source_url": "https://t5a.coupangcdn.com/thumbnails/remote/1024x1024/image/eats_api/b840/971d65600042047d96a44d47613a8c04acb2a131fbe00859618ae8c1ee64.jpg",
+     "rights_status": "미확인"
+    },
+    {
+     "sort_order": 4,
+     "source_position": 5,
+     "object_path": "stores/9d5acc03-45c5-581b-a657-22ee8773b28c-0c48f2ba.jpg",
+     "sha256": "0c48f2bab018447189ba88bab9d58642983196feca1c8ab380440e4e31655426",
+     "bytes": 144380,
+     "local_path": "images/22ed9db17d78bf8cd6c9e480.jpg",
+     "source_url": "https://t5c.coupangcdn.com/thumbnails/remote/1024x1024/image/eats_api/d78d/5d8b39adb6bff3eb3ebf71afef30b57175700c22bde23177671d0459ca4a.jpg",
+     "rights_status": "미확인"
+    },
+    {
+     "sort_order": 5,
+     "source_position": 6,
+     "object_path": "stores/9d5acc03-45c5-581b-a657-22ee8773b28c-47ef660c.jpg",
+     "sha256": "47ef660c4b4f96a0804e87c79192c3bf3443eb35067b7380808e27a78c987cde",
+     "bytes": 144715,
+     "local_path": "images/be96ef176e8696c6b6e6d0f8.jpg",
+     "source_url": "https://t2a.coupangcdn.com/thumbnails/remote/1024x1024/image/eats_api/bde8/4f84cc4f1d7ff799737f59f066f8f9794d2597709ac60792f7815a3abdb3.jpg",
+     "rights_status": "미확인"
+    }
+   ]
+  },
+  {
+   "key": "baeksojeong",
+   "store_id": "80b4c10d-a815-51d9-add1-e10cc962cf37",
+   "store_name": "백소정",
+   "branch_name": "백소정 광화문점",
+   "source_store_id": 797274,
+   "source_field": "store.get_store_with_menu:data.imagePaths",
+   "representative_source_position": 1,
+   "representative_basis": "first source photo; food visible in the 16:9 card crop",
+   "photos": [
+    {
+     "sort_order": 0,
+     "source_position": 1,
+     "object_path": "stores/80b4c10d-a815-51d9-add1-e10cc962cf37-379eb12e.jpg",
+     "sha256": "379eb12ef29d930af4af05d34a2db0454aae2b9bbc9662e30aba3ec86eaf68a9",
+     "bytes": 155287,
+     "local_path": "images/638d44d446ae74fe94d4b988.jpg",
+     "source_url": "https://t2c.coupangcdn.com/thumbnails/remote/1024x1024/image/eats_api/8ff8/855d3c80070458ff6001d33d852560d77b7008f73c6ae0f5aa06fd860ac1.jpg",
+     "rights_status": "미확인"
+    },
+    {
+     "sort_order": 1,
+     "source_position": 2,
+     "object_path": "stores/80b4c10d-a815-51d9-add1-e10cc962cf37-44bb706d.jpg",
+     "sha256": "44bb706d01a27e9d6480edd4d3e1b078c224ce4219ddaa268327e4a2405f0bd7",
+     "bytes": 133212,
+     "local_path": "images/e120f201524628089a773170.jpg",
+     "source_url": "https://t2c.coupangcdn.com/thumbnails/remote/1024x1024/image/eats_api/6691/93b1e94f8a3d149d16e6d05c2477f95f12f680adde89c764295010f792d5.jpg",
+     "rights_status": "미확인"
+    },
+    {
+     "sort_order": 2,
+     "source_position": 3,
+     "object_path": "stores/80b4c10d-a815-51d9-add1-e10cc962cf37-2188fb85.jpg",
+     "sha256": "2188fb85b262c0de58ad80be9bb0d0895cc374406f6d79818189911b6a2471a2",
+     "bytes": 115086,
+     "local_path": "images/37afb8a2de1dc9d9b300d0a2.jpg",
+     "source_url": "https://t2a.coupangcdn.com/thumbnails/remote/1024x1024/image/eats_api/90dd/3880cc49246950289ef341cc062c62662f8366600dff112f476e66b03859.jpg",
+     "rights_status": "미확인"
+    }
+   ]
+  },
+  {
+   "key": "burgerking",
+   "store_id": "f754f737-104b-5eb1-a6d9-274023d60a64",
+   "store_name": "버거킹",
+   "branch_name": "버거킹 홍제역점",
+   "source_store_id": 138746,
+   "source_field": "store.get_store_with_menu:data.imagePaths",
+   "representative_source_position": 1,
+   "representative_basis": "first source photo; food visible in the 16:9 card crop",
+   "photos": [
+    {
+     "sort_order": 0,
+     "source_position": 1,
+     "object_path": "stores/f754f737-104b-5eb1-a6d9-274023d60a64-f276a3bc.jpg",
+     "sha256": "f276a3bcbf18de2563c0908254d1e2a1c0ea3747d3206c889acfab2764f2ca09",
+     "bytes": 148330,
+     "local_path": "images/f613a0ee8ab044060798dae8.jpg",
+     "source_url": "https://t3a.coupangcdn.com/thumbnails/remote/1024x1024/image/eats_api/7e52/dc0390052f6e4183732c74ef16d28470935826c58b29e0b8b9dd4d65376b.jpg",
+     "rights_status": "미확인"
+    },
+    {
+     "sort_order": 1,
+     "source_position": 2,
+     "object_path": "stores/f754f737-104b-5eb1-a6d9-274023d60a64-d1846cf4.jpg",
+     "sha256": "d1846cf4dce3c619f1968facc94b7972b2ee520747ad9ab29f5cbf6bc0d9a54a",
+     "bytes": 156086,
+     "local_path": "images/d08c84153d7f84569c2893db.jpg",
+     "source_url": "https://t1c.coupangcdn.com/thumbnails/remote/1024x1024/image/eats_api/9a91/b73924a8a1d36ac29e3844c2fd5c664af185b41edb97137f3d58318c8b32.jpg",
+     "rights_status": "미확인"
+    },
+    {
+     "sort_order": 2,
+     "source_position": 3,
+     "object_path": "stores/f754f737-104b-5eb1-a6d9-274023d60a64-a116539c.jpg",
+     "sha256": "a116539c3a05719f7990fddb08c23c4aef01dee166b92197b59fd0749a7b6a6e",
+     "bytes": 156547,
+     "local_path": "images/f9fdcf2ce7d585d175eb0780.jpg",
+     "source_url": "https://t1a.coupangcdn.com/thumbnails/remote/1024x1024/image/eats_api/2d84/79c42d9acd0082355b8a22a110100d636933df3f12fb5df02c4f0deef6a3.jpg",
+     "rights_status": "미확인"
+    }
+   ]
+  },
+  {
+   "key": "bobae",
+   "store_id": "ae4676a3-d07e-59c2-ac08-26dd7e8193fa",
+   "store_name": "보배반점",
+   "branch_name": "보배반점 응암점",
+   "source_store_id": 986756,
+   "source_field": "store.get_store_with_menu:data.imagePaths",
+   "representative_source_position": 1,
+   "representative_basis": "first source photo; food visible in the 16:9 card crop",
+   "photos": [
+    {
+     "sort_order": 0,
+     "source_position": 1,
+     "object_path": "stores/ae4676a3-d07e-59c2-ac08-26dd7e8193fa-db79e713.jpg",
+     "sha256": "db79e7134127e310d6cf14a4d2c3936ed81d9c6b47169765c02efdc2d182a81c",
+     "bytes": 166650,
+     "local_path": "images/6170b246bf4bb1dd93272553.jpg",
+     "source_url": "https://t2c.coupangcdn.com/thumbnails/remote/1024x1024/image/eats_catalog_tool/1e1f/328a9d175342e6d1018d211504abe150aec470ab5d1abf9811703b5f6203.jpg",
+     "rights_status": "미확인"
+    },
+    {
+     "sort_order": 1,
+     "source_position": 2,
+     "object_path": "stores/ae4676a3-d07e-59c2-ac08-26dd7e8193fa-5f8b7683.jpg",
+     "sha256": "5f8b76837db932937c3e098f52c3de6a0f7c93a8b061c62a7dddf9486cc07923",
+     "bytes": 251361,
+     "local_path": "images/9004aca96818d2c25fe6185a.jpg",
+     "source_url": "https://t1a.coupangcdn.com/thumbnails/remote/1024x1024/image/eats_api/0316/aaabf0c9b5871761cd7fd52fd2b02eebf8a4c4c94267902e0adc61bafc03.jpg",
+     "rights_status": "미확인"
+    },
+    {
+     "sort_order": 2,
+     "source_position": 3,
+     "object_path": "stores/ae4676a3-d07e-59c2-ac08-26dd7e8193fa-65304ea3.jpg",
+     "sha256": "65304ea33c58010f4b9730566e9120c5d4cea6b9b9ede9e443e87eb12c3a5597",
+     "bytes": 221778,
+     "local_path": "images/e207e6b6f9559b428a44a9bd.jpg",
+     "source_url": "https://t1c.coupangcdn.com/thumbnails/remote/1024x1024/image/eats_api/a97c/4c69110018fef373cd77576c0e5c76aa09393ad55c81d3e79e8724beca42.jpg",
+     "rights_status": "미확인"
+    },
+    {
+     "sort_order": 3,
+     "source_position": 4,
+     "object_path": "stores/ae4676a3-d07e-59c2-ac08-26dd7e8193fa-63318c06.jpg",
+     "sha256": "63318c06c44b2e0aaf20bb392d49ba738f7d38fffa3e496e36527ac4708b0c2b",
+     "bytes": 195355,
+     "local_path": "images/2ee1eda2a88bece7dd9768d9.jpg",
+     "source_url": "https://t2a.coupangcdn.com/thumbnails/remote/1024x1024/image/eats_api/ffa7/52bb267a6f5928b6a3b5407e81c9ae1017553b05112f52688138e91ea9be.jpg",
+     "rights_status": "미확인"
+    }
+   ]
+  },
+  {
+   "key": "sulbing",
+   "store_id": "3ddc0b28-61f6-5531-a1c8-1a9f8d08404a",
+   "store_name": "설빙",
+   "branch_name": "설빙 홍제역점",
+   "source_store_id": 1007875,
+   "source_field": "store.get_store_with_menu:data.imagePaths",
+   "representative_source_position": 1,
+   "representative_basis": "first source photo; food visible in the 16:9 card crop",
+   "photos": [
+    {
+     "sort_order": 0,
+     "source_position": 1,
+     "object_path": "stores/3ddc0b28-61f6-5531-a1c8-1a9f8d08404a-641a0855.jpg",
+     "sha256": "641a0855fec79b6ef2665b04b0ce5b92a20052b02e59d07934352dfabf6acec1",
+     "bytes": 56177,
+     "local_path": "images/85d0afc1330f08e729c23dc1.jpg",
+     "source_url": "https://t4c.coupangcdn.com/thumbnails/remote/1024x1024/image/eats_api/8440/7eb9dd8671817aafef9b3555b06bcc3c70a8d1ac4745a9e73e653d4d2689.jpg",
+     "rights_status": "미확인"
+    },
+    {
+     "sort_order": 1,
+     "source_position": 2,
+     "object_path": "stores/3ddc0b28-61f6-5531-a1c8-1a9f8d08404a-841d4537.jpg",
+     "sha256": "841d45370efcedb4379e7d935d8fb9edbb2c1760c5d444042464f0b1dc96ee8a",
+     "bytes": 78735,
+     "local_path": "images/a77563296f6f265a9d771a85.jpg",
+     "source_url": "https://t5c.coupangcdn.com/thumbnails/remote/1024x1024/image/eats_api/e9fe/73ebc9d5530b56f534f5d79b77778394949d480d63c06ba2273bde557da4.jpg",
+     "rights_status": "미확인"
+    }
+   ]
+  },
+  {
+   "key": "hansot",
+   "store_id": "5ab234b5-79cd-58a6-ab73-0b14376ad985",
+   "store_name": "한솥도시락",
+   "branch_name": "한솥도시락 명지대점",
+   "source_store_id": 544628,
+   "source_field": "store.get_store_with_menu:data.imagePaths",
+   "representative_source_position": 1,
+   "representative_basis": "first source photo; food visible in the 16:9 card crop",
+   "photos": [
+    {
+     "sort_order": 0,
+     "source_position": 1,
+     "object_path": "stores/5ab234b5-79cd-58a6-ab73-0b14376ad985-9813ba07.jpg",
+     "sha256": "9813ba0742c78c300bae62adea3b2e7bf6532f24a4d5fa11c93eba8c218988e1",
+     "bytes": 187309,
+     "local_path": "images/530fefe0422df7f5839036ea.jpg",
+     "source_url": "https://t1c.coupangcdn.com/thumbnails/remote/1024x1024/image/eats_api/4c38/4beceac231afbfdcb4653a65086af51b23dee963d796cd0574298f1cc676.jpg",
+     "rights_status": "미확인"
+    },
+    {
+     "sort_order": 1,
+     "source_position": 2,
+     "object_path": "stores/5ab234b5-79cd-58a6-ab73-0b14376ad985-9202895e.jpg",
+     "sha256": "9202895efaf4f100348a05afe8bff3f2ac626ba7fb0b13ce9bb9fb93239e62ca",
+     "bytes": 287103,
+     "local_path": "images/8f3dc0221d7a4fe0c54278f1.jpg",
+     "source_url": "https://t1a.coupangcdn.com/thumbnails/remote/1024x1024/image/eats_api/de5e/4e62c5801951927fb03ba292ca5c02bc89ec01159a36115659afd86b882c.jpg",
+     "rights_status": "미확인"
+    },
+    {
+     "sort_order": 2,
+     "source_position": 3,
+     "object_path": "stores/5ab234b5-79cd-58a6-ab73-0b14376ad985-29e03760.jpg",
+     "sha256": "29e037605b3fe872706185711ea400b5ed4033799b1db5f19fa280bb628a8997",
+     "bytes": 168460,
+     "local_path": "images/adf17b74a816dfd1cdda7ff6.jpg",
+     "source_url": "https://t3a.coupangcdn.com/thumbnails/remote/1024x1024/image/eats_api/ac1a/dc2915b82f69da0810dc29d6b075331f332fafd2636865350500c8652e4e.jpg",
+     "rights_status": "미확인"
+    },
+    {
+     "sort_order": 3,
+     "source_position": 4,
+     "object_path": "stores/5ab234b5-79cd-58a6-ab73-0b14376ad985-eb97366e.jpg",
+     "sha256": "eb97366ef37213c3100f7830f9b9d6a1e39564c9a3876b8db77ac029ff71e16d",
+     "bytes": 242663,
+     "local_path": "images/e491ff637049f5bfa7d83be8.jpg",
+     "source_url": "https://t3c.coupangcdn.com/thumbnails/remote/1024x1024/image/eats_api/b752/4c3b67a3562fb79c01f8015c8044d19578e131e5b8b231966d8a0386193b.jpg",
+     "rights_status": "미확인"
+    }
+   ]
+  },
+  {
+   "key": "bhc",
+   "store_id": "a3fa9f76-e7c1-568b-a59a-39c70b0084f9",
+   "store_name": "BHC",
+   "branch_name": "BHC 홍은점",
+   "source_store_id": 820833,
+   "source_field": "store.get_store_with_menu:data.imagePaths",
+   "representative_source_position": 1,
+   "representative_basis": "first source photo; food visible in the 16:9 card crop",
+   "photos": [
+    {
+     "sort_order": 0,
+     "source_position": 1,
+     "object_path": "stores/a3fa9f76-e7c1-568b-a59a-39c70b0084f9-2908bbbd.jpg",
+     "sha256": "2908bbbd2b112cc55199f31018966c80f66b761210b9d2042e32faecc123591d",
+     "bytes": 146284,
+     "local_path": "images/8e4f1af95c785b4a76b52ee3.jpg",
+     "source_url": "https://t4a.coupangcdn.com/thumbnails/remote/1024x1024/image/eats_api/f42d/58238bd90232e8302b46ad347c1cb21584ab7c94b3e7574acc7f0297a9ed.jpg",
+     "rights_status": "미확인"
+    },
+    {
+     "sort_order": 1,
+     "source_position": 2,
+     "object_path": "stores/a3fa9f76-e7c1-568b-a59a-39c70b0084f9-0de1a192.jpg",
+     "sha256": "0de1a192ceabc7b8594d5cdfd8b1632baef5c69c58ee917a8c397016e4d584cc",
+     "bytes": 151302,
+     "local_path": "images/e1bf3eb5126a3c8c0f668931.jpg",
+     "source_url": "https://t5c.coupangcdn.com/thumbnails/remote/1024x1024/image/eats_api/333a/c2897caa6d4c1218292d560d982dccd4186c12db50535c86eb2adda35fa1.jpg",
+     "rights_status": "미확인"
+    },
+    {
+     "sort_order": 2,
+     "source_position": 3,
+     "object_path": "stores/a3fa9f76-e7c1-568b-a59a-39c70b0084f9-7995af68.jpg",
+     "sha256": "7995af68389dfa6a34ed8ea5bbc2f026c4498304ad8709ae56070870f64b862e",
+     "bytes": 162939,
+     "local_path": "images/86628b9a29d31c4744a3f39a.jpg",
+     "source_url": "https://t5a.coupangcdn.com/thumbnails/remote/1024x1024/image/eats_api/0843/18536624ed248cd772be8c665c875029c28086e559c951cc8440d8939652.jpg",
+     "rights_status": "미확인"
+    },
+    {
+     "sort_order": 3,
+     "source_position": 4,
+     "object_path": "stores/a3fa9f76-e7c1-568b-a59a-39c70b0084f9-50313505.jpg",
+     "sha256": "50313505d3aab882a4800566815af53378226c5cd088cc6c883e2f7ab720e57e",
+     "bytes": 151655,
+     "local_path": "images/e39e5dc3810fc4a170d4af8e.jpg",
+     "source_url": "https://t3a.coupangcdn.com/thumbnails/remote/1024x1024/image/eats_api/2886/c7208673117345ddbb0f90a61df390aaca146a0fcf53e7751e39c21ba00d.jpg",
+     "rights_status": "미확인"
+    },
+    {
+     "sort_order": 4,
+     "source_position": 5,
+     "object_path": "stores/a3fa9f76-e7c1-568b-a59a-39c70b0084f9-b892c439.jpg",
+     "sha256": "b892c439666cea4984d857e520af227f9b79794b1e2d4526d889580c2ffefe82",
+     "bytes": 161385,
+     "local_path": "images/8347ea88c9077f24872725e7.jpg",
+     "source_url": "https://t4a.coupangcdn.com/thumbnails/remote/1024x1024/image/eats_api/c71e/b97bc397fa945d49756cae0c8c03523771d4e740f6def415e0fa081329f1.jpg",
+     "rights_status": "미확인"
+    }
+   ]
+  },
+  {
+   "key": "momstouch",
+   "store_id": "3ae1ca12-9429-5b13-aaef-41eda941b451",
+   "store_name": "맘스터치",
+   "branch_name": "맘스터치 홍제역점",
+   "source_store_id": 691248,
+   "source_field": "store.get_store_with_menu:data.imagePaths",
+   "representative_source_position": 1,
+   "representative_basis": "first source photo; food visible in the 16:9 card crop",
+   "photos": [
+    {
+     "sort_order": 0,
+     "source_position": 1,
+     "object_path": "stores/3ae1ca12-9429-5b13-aaef-41eda941b451-3c71ebbf.jpg",
+     "sha256": "3c71ebbf9fac91e0c7aa7a7753875e6a2b92bcfb73343b40e027619a77834f6b",
+     "bytes": 129759,
+     "local_path": "images/60046f1ac7eed753665710f2.jpg",
+     "source_url": "https://t2a.coupangcdn.com/thumbnails/remote/1024x1024/image/eats_api/b54f/f012b49499e49cbc00897e6dbeaf8f940179f3242a58fb6ca5139f122301.jpg",
+     "rights_status": "미확인"
+    },
+    {
+     "sort_order": 1,
+     "source_position": 2,
+     "object_path": "stores/3ae1ca12-9429-5b13-aaef-41eda941b451-862c2a4f.jpg",
+     "sha256": "862c2a4f70d03e7c53a3c7976472b70f0a47d0d4cf7fe874da64b450b164df39",
+     "bytes": 129983,
+     "local_path": "images/56eb4c8a0f7ab41a88d114f8.jpg",
+     "source_url": "https://t4a.coupangcdn.com/thumbnails/remote/1024x1024/image/eats_api/ccf5/e65a0f321b9fbcbec83894c115f204b79d0ca68fbf93c3fe7def87afd49d.jpg",
+     "rights_status": "미확인"
+    },
+    {
+     "sort_order": 2,
+     "source_position": 3,
+     "object_path": "stores/3ae1ca12-9429-5b13-aaef-41eda941b451-033efe97.jpg",
+     "sha256": "033efe978354ca166773d7b0d098d8da4dde3e378afac1ac6bf5f132f1765f92",
+     "bytes": 110063,
+     "local_path": "images/512b5f2ad59bcca6a690f729.jpg",
+     "source_url": "https://t2c.coupangcdn.com/thumbnails/remote/1024x1024/image/eats_api/fb3e/d3c8b78d64dea84304f9a22d4339f41b8db0aa88014a502cfe2346f59d1b.jpg",
+     "rights_status": "미확인"
+    },
+    {
+     "sort_order": 3,
+     "source_position": 4,
+     "object_path": "stores/3ae1ca12-9429-5b13-aaef-41eda941b451-356be975.jpg",
+     "sha256": "356be975532490cab9e9b5f43d87815efe50249367dfc795e66ab7f7323462fa",
+     "bytes": 75762,
+     "local_path": "images/26734e5473a6eeffaf2a09f9.jpg",
+     "source_url": "https://t1c.coupangcdn.com/thumbnails/remote/1024x1024/image/eats_api/9df7/f9ed4b24c1404c10fa91d4d2875d2703a2ff89973fb742bccfd7acdc738f.jpg",
+     "rights_status": "미확인"
+    },
+    {
+     "sort_order": 4,
+     "source_position": 5,
+     "object_path": "stores/3ae1ca12-9429-5b13-aaef-41eda941b451-a4611cdc.jpg",
+     "sha256": "a4611cdc5a7a6e7be6a3bbd27e95d9a6c7f44d6b21f18c2daf3c7df4f4e2a4aa",
+     "bytes": 92046,
+     "local_path": "images/6d325cd26ff150ef0cb5bff8.jpg",
+     "source_url": "https://t5c.coupangcdn.com/thumbnails/remote/1024x1024/image/eats_api/edad/aae2044b1b36908e49fb973378de455f5a06d4b031410830214a00ac67bd.jpg",
+     "rights_status": "미확인"
+    }
+   ]
+  },
+  {
+   "key": "megamgc",
+   "store_id": "7dff7e39-2b54-584e-a981-06a1f54b5d76",
+   "store_name": "메가MGC커피",
+   "branch_name": "메가MGC커피 홍제홍은벽산점",
+   "source_store_id": 953211,
+   "source_field": "store.get_store_with_menu:data.imagePaths",
+   "representative_source_position": 1,
+   "representative_basis": "first source photo; food visible in the 16:9 card crop",
+   "photos": [
+    {
+     "sort_order": 0,
+     "source_position": 1,
+     "object_path": "stores/7dff7e39-2b54-584e-a981-06a1f54b5d76-83417c33.jpg",
+     "sha256": "83417c337c1634e33bfdfcca16f72fd8be8435c422d8809098d9cd10fbb638bc",
+     "bytes": 57605,
+     "local_path": "images/1cadad65fb302785857a610b.jpg",
+     "source_url": "https://t4a.coupangcdn.com/thumbnails/remote/1024x1024/image/eats_api/352c/904ca11762136b8b816134b8577fc3c466ee214f3beb7fd99b2a9bfc63d6.jpg",
+     "rights_status": "미확인"
+    },
+    {
+     "sort_order": 1,
+     "source_position": 2,
+     "object_path": "stores/7dff7e39-2b54-584e-a981-06a1f54b5d76-ca42ec67.jpg",
+     "sha256": "ca42ec676de82aedbe124f5d925c91a8ab5bb929a8049e3aac0786cecc825420",
+     "bytes": 63509,
+     "local_path": "images/6f398266b7b31f903a154267.jpg",
+     "source_url": "https://t2c.coupangcdn.com/thumbnails/remote/1024x1024/image/eats_api/d2eb/fa1b6abe779bf14ee40ab54312b6d4e1fd7849959541f115031fbd22c2b1.jpg",
+     "rights_status": "미확인"
+    },
+    {
+     "sort_order": 2,
+     "source_position": 3,
+     "object_path": "stores/7dff7e39-2b54-584e-a981-06a1f54b5d76-82ac20cc.jpg",
+     "sha256": "82ac20cc735c74bbbc1b5dd1826fc1e07e0b5fbd747b519391061284d09f8014",
+     "bytes": 70721,
+     "local_path": "images/cb356caa0d2322c710f335f1.jpg",
+     "source_url": "https://t2a.coupangcdn.com/thumbnails/remote/1024x1024/image/eats_api/ebce/3b424166885411a0945d32626565e4c5653a0f62ff16b68a05fac9f1aabc.jpg",
+     "rights_status": "미확인"
+    }
+   ]
+  },
+  {
+   "key": "misoya",
+   "store_id": "0d37a1b6-46b7-5d50-a72b-2c619736941f",
+   "store_name": "미소야",
+   "branch_name": "미소야 구산역점",
+   "source_store_id": 974233,
+   "source_field": "store.get_store_with_menu:data.imagePaths",
+   "representative_source_position": 1,
+   "representative_basis": "first source photo; food visible in the 16:9 card crop",
+   "photos": [
+    {
+     "sort_order": 0,
+     "source_position": 1,
+     "object_path": "stores/0d37a1b6-46b7-5d50-a72b-2c619736941f-71767378.jpg",
+     "sha256": "71767378eb0eb51ac680441c45fd7d90edc3e0ab54d68289979486315f739044",
+     "bytes": 213284,
+     "local_path": "images/57053f3d8a94bf6195ac1608.jpg",
+     "source_url": "https://t4c.coupangcdn.com/thumbnails/remote/1024x1024/image/eats_api/4dbd/e7e5bdd58fd50311984bd2cb0fc9230f541306f768d047727a298df43b43.jpg",
+     "rights_status": "미확인"
+    },
+    {
+     "sort_order": 1,
+     "source_position": 2,
+     "object_path": "stores/0d37a1b6-46b7-5d50-a72b-2c619736941f-70f0c6b9.jpg",
+     "sha256": "70f0c6b99f4aec9eb75d15b04a311e3264c2040be9d9fdf96bb681a8400a58a0",
+     "bytes": 228541,
+     "local_path": "images/939dc5471d6cb51a026c0138.jpg",
+     "source_url": "https://t1a.coupangcdn.com/thumbnails/remote/1024x1024/image/eats_api/a172/598b76ebafa7045ee0caca1edcda08a14159dd7962ea006d212f46221ea0.jpg",
+     "rights_status": "미확인"
+    },
+    {
+     "sort_order": 2,
+     "source_position": 3,
+     "object_path": "stores/0d37a1b6-46b7-5d50-a72b-2c619736941f-45c318ff.jpg",
+     "sha256": "45c318ff76cc93146f30e93c2d685ae832d021caf3f0e3142e08a242be8e1457",
+     "bytes": 190653,
+     "local_path": "images/f175d9359620c70c2dd0d896.jpg",
+     "source_url": "https://t5c.coupangcdn.com/thumbnails/remote/1024x1024/image/eats_api/c163/28ca1104695953be383c97a458741aadf340859be5dcc212889d34d16da3.jpg",
+     "rights_status": "미확인"
+    }
+   ]
+  },
+  {
+   "key": "bonjuk",
+   "store_id": "23fbc09f-d03f-5d87-a0b7-d8b4d3d8b989",
+   "store_name": "본죽&비빔밥",
+   "branch_name": "본죽&비빔밥 홍은1동점",
+   "source_store_id": 551269,
+   "source_field": "store.get_store_with_menu:data.imagePaths",
+   "representative_source_position": 1,
+   "representative_basis": "first source photo; food visible in the 16:9 card crop",
+   "photos": [
+    {
+     "sort_order": 0,
+     "source_position": 1,
+     "object_path": "stores/23fbc09f-d03f-5d87-a0b7-d8b4d3d8b989-09e824e9.jpg",
+     "sha256": "09e824e9208a6d1f572bd1d708a53b3a4d4ea013d8703766119548a9d9488597",
+     "bytes": 131965,
+     "local_path": "images/163322cfd94acc3d75c9f8c5.jpg",
+     "source_url": "https://t4a.coupangcdn.com/thumbnails/remote/1024x1024/image/eats_api/7716/2026d4ffb96c27a530971c9eac0fe1af96c995dad522ccfc8920410eae1d.jpg",
+     "rights_status": "미확인"
+    },
+    {
+     "sort_order": 1,
+     "source_position": 2,
+     "object_path": "stores/23fbc09f-d03f-5d87-a0b7-d8b4d3d8b989-1b08388c.jpg",
+     "sha256": "1b08388caad1c33a179ee885823ea27d0ebf48ea93c22174d3159b7eb32c7a70",
+     "bytes": 129578,
+     "local_path": "images/bae81c2faf5cbc8b9425a15f.jpg",
+     "source_url": "https://t4a.coupangcdn.com/thumbnails/remote/1024x1024/image/eats_api/b347/16e4ef8234c58413faa4ed1491212ab5f7c369c1aeea6940acfe8c66d826.jpg",
+     "rights_status": "미확인"
+    },
+    {
+     "sort_order": 2,
+     "source_position": 3,
+     "object_path": "stores/23fbc09f-d03f-5d87-a0b7-d8b4d3d8b989-9ee70c40.jpg",
+     "sha256": "9ee70c40aa5c453122f80baa6f0a1c2c177bc40f7a13bee5bc977626651da5c2",
+     "bytes": 131010,
+     "local_path": "images/73a97b48df33e87416c6bcab.jpg",
+     "source_url": "https://t3a.coupangcdn.com/thumbnails/remote/1024x1024/image/eats_api/1be8/41b616c40a26b7fd90095edb7c12455956e7974b460958df2aba902a1ed6.jpg",
+     "rights_status": "미확인"
+    },
+    {
+     "sort_order": 3,
+     "source_position": 4,
+     "object_path": "stores/23fbc09f-d03f-5d87-a0b7-d8b4d3d8b989-eed023e6.jpg",
+     "sha256": "eed023e6533138c52042f31708280a9364f9e39592360d0388d98cfff203a496",
+     "bytes": 119137,
+     "local_path": "images/c30704616c5b78f2651448f0.jpg",
+     "source_url": "https://t3c.coupangcdn.com/thumbnails/remote/1024x1024/image/eats_api/d04d/d40b498ce2d6751efea4e06f7924c8fb2812dfda7f66b7e550ba17d94cb6.jpg",
+     "rights_status": "미확인"
+    }
+   ]
+  },
+  {
+   "key": "sinjeon",
+   "store_id": "d84d5228-135a-5e51-a35d-6dea5513c9d8",
+   "store_name": "신전떡볶이",
+   "branch_name": "신전떡볶이 상명대점",
+   "source_store_id": 140048,
+   "source_field": "store.get_store_with_menu:data.imagePaths",
+   "representative_source_position": 1,
+   "representative_basis": "first source photo; food visible in the 16:9 card crop",
+   "photos": [
+    {
+     "sort_order": 0,
+     "source_position": 1,
+     "object_path": "stores/d84d5228-135a-5e51-a35d-6dea5513c9d8-f295bb9c.jpg",
+     "sha256": "f295bb9c2927adcf5a93f269cd87cd71ab6ebaedf9bb318cd0e0c6db39933665",
+     "bytes": 236152,
+     "local_path": "images/bcfa06dfba3fbc4dd2b3c61c.jpg",
+     "source_url": "https://t2c.coupangcdn.com/thumbnails/remote/1024x1024/image/eats_api/8df8/0e886a4eac54d3ff0faebb7156c7ebc055ea0946ec3b551edef10584f4a9.jpg",
+     "rights_status": "미확인"
+    },
+    {
+     "sort_order": 1,
+     "source_position": 2,
+     "object_path": "stores/d84d5228-135a-5e51-a35d-6dea5513c9d8-ca69b934.jpg",
+     "sha256": "ca69b9342862d88747a0548cb41b2ed83c148aba6229dd2fa3803a5aa10dfece",
+     "bytes": 261549,
+     "local_path": "images/9666215915e11f4393c023dc.jpg",
+     "source_url": "https://t3c.coupangcdn.com/thumbnails/remote/1024x1024/image/eats_api/1226/482e7f7ff7d74dd08ba1e13dcfeadccb4ec93c37545d2bf70282696b74e8.jpg",
+     "rights_status": "미확인"
+    },
+    {
+     "sort_order": 2,
+     "source_position": 3,
+     "object_path": "stores/d84d5228-135a-5e51-a35d-6dea5513c9d8-a677a240.jpg",
+     "sha256": "a677a240fb8a483f00ddf5821514703371c37e6527ce57281d9111160c63b3f0",
+     "bytes": 164119,
+     "local_path": "images/4c05a584099bfb2b88c6f139.jpg",
+     "source_url": "https://t4a.coupangcdn.com/thumbnails/remote/1024x1024/image/eats_api/d5a8/05c437c8943f58c291c1f3de6569e206f4fdc6544d6e8b99b6773079f69e.jpg",
+     "rights_status": "미확인"
+    }
+   ]
+  },
+  {
+   "key": "jjambbongjizon",
+   "store_id": "8b6c40b5-ff06-5f3d-a6f8-0d359246ff88",
+   "store_name": "짬뽕지존",
+   "branch_name": "짬뽕지존 연신내점",
+   "source_store_id": 836082,
+   "source_field": "store.get_store_with_menu:data.imagePaths",
+   "representative_source_position": 1,
+   "representative_basis": "first source photo; food visible in the 16:9 card crop",
+   "photos": [
+    {
+     "sort_order": 0,
+     "source_position": 1,
+     "object_path": "stores/8b6c40b5-ff06-5f3d-a6f8-0d359246ff88-1d0cf8d3.jpg",
+     "sha256": "1d0cf8d3c5899cf2135c88f5ff3f17d769a2ee714b6e71e813597b18702ecbc1",
+     "bytes": 184009,
+     "local_path": "images/d3895d7765d640a2d70ce82c.jpg",
+     "source_url": "https://t5c.coupangcdn.com/thumbnails/remote/1024x1024/image/eats_api/e284/c5ed89df0e118bc83ff86c0f785d3d5e63fa6d7d7292b2869c9abe8ea432.jpg",
+     "rights_status": "미확인"
+    },
+    {
+     "sort_order": 1,
+     "source_position": 2,
+     "object_path": "stores/8b6c40b5-ff06-5f3d-a6f8-0d359246ff88-61e0245c.jpg",
+     "sha256": "61e0245cc947a2e12c32bae87132c1e8115422d0ae9ad6bbb173c30ed2f2292a",
+     "bytes": 215645,
+     "local_path": "images/293b452d2a7e2487be181608.jpg",
+     "source_url": "https://t3c.coupangcdn.com/thumbnails/remote/1024x1024/image/eats_api/7a14/6c5e621f1d6e059576605f14f82effdf91df13f58b8ccba9e7caa2310fa4.jpg",
+     "rights_status": "미확인"
+    },
+    {
+     "sort_order": 2,
+     "source_position": 3,
+     "object_path": "stores/8b6c40b5-ff06-5f3d-a6f8-0d359246ff88-0a085bca.jpg",
+     "sha256": "0a085bca9e28223cf3babdb63a2f24cab7f9ec71016a9b2f6c045491ddfb5e07",
+     "bytes": 99237,
+     "local_path": "images/42af408438efb96c9a711510.jpg",
+     "source_url": "https://t3a.coupangcdn.com/thumbnails/remote/1024x1024/image/eats_api/4d34/8731d74ee279b00b81730028c5312dc52036a9bdedf287e8b323cfbad20b.jpg",
+     "rights_status": "미확인"
+    },
+    {
+     "sort_order": 3,
+     "source_position": 4,
+     "object_path": "stores/8b6c40b5-ff06-5f3d-a6f8-0d359246ff88-3cebc089.jpg",
+     "sha256": "3cebc08945b7bf23ca27410a4eca2cd5b6c5995744bb53f33d7a27df5bc82bab",
+     "bytes": 137762,
+     "local_path": "images/9c86a92aa2765cdef3b70017.jpg",
+     "source_url": "https://t3a.coupangcdn.com/thumbnails/remote/1024x1024/image/eats_catalog_tool/404b/f8c83d224924d926af0584061b41c3bf16cabdadb552f4a7248915f0a219.jpg",
+     "rights_status": "미확인"
+    },
+    {
+     "sort_order": 4,
+     "source_position": 5,
+     "object_path": "stores/8b6c40b5-ff06-5f3d-a6f8-0d359246ff88-fb3e03e4.jpg",
+     "sha256": "fb3e03e4287d59769cb33197aa653829297714f7f80596e701f20a87dfb033b7",
+     "bytes": 143333,
+     "local_path": "images/a26ae3e4ed22c13b9d0bdc92.jpg",
+     "source_url": "https://t5a.coupangcdn.com/thumbnails/remote/1024x1024/image/eats_catalog_tool/0b7d/9743cc81bb4e5c0736e08afacecb963c14dacaf32257a1bcdc36d43f8c6c.jpg",
+     "rights_status": "미확인"
+    }
+   ]
+  },
+  {
+   "key": "pizzaschool",
+   "store_id": "b6322307-c104-5044-a048-ac4c96a5409b",
+   "store_name": "피자스쿨",
+   "branch_name": "피자스쿨 문화촌점",
+   "source_store_id": 371212,
+   "source_field": "store.get_store_with_menu:data.imagePaths",
+   "representative_source_position": 1,
+   "representative_basis": "first source photo; food visible in the 16:9 card crop",
+   "photos": [
+    {
+     "sort_order": 0,
+     "source_position": 1,
+     "object_path": "stores/b6322307-c104-5044-a048-ac4c96a5409b-ff22956c.jpg",
+     "sha256": "ff22956cc2e203e94d333b65d170445f28610a5dc8efbc2fe813eb4cddbb93ea",
+     "bytes": 170124,
+     "local_path": "images/dd75f5a6ee5571c8dbdc3e89.jpg",
+     "source_url": "https://t2a.coupangcdn.com/thumbnails/remote/1024x1024/image/eats_api/f167/d2397463eb94fdbd3e4ff28d6788c22dda595c96641e09f3844d67ec5dae.jpg",
+     "rights_status": "미확인"
+    },
+    {
+     "sort_order": 1,
+     "source_position": 2,
+     "object_path": "stores/b6322307-c104-5044-a048-ac4c96a5409b-0620005e.jpg",
+     "sha256": "0620005e54f2447a501c354fac3cf76dd88c105299f3de3f68d2a505557953e4",
+     "bytes": 103576,
+     "local_path": "images/a74e165ed1a207cc15d962c8.jpg",
+     "source_url": "https://t4c.coupangcdn.com/thumbnails/remote/1024x1024/image/eats_api/9f18/a01cea2e8fb2af34c4dca297ab0643a074f02e3d6843f635fca598d828b9.jpg",
+     "rights_status": "미확인"
+    },
+    {
+     "sort_order": 2,
+     "source_position": 3,
+     "object_path": "stores/b6322307-c104-5044-a048-ac4c96a5409b-2bccb2c0.jpg",
+     "sha256": "2bccb2c02185422d4f1970a299f3ce66e49fcc5beb3d04b2c66963b50ae86574",
+     "bytes": 173953,
+     "local_path": "images/155ff6c2a1760f4de8c2f821.jpg",
+     "source_url": "https://t2a.coupangcdn.com/thumbnails/remote/1024x1024/image/eats_api/df8f/328b80a543e86c9ae12f4cdebc6235a878613fd0a9cb8914314c168cd399.jpg",
+     "rights_status": "미확인"
+    },
+    {
+     "sort_order": 3,
+     "source_position": 4,
+     "object_path": "stores/b6322307-c104-5044-a048-ac4c96a5409b-bec07050.jpg",
+     "sha256": "bec07050ada569bcbfa9f3faab7631d2014cb10bb1cec228fa0c991cb9553d9d",
+     "bytes": 93743,
+     "local_path": "images/038c4f8d927ab019a129db10.jpg",
+     "source_url": "https://t3a.coupangcdn.com/thumbnails/remote/1024x1024/image/eats_api/8232/599a3755693e8155296c8253789b5479129784e5c6dc736e4ce158378e09.jpg",
+     "rights_status": "미확인"
+    },
+    {
+     "sort_order": 4,
+     "source_position": 5,
+     "object_path": "stores/b6322307-c104-5044-a048-ac4c96a5409b-070c198c.jpg",
+     "sha256": "070c198c7d2f4dbf33c499233e679cd390b2e2fd8696fe5f8c19e6bd564da2d5",
+     "bytes": 91092,
+     "local_path": "images/43ac0a1421595674b8f5ffae.jpg",
+     "source_url": "https://t2c.coupangcdn.com/thumbnails/remote/1024x1024/image/eats_api/ac30/5319b948575c9dddbc86a22dd96ffc8269c051cb61470f842d93c1c386f3.jpg",
+     "rights_status": "미확인"
+    }
+   ]
+  }
+ ]
+}

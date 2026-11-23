@@ -25,17 +25,20 @@ test('기존 UUID 경로와 가게 사진 경로는 그대로 공개 URL로 바�
   assert.equal(resolveImageUrl(`menus/${id}.jpg`), `${BASE}menus/${id}.jpg`);
   assert.equal(resolveImageUrl(`menus/${id}.PNG`), `${BASE}menus/${id}.PNG`);
   assert.equal(resolveImageUrl(`stores/${id}.jpeg`), `${BASE}stores/${id}.jpeg`);
+  assert.equal(resolveImageUrl(`stores/${id}.png`), `${BASE}stores/${id}.png`);
 });
 
 test('교체 사진의 해시 접미사 경로를 허용한다', () => {
   const id = '6854fd60-0e8c-5461-ad4c-1818ecd3c76a';
   assert.equal(resolveImageUrl(`menus/${id}-5ec9105f.jpg`), `${BASE}menus/${id}-5ec9105f.jpg`);
   assert.equal(resolveImageUrl(`menus/${id}-2dd2953e.png`), `${BASE}menus/${id}-2dd2953e.png`);
+  // 가게 대표·갤러리 사진도 같은 모양(별도 경로, 파일마다 다른 해시)
+  assert.equal(resolveImageUrl(`stores/${id}-9b4a6d1a.jpg`), `${BASE}stores/${id}-9b4a6d1a.jpg`);
 });
 
 test('좁은 검사 유지: 이상한 경로·접미사는 null, 사진 없음(NULL)도 null', () => {
   const id = '6854fd60-0e8c-5461-ad4c-1818ecd3c76a';
-  for (const bad of [null, '', `menus/${id}-5ec9105.jpg`, `menus/${id}-5ec9105fa.jpg`, `menus/${id}-5ec9105g.jpg`, `menus/${id}-5ec9105f-5ec9105f.jpg`, `stores/${id}-5ec9105f.jpg`,
+  for (const bad of [null, '', `menus/${id}-5ec9105.jpg`, `menus/${id}-5ec9105fa.jpg`, `menus/${id}-5ec9105g.jpg`, `menus/${id}-5ec9105f-5ec9105f.jpg`, `stores/${id}-5ec9105.jpg`, `stores/${id}-5ec9105f-5ec9105f.jpg`, `stores/${id}-5ec9105g.jpg`, `stores/${id}-../x.jpg`, `stores/${id}.gif`,
     `menus/../${id}.jpg`, `menus/${id}-../x.jpg`, `other/${id}.jpg`, `menus/${id}.gif`, `menus/${id}.jpg?x=1`, `https://evil.example/menus/${id}.jpg`, `/menus/${id}.jpg`, `menus/${id}-5ec9105f.jpg/..`, 'menus/mock-image.png']) {
     assert.equal(resolveImageUrl(bad), null, String(bad));
   }

@@ -19,6 +19,7 @@ import { CtaBar } from '@/components/ui/cta-bar';
 import { EmptyState, ErrorState, Skeleton } from '@/components/ui/feedback-states';
 import { FavoriteButton } from '@/components/ui/favorite-button';
 import { FoodImage } from '@/components/ui/food-image';
+import { StorePhotoGallery } from '@/components/ui/store-photo-gallery';
 import { Icon } from '@/components/ui/icon';
 import { IconButton } from '@/components/ui/icon-button';
 import { MenuGroupTabs } from '@/components/ui/menu-group-tabs';
@@ -55,6 +56,7 @@ import {
   searchTransition,
   stickyScrollRange,
 } from './menu-sections';
+import { storePhotoUris } from './store-photos';
 import { StoreSourceSection } from './store-source-section';
 
 type TabId = 'menu' | 'review' | 'info';
@@ -324,7 +326,7 @@ export function StoreDetailScreen({ storeId }: { storeId: string }) {
         keyboardDismissMode="on-drag"
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.content}>
-        <FoodImage uri={resolveImageUrl(loaded.imageRef)} alt={loaded.name} ratio="16:9" rounded={0} />
+        <StorePhotoGallery uris={storePhotoUris(loaded)} alt={loaded.name} />
 
         <View style={styles.info}>
           <View style={styles.nameRow}>

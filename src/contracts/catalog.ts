@@ -120,11 +120,22 @@ export interface MenuGroupDto {
   menuIds: Uuid[];
 }
 
+/** 가게 상세 사진 갤러리의 사진 한 장. 이미지는 imageRef 키만 내려주고 URL 변환은 앱에서 한다 */
+export interface StorePhotoDto {
+  imageRef: string;
+}
+
 export interface StoreDetailDto {
   id: Uuid;
   name: string;
   description: string | null;
+  /** 대표사진 한 장. 목록·구버전 앱도 이 값을 그대로 쓴다(photos와 별개로 계속 내려준다) */
   imageRef: string | null;
+  /**
+   * 상세 갤러리 사진, 보여 줄 순서대로(첫 장 = 대표사진). 목록 응답에는 없다.
+   * 서버가 갤러리 도입 전 응답이면 이 필드가 없고, 사진이 없는 가게는 빈 배열이다. 둘 다 앱이 imageRef 한 장으로 보여 준다.
+   */
+  photos?: StorePhotoDto[];
   /** false면 새 메뉴 담기 불가 (FR-MENU-010) */
   isOpen: boolean;
   isRecommended: boolean;

@@ -159,6 +159,11 @@ export function parseStoreDetail(data: unknown): StoreDetailDto {
   need(s.isFavorite === null || isBool(s.isFavorite));
   need(Array.isArray(s.menus));
   (s.menus as unknown[]).forEach(checkMenuSummary);
+  // 상세 사진 갤러리(없으면 imageRef 한 장). 있으면 모양이 맞아야 한다
+  if (s.photos !== undefined) {
+    need(Array.isArray(s.photos));
+    for (const p of s.photos as unknown[]) need(isObj(p) && isStr(p.imageRef));
+  }
   // 메뉴 그룹(없으면 평평한 목록). 있으면 모양이 맞아야 한다. 틀린 응답을 조용히 무시하지 않는다
   if (s.menuGroups !== undefined) {
     need(Array.isArray(s.menuGroups));
