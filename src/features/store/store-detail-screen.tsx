@@ -2,6 +2,7 @@ import { useRouter } from 'expo-router';
 import { useEffect, useMemo, useRef, useState, type ComponentRef } from 'react';
 import {
   Animated,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -322,6 +323,9 @@ export function StoreDetailScreen({ storeId }: { storeId: string }) {
         ref={scrollRef}
         onScroll={onScroll}
         scrollEventThrottle={16}
+        // Android의 맨 위·아래 늘어남(스트레치) 효과는 화면 내용만 늘리고 스크롤 값(contentOffset.y)은 0에 둔다.
+        // 그러면 스크롤 값을 따라 움직이는 고정 영역(검색창·그룹 탭)만 제자리에 남아 본문과 분리돼 보인다. 이 화면에서는 끈다. iOS의 바운스는 그대로 둔다.
+        overScrollMode={Platform.OS === 'android' ? 'never' : undefined}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
         showsVerticalScrollIndicator={false}
