@@ -107,7 +107,7 @@ select ok((select array_agg(m ->> 'name') from jsonb_array_elements(
   '[anon] get_store: 활성 메뉴만, 정렬 순서, 품절 포함(비활성 제외)');
 select ok((select array_agg(k order by k) from jsonb_object_keys(
     public.get_store('20000000-0000-4000-8000-000000000001')) k)
-  = array['category','description','id','imageRef','isFavorite','isOpen','isRecommended','menus','name','reviewSummary'],
+  = array['category','description','id','imageRef','isFavorite','isOpen','isRecommended','menuGroups','menus','name','reviewSummary'],
   '[anon] get_store: 응답 키');
 
 select ok(public.test_err($$select public.get_store('20000000-0000-4000-8000-000000000098')$$, 'P0001', 'RESOURCE_NOT_FOUND'),
